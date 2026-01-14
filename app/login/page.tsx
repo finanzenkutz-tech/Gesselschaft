@@ -38,32 +38,47 @@ export default async function LoginPage({
                             <code className="block bg-white/50 p-1 rounded mt-1">password123</code>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="email">
-                                E-Mail Adresse
-                            </label>
-                            <input
-                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="name@beispiel.de"
-                                required
-                            />
-                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="full_name">
+                                    Vollständiger Name (nur bei Registrierung)
+                                </label>
+                                <input
+                                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
+                                    id="full_name"
+                                    name="full_name"
+                                    type="text"
+                                    placeholder="Max Mustermann"
+                                />
+                            </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="password">
-                                Passwort
-                            </label>
-                            <input
-                                className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
-                                id="password"
-                                name="password"
-                                type="password"
-                                placeholder="••••••••"
-                                required
-                            />
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="email">
+                                    E-Mail Adresse
+                                </label>
+                                <input
+                                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="name@beispiel.de"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="password">
+                                    Passwort
+                                </label>
+                                <input
+                                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
                         </div>
 
                         {params?.error && (

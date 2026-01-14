@@ -7,16 +7,16 @@ import { createClient } from '@/lib/supabase/server'
 export async function login(formData: FormData) {
     const supabase = await createClient()
 
-    // Type-casting here for simplicity, but in a real app you should validate inputs
-    const data = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-    }
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
 
-    const { error } = await supabase.auth.signInWithPassword(data)
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    })
 
     if (error) {
-        redirect('/login?error=Anmeldung fehlgeschlagen')
+        redirect(`/login?error=${encodeURIComponent(error.message)}`)
     }
 
     revalidatePath('/', 'layout')
@@ -26,21 +26,22 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
     const supabase = await createClient()
 
-    // Type-casting here for simplicity, but in a real app you should validate inputs
-    const data = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+    const fullName = formData.get('full_name') as string
+
+    const { error } = await supabase.auth.signUp({
+        email,
+        password,
         options: {
             data: {
-                full_name: formData.get('full_name') as string, // Note: form doesn't have full_name input yet, but good to keep
+                full_name: fullName,
             }
         }
-    }
-
-    const { error } = await supabase.auth.signUp(data)
+    })
 
     if (error) {
-        redirect('/login?error=Registrierung fehlgeschlagen')
+        redirect(`/login?error=${encodeURIComponent(error.message)}`)
     }
 
     revalidatePath('/', 'layout')
