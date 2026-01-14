@@ -15,7 +15,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
 
     const { data: group, error: groupError } = await supabase
         .from('groups')
-        .select('*, group_members(*, profiles(*))')
+        .select('*')
         .eq('id', id)
         .single()
 
@@ -26,12 +26,24 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                 <Users className="w-16 h-16 text-slate-200 mx-auto" />
                 <h1 className="text-2xl font-bold text-slate-800">Gruppe nicht gefunden</h1>
                 <p className="text-slate-500">Diese Gruppe existiert nicht oder du hast keinen Zugriff darauf.</p>
+                <div className="bg-slate-50 p-4 rounded-xl text-xs text-slate-400 font-mono text-left max-w-sm mx-auto overflow-auto">
+                    ID: {id}<br />
+                    Error: {groupError?.message || 'Unknown'}
+                </div>
                 <Link href="/groups">
                     <Button variant="outline" className="rounded-xl">Zurück zur Übersicht</Button>
                 </Link>
             </div>
         )
     }
+
+    // Fetch members separately for better RLS isolation
+    const { data: members } = await supabase
+        .from('group_members')
+        .select('*, profiles(*)')
+        .eq('group_id', id)
+
+    const groupMembers = members || []
 
     // Fetch Places
     const { data: places } = await supabase
@@ -51,8 +63,8 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     const upcomingEvents = allEvents?.filter(e => e.start_time >= now) || []
     const pastEvents = allEvents?.filter(e => e.start_time < now).reverse().slice(0, 5) || []
 
-    const isMember = group.group_members.some((m: any) => m.user_id === user?.id)
-    const isAdmin = group.group_members.some((m: any) => m.user_id === user?.id && m.role === 'admin')
+    const isMember = groupMembers.some((m: any) => m.user_id === user?.id)
+    const isAdmin = groupMembers.some((m: any) => m.user_id === user?.id && m.role === 'admin')
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -190,10 +202,10 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                     <div className="sky-card p-6">
                         <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
                             <Users className="w-5 h-5 text-secondary" />
-                            Mitglieder ({group.group_members.length})
+                            Mitglieder ({groupMembers.length})
                         </h3>
                         <div className="space-y-3">
-                            {group.group_members.map((member: any) => (
+                            {groupMembers.map((member: any) => (
                                 <div key={member.user_id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-colors">
                                     <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold border border-blue-200">
                                         {member.profiles?.full_name?.[0] || member.profiles?.email?.[0] || '?'}

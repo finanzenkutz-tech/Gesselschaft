@@ -15,6 +15,8 @@ import { addGameToInventory } from '@/app/inventory/actions'
 import { searchBGG, getBGGGameDetails, BGGSearchResult } from '@/app/inventory/bgg-actions'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
+import { useDebounce } from '@/lib/hooks/use-debounce'
+import { useEffect } from 'react'
 
 type Group = { id: string; name: string }
 
@@ -36,10 +38,19 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
 
     const router = useRouter()
 
-    async function handleSearch() {
-        if (searchQuery.length < 3) return
+    const debouncedSearch = useDebounce(searchQuery, 500)
+
+    useEffect(() => {
+        if (debouncedSearch && debouncedSearch.length >= 3) {
+            handleSearch(debouncedSearch)
+        } else {
+            setSearchResults([])
+        }
+    }, [debouncedSearch])
+
+    async function handleSearch(query: string) {
         setSearching(true)
-        const results = await searchBGG(searchQuery)
+        const results = await searchBGG(query)
         setSearchResults(results)
         setSearching(false)
     }
@@ -141,7 +152,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                 <Input
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
                                     placeholder="Spielname suchen..."
                                     className="pl-10 rounded-xl bg-slate-50 border-slate-100 h-12"
                                 />
@@ -149,7 +160,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                             <Button
                                 type="button"
                                 variant="secondary"
-                                onClick={handleSearch}
+                                onClick={() => handleSearch(searchQuery)}
                                 disabled={searching || searchQuery.length < 3}
                                 className="rounded-xl h-12 px-4 whitespace-nowrap"
                             >
