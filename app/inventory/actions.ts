@@ -1,0 +1,77 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+export async function addGameToInventory(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const name = formData.get('name') as string
+    const bggLink = formData.get('bgg_link') as string
+    const groupId = formData.get('group_id') as string
+    const visibility = formData.get('visibility') as string || 'private'
+
+    // Handle image upload if present
+    const imageFile = formData.get('image') as File | null
+    const remoteImageUrl = formData.get('image_url_remote') as string | null
+    let imageUrl = remoteImageUrl || null
+
+    if (imageFile && imageFile.size > 0) {
+        const fileExt = imageFile.name.split('.').pop()
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('game-images')
+            .upload(fileName, imageFile)
+
+        if (!uploadError && uploadData) {
+            const { data: publicUrl } = supabase.storage
+                .from('game-images')
+                .getPublicUrl(fileName)
+            imageUrl = publicUrl?.publicUrl
+        }
+    }
+
+    const { data, error } = await supabase
+        .from('inventory')
+        .insert({
+            name,
+            bgg_link: bggLink || null,
+            owner_id: user.id,
+            group_id: groupId || null,
+            visibility: visibility,
+            image_url: imageUrl
+        })
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error adding game:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/inventory')
+    return { success: true, data }
+}
+
+export async function removeGameFromInventory(gameId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const { error } = await supabase
+        .from('inventory')
+        .delete()
+        .eq('id', gameId)
+        .eq('owner_id', user.id)
+
+    if (error) {
+        console.error('Error removing game:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/inventory')
+    return { success: true }
+}
