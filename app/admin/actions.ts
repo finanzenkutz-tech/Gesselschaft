@@ -1,0 +1,110 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+async function checkSuperAdmin() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('system_role')
+        .eq('id', user.id)
+        .single()
+
+    return profile?.system_role === 'super_admin'
+}
+
+export async function getAllUsers() {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+}
+
+export async function getAllGroups() {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('groups')
+        .select('*, profiles(full_name, email)')
+        .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+}
+
+export async function deleteUser(userId: string) {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    // Note: Deleting from profiles is easy, but deleting from auth.users 
+    // requires service_role. For now we handle the profile and data.
+    // If service role is available, we can also delete the auth user.
+    const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/admin')
+    return { success: true }
+}
+
+export async function updateUserProfile(userId: string, data: any) {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', userId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/admin')
+    return { success: true }
+}
+
+export async function deleteAnyGroup(groupId: string) {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('groups')
+        .delete()
+        .eq('id', groupId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/admin')
+    revalidatePath('/groups')
+    return { success: true }
+}
+
+export async function deleteAnyEvent(eventId: string) {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/admin')
+    revalidatePath('/events')
+    return { success: true }
+}

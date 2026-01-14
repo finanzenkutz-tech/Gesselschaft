@@ -16,6 +16,14 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('system_role')
+        .eq('id', user?.id)
+        .single()
+
+    const isSuperAdmin = profile?.system_role === 'super_admin'
+
     const { data: group, error: groupError } = await supabase
         .from('groups')
         .select('*')
@@ -120,17 +128,17 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                 />
                             )}
                             <div>
-                                {!isMember ? (
-                                    <GroupJoinButton groupId={id} />
-                                ) : (
+                                {(isSuperAdmin || isMember) ? (
                                     <div className="flex gap-2">
-                                        {isAdmin && (
+                                        {(isAdmin || isSuperAdmin) && (
                                             <EditGroupDialog group={group} />
                                         )}
-                                        {!isAdmin && (
+                                        {isMember && !isAdmin && (
                                             <GroupLeaveButton groupId={id} />
                                         )}
                                     </div>
+                                ) : (
+                                    <GroupJoinButton groupId={id} />
                                 )}
                             </div>
                         </div>

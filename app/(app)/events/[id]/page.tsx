@@ -1,20 +1,31 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
-import { Calendar, MapPin, Users, ArrowLeft, Check, X, HelpCircle, Dice5 } from 'lucide-react'
+import { notFound, redirect } from 'next/navigation'
+import { Calendar, MapPin, Users, ArrowLeft, Trash2, Car, Pizza, Dice5, MessageCircle, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { upsertRSVP } from '@/app/events/rsvp-actions'
 import { CarpoolingWidget } from '@/components/events/carpooling-widget'
 import { EventChatWidget } from '@/components/events/event-chat-widget'
 import { getMessages } from '@/app/events/chat-actions'
 import { GameTrackingWidget } from '@/components/events/game-tracking-widget'
 import { getEventSessions } from '@/app/events/session-actions'
 import { EventContributionsWidget } from '@/components/events/event-contributions-widget'
+import { deleteAnyEvent } from '@/app/admin/actions'
+import { RSVPButtons } from '@/components/events/rsvp-buttons'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { GameSuggestions } from '@/components/events/game-suggestions'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('system_role')
+        .eq('id', user?.id)
+        .single()
+
+    const isSuperAdmin = profile?.system_role === 'super_admin'
 
     const { data: event, error: fetchError } = await supabase
         .from('events')
@@ -30,6 +41,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     const userRSVP = event.event_attendees.find((a: any) => a.user_id === user?.id)
     const attendees = event.event_attendees || []
     const goingCount = attendees.filter((a: any) => a.status === 'going').length
+    const guestCounts = attendees.reduce((acc: number, curr: any) => acc + (curr.guest_count || 0), 0)
+    const totalHeadcount = goingCount + guestCounts
+
     const maybeCount = attendees.filter((a: any) => a.status === 'maybe').length
 
     // Fetch chat messages
@@ -44,6 +58,12 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         .select('*')
         .eq('event_id', id)
         .order('created_at', { ascending: true })
+
+    // Fetch Group Inventory for suggestions
+    const { data: groupInventory } = await supabase
+        .from('inventory')
+        .select('*, owner:profiles(full_name)')
+        .eq('group_id', event.group_id)
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('de-DE', {
@@ -68,21 +88,35 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             {/* Header Section */}
             <div className="sky-card overflow-hidden">
                 <div className="h-48 bg-gradient-to-br from-primary to-blue-600 p-8 md:p-12 flex flex-col justify-end text-white relative">
-                    <div className="absolute top-0 right-0 p-8 opacity-10">
-                        <Calendar className="w-48 h-48" />
+                    <div className="absolute top-0 right-0 p-4 flex gap-2">
+                        {(isSuperAdmin || event.created_by === user?.id) && (
+                            <form action={async () => {
+                                'use server'
+                                await deleteAnyEvent(id)
+                                redirect('/events')
+                            }}>
+                                <Button
+                                    className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white border-none rounded-xl h-10 w-10 p-0"
+                                    variant="outline"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </Button>
+                            </form>
+                        )}
+                        <Calendar className="w-48 h-48 opacity-10 absolute -top-10 -right-10 pointer-events-none" />
                     </div>
-                    <div className="relative z-10">
-                        <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-bold uppercase tracking-wider mb-3">
+                    <div className="relative z-10 text-shadow-sm">
+                        <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-xs font-bold uppercase tracking-wider mb-3 shadow-sm border border-white/10">
                             {event.groups?.name || 'Gruppe'}
                         </span>
-                        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">{event.title}</h1>
+                        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight drop-shadow-md">{event.title}</h1>
                     </div>
                 </div>
 
                 <div className="p-8 md:p-12 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-6">
                         <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-primary flex items-center justify-center shrink-0">
+                            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-primary flex items-center justify-center shrink-0 border border-blue-100">
                                 <Calendar className="w-6 h-6" />
                             </div>
                             <div>
@@ -92,7 +126,7 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                         </div>
 
                         <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-secondary flex items-center justify-center shrink-0">
+                            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-secondary flex items-center justify-center shrink-0 border border-sky-100">
                                 <MapPin className="w-6 h-6" />
                             </div>
                             <div>
@@ -102,62 +136,113 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                         </div>
                     </div>
 
-                    <div className="flex flex-col justify-center gap-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                        <p className="text-center text-slate-500 font-bold text-sm mb-2">Bist du dabei?</p>
-                        <div className="grid grid-cols-3 gap-3">
-                            <form action={async () => { 'use server'; await upsertRSVP(id, 'going') }}>
-                                <Button
-                                    className={`w-full h-12 rounded-xl font-bold flex flex-col gap-1 ${userRSVP?.status === 'going' ? 'bg-green-500 text-white shadow-lg shadow-green-100' : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-green-200 hover:text-green-500'}`}
-                                >
-                                    <Check className="w-5 h-5" />
-                                    <span className="text-[10px]">Dabei</span>
-                                </Button>
-                            </form>
-                            <form action={async () => { 'use server'; await upsertRSVP(id, 'maybe') }}>
-                                <Button
-                                    className={`w-full h-12 rounded-xl font-bold flex flex-col gap-1 ${userRSVP?.status === 'maybe' ? 'bg-yellow-500 text-white shadow-lg shadow-yellow-100' : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-yellow-200 hover:text-yellow-500'}`}
-                                >
-                                    <HelpCircle className="w-5 h-5" />
-                                    <span className="text-[10px]">Vielleicht</span>
-                                </Button>
-                            </form>
-                            <form action={async () => { 'use server'; await upsertRSVP(id, 'not_going') }}>
-                                <Button
-                                    className={`w-full h-12 rounded-xl font-bold flex flex-col gap-1 ${userRSVP?.status === 'not_going' ? 'bg-red-500 text-white shadow-lg shadow-red-100' : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-red-200 hover:text-red-500'}`}
-                                >
-                                    <X className="w-5 h-5" />
-                                    <span className="text-[10px]">Nein</span>
-                                </Button>
-                            </form>
-                        </div>
-                    </div>
+                    <RSVPButtons
+                        eventId={id}
+                        currentStatus={userRSVP?.status}
+                        currentGuestCount={userRSVP?.guest_count || 0}
+                    />
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-2 space-y-8">
-                    <section className="sky-card p-8 space-y-4">
-                        <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
-                            <Dice5 className="w-6 h-6 text-primary" />
-                            Beschreibung
-                        </h2>
-                        <div className="text-slate-600 leading-relaxed font-medium">
-                            {event.description || 'Keine Beschreibung vorhanden.'}
+            {/* Content Tabs */}
+            <Tabs defaultValue="details" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-blue-50/50 rounded-2xl gap-1">
+                    <TabsTrigger value="details" className="h-10 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-xs md:text-sm">
+                        <Info className="w-4 h-4 mr-2 hidden md:block" />
+                        Infos
+                    </TabsTrigger>
+                    <TabsTrigger value="logistics" className="h-10 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-xs md:text-sm">
+                        <Pizza className="w-4 h-4 mr-2 hidden md:block" />
+                        Logistik
+                    </TabsTrigger>
+                    <TabsTrigger value="games" className="h-10 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-xs md:text-sm">
+                        <Dice5 className="w-4 h-4 mr-2 hidden md:block" />
+                        Spiele
+                    </TabsTrigger>
+                    <TabsTrigger value="chat" className="h-10 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm font-bold text-xs md:text-sm">
+                        <MessageCircle className="w-4 h-4 mr-2 hidden md:block" />
+                        Chat
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="details" className="mt-6 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div className="md:col-span-2 space-y-8">
+                            <section className="sky-card p-8 space-y-4">
+                                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+                                    <Info className="w-6 h-6 text-primary" />
+                                    Beschreibung
+                                </h2>
+                                <div className="text-slate-600 leading-relaxed font-medium">
+                                    {event.description || 'Keine Beschreibung vorhanden.'}
+                                </div>
+                            </section>
                         </div>
-                    </section>
 
-                    {/* Integration of Carpooling Widget */}
-                    <CarpoolingWidget
-                        eventId={id}
-                        carpools={event.carpooling || []}
-                        userId={user?.id}
-                    />
+                        <aside className="sky-card p-8 h-fit">
+                            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-secondary" />
+                                Teilnehmer ({totalHeadcount})
+                            </h3>
+                            <div className="space-y-4">
+                                {attendees.filter((a: any) => a.status === 'going').map((attendee: any) => (
+                                    <div key={attendee.user_id} className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-blue-50 text-primary flex items-center justify-center font-bold border border-blue-100 uppercase">
+                                            {attendee.profiles?.full_name?.[0] || attendee.profiles?.email?.[0] || '?'}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-slate-700 truncate">{attendee.profiles?.full_name || attendee.profiles?.email.split('@')[0]}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-[10px] text-green-500 font-bold uppercase">Dabei</p>
+                                                {attendee.guest_count > 0 && (
+                                                    <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 rounded-full font-bold">+{attendee.guest_count}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {goingCount === 0 && (
+                                    <p className="text-slate-400 text-sm italic">Noch keine Zusagen.</p>
+                                )}
+                            </div>
 
-                    {/* Mitbringliste Slot */}
-                    <EventContributionsWidget
-                        eventId={id}
-                        contributions={contributions || []}
-                        userId={user?.id}
+                            {maybeCount > 0 && (
+                                <div className="mt-8 pt-8 border-t border-slate-50">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Vielleicht ({maybeCount})</p>
+                                    <div className="flex -space-x-2">
+                                        {attendees.filter((a: any) => a.status === 'maybe').map((attendee: any) => (
+                                            <div key={attendee.user_id} className="w-8 h-8 rounded-full bg-slate-50 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-400 uppercase" title={attendee.profiles?.full_name}>
+                                                {attendee.profiles?.full_name?.[0] || '?'}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </aside>
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="logistics" className="mt-6 space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Mitbringliste Slot */}
+                        <EventContributionsWidget
+                            eventId={id}
+                            contributions={contributions || []}
+                            userId={user?.id}
+                        />
+                        {/* Integration of Carpooling Widget */}
+                        <CarpoolingWidget
+                            eventId={id}
+                            carpools={event.carpooling || []}
+                            userId={user?.id}
+                        />
+                    </div>
+                </TabsContent>
+
+                <TabsContent value="games" className="mt-6 space-y-8">
+                    <GameSuggestions
+                        games={groupInventory || []}
+                        playerCount={totalHeadcount}
                     />
 
                     {/* Game Tracking Widget */}
@@ -167,51 +252,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                         attendees={attendees as any}
                         userId={user?.id}
                     />
+                </TabsContent>
 
+                <TabsContent value="chat" className="mt-6">
                     {/* Event Chat */}
                     <EventChatWidget
                         eventId={id}
                         initialMessages={messages as any}
                         userId={user?.id}
                     />
-                </div>
-
-                <aside className="sky-card p-8">
-                    <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-secondary" />
-                        Teilnehmer ({goingCount})
-                    </h3>
-                    <div className="space-y-4">
-                        {attendees.filter((a: any) => a.status === 'going').map((attendee: any) => (
-                            <div key={attendee.user_id} className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 text-primary flex items-center justify-center font-bold border border-blue-100">
-                                    {attendee.profiles?.full_name?.[0] || attendee.profiles?.email?.[0] || '?'}
-                                </div>
-                                <div className="min-w-0">
-                                    <p className="text-sm font-bold text-slate-700 truncate">{attendee.profiles?.full_name || attendee.profiles?.email.split('@')[0]}</p>
-                                    <p className="text-[10px] text-green-500 font-bold uppercase">Dabei</p>
-                                </div>
-                            </div>
-                        ))}
-                        {goingCount === 0 && (
-                            <p className="text-slate-400 text-sm italic">Noch keine Zusagen.</p>
-                        )}
-                    </div>
-
-                    {maybeCount > 0 && (
-                        <div className="mt-8 pt-8 border-t border-slate-50">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Vielleicht ({maybeCount})</p>
-                            <div className="flex -space-x-2">
-                                {attendees.filter((a: any) => a.status === 'maybe').map((attendee: any) => (
-                                    <div key={attendee.user_id} className="w-8 h-8 rounded-full bg-slate-50 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-400" title={attendee.profiles?.full_name}>
-                                        {attendee.profiles?.full_name?.[0] || '?'}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </aside>
-            </div>
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }

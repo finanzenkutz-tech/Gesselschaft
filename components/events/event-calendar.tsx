@@ -69,8 +69,8 @@ export function EventCalendar({ events, userId }: { events: Event[], userId?: st
                         return (
                             <Link href={`/events/${event.id}`} key={event.id}>
                                 <div className={`text-[10px] md:text-xs font-bold px-1.5 py-0.5 rounded-md truncate cursor-pointer transition-all hover:scale-[1.02] ${attending
-                                        ? 'bg-green-500 text-white'
-                                        : 'bg-primary/10 text-primary'
+                                    ? 'bg-green-500 text-white'
+                                    : 'bg-primary/10 text-primary'
                                     }`}>
                                     {event.title}
                                 </div>
@@ -105,13 +105,15 @@ export function EventCalendar({ events, userId }: { events: Event[], userId?: st
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 gap-1">
-                {dayNames.map(day => (
-                    <div key={day} className="text-center text-xs font-bold text-slate-400 py-2">
-                        {day}
-                    </div>
-                ))}
-                {days}
+            <div className="overflow-x-auto -mx-6 px-6 md:overflow-visible md:mx-0 md:px-0">
+                <div className="grid grid-cols-7 gap-1 min-w-[600px] md:min-w-0">
+                    {dayNames.map(day => (
+                        <div key={day} className="text-center text-xs font-bold text-slate-400 py-2">
+                            {day}
+                        </div>
+                    ))}
+                    {days}
+                </div>
             </div>
 
             <div className="flex items-center gap-4 pt-4 border-t border-slate-50 text-xs">

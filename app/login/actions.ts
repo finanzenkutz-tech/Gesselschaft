@@ -65,6 +65,25 @@ export async function signup(formData: FormData) {
     redirect('/')
 }
 
+export async function forgotPassword(formData: FormData) {
+    const supabase = await createClient()
+
+    const email = formData.get('email') as string
+    const headersList = await (await import('next/headers')).headers()
+    const origin = headersList.get('origin')
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/auth/callback?next=/update-password`,
+    })
+
+    if (error) {
+        const germanError = translateError(error.message)
+        redirect(`/login?error=${encodeURIComponent(germanError)}`)
+    }
+
+    redirect(`/login?message=${encodeURIComponent('Bitte prüfe deine E-Mails für den Reset-Link')}`)
+}
+
 export async function logout() {
     const supabase = await createClient()
     await supabase.auth.signOut()

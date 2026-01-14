@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut, Trophy, MessageCircle } from 'lucide-react'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut, Trophy, MessageCircle, Shield, Smartphone, Tablet, Monitor } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { User as SupabaseUser } from '@supabase/supabase-js'
@@ -26,13 +26,19 @@ const menuNavigation = [
 ]
 
 const adminNavigation = [
-    { name: 'Mitglieder', href: '/admin/users', icon: Settings },
+    { name: 'Dashboard', href: '/admin', icon: Shield },
 ]
 
 export function Shell({ children, user, profile }: { children: React.ReactNode, user: SupabaseUser, profile: any }) {
     const pathname = usePathname()
+    const searchParams = useSearchParams()
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
+    const [godMode, setGodMode] = useState(true)
     const supabase = createClient()
+
+    // Check if we are inside the preview iframe
+    const isFramed = searchParams.get('framed') === 'true'
 
     // Presence Heartbeat
     useEffect(() => {
@@ -51,13 +57,94 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
         return () => clearInterval(interval)
     }, [user, supabase])
 
-    const isAdmin = profile?.role === 'admin'
+    // Base Super Admin check (from DB profile)
+    const isRealSuperAdmin = profile?.system_role === 'super_admin'
+    // Effective Super Admin for UI (respects God Mode toggles)
+    const isSuperAdmin = isRealSuperAdmin && godMode
 
     const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
     const levelInfo = getLevelInfo(profile?.points || 0)
 
+    // Preview Mode Render
+    if (!isFramed && viewMode !== 'desktop') {
+        const currentParams = new URLSearchParams(searchParams.toString())
+        currentParams.set('framed', 'true')
+        const iframeSrc = `${pathname}?${currentParams.toString()}`
+
+        return (
+            <div className="min-h-screen bg-slate-900 flex flex-col h-screen overflow-hidden">
+                {/* Preview Toolbar */}
+                <div className="bg-slate-800 border-b border-slate-700 p-4 flex items-center justify-between shadow-lg z-50">
+                    <div className="flex items-center gap-4">
+                        <span className="text-white font-bold flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-blue-400" />
+                            Device Preview
+                        </span>
+                        <div className="flex bg-slate-700 rounded-lg p-1 border border-slate-600">
+                            <button
+                                onClick={() => setViewMode('mobile')}
+                                className={cn(
+                                    "p-2 rounded-md transition-all flex items-center gap-2 text-sm font-medium",
+                                    viewMode === 'mobile' ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white hover:bg-slate-600"
+                                )}
+                            >
+                                <Smartphone className="w-4 h-4" />
+                                Mobile
+                            </button>
+                            <button
+                                onClick={() => setViewMode('tablet')}
+                                className={cn(
+                                    "p-2 rounded-md transition-all flex items-center gap-2 text-sm font-medium",
+                                    viewMode === 'tablet' ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white hover:bg-slate-600"
+                                )}
+                            >
+                                <Tablet className="w-4 h-4" />
+                                Tablet
+                            </button>
+                            <button
+                                onClick={() => setViewMode('desktop')}
+                                className={cn(
+                                    "p-2 rounded-md transition-all flex items-center gap-2 text-sm font-medium",
+                                    viewMode === 'desktop' ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white hover:bg-slate-600"
+                                )}
+                            >
+                                <Monitor className="w-4 h-4" />
+                                Desktop
+                            </button>
+                        </div>
+                    </div>
+                    <div className="text-slate-400 text-xs">
+                        {viewMode === 'mobile' ? 'iPhone SE (375px)' : 'iPad Mini (768px)'}
+                    </div>
+                </div>
+
+                {/* Preview Area */}
+                <div className="flex-1 bg-slate-900 overflow-auto p-8 flex justify-center items-start">
+                    <div
+                        className={cn(
+                            "bg-white transition-all duration-300 shadow-2xl overflow-hidden border-8 border-slate-800 rounded-[3rem] relative ring-4 ring-slate-700",
+                            viewMode === 'mobile' ? "w-[375px] min-h-[667px]" : "w-[768px] min-h-[1024px]"
+                        )}
+                        style={{ height: 'calc(100vh - 120px)' }}
+                    >
+                        {/* Device Notch Simulation (Mobile Only) */}
+                        {viewMode === 'mobile' && (
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-slate-800 rounded-b-xl z-20"></div>
+                        )}
+
+                        <iframe
+                            src={iframeSrc}
+                            className="w-full h-full bg-slate-50"
+                            title="Device Preview"
+                        />
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
-        <div className="min-h-screen bg-background text-slate-800">
+        <div className="min-h-[100dvh] bg-background text-slate-800 overflow-x-hidden">
             {/* Mobile Header */}
             <div className="lg:hidden flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border-b border-blue-100 sticky top-0 z-50">
                 <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary hover:opacity-80 transition-opacity">
@@ -79,7 +166,7 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                 </div>
             </div>
 
-            <div className="flex h-screen overflow-hidden">
+            <div className="flex h-[100dvh] lg:h-screen overflow-hidden">
                 {/* Sidebar (Desktop & Mobile) */}
                 <aside
                     className={cn(
@@ -88,11 +175,16 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                     )}
                 >
                     <div className="h-full flex flex-col p-6">
-                        <Link href="/" className="flex items-center gap-3 font-extrabold text-2xl text-slate-800 px-2 mb-8 hover:opacity-80 transition-opacity">
+                        <Link href="/" className="relative flex items-center gap-3 font-extrabold text-2xl text-slate-800 px-2 mb-8 hover:opacity-80 transition-opacity">
                             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center overflow-hidden">
                                 <img src="/würfel.png" alt="Logo" className="w-8 h-8" />
                             </div>
                             Game Hub
+                            {isSuperAdmin && (
+                                <span className="absolute -right-3 -top-2 bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black border-2 border-white shadow-sm">
+                                    ADMIN
+                                </span>
+                            )}
                         </Link>
 
                         <nav className="flex-1 space-y-6">
@@ -131,9 +223,22 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                             </div>
 
 
-                            {isAdmin && (
+                            {isSuperAdmin && (
                                 <div className="space-y-1">
                                     <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Admin-Bereich</p>
+                                    <Link
+                                        href="/members"
+                                        onClick={() => setSidebarOpen(false)}
+                                        className={cn(
+                                            "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group font-bold",
+                                            pathname === '/members'
+                                                ? "bg-amber-100 text-amber-700 shadow-sm"
+                                                : "text-slate-500 hover:bg-amber-50 hover:text-amber-600"
+                                        )}
+                                    >
+                                        <Users className={cn("w-5 h-5 transition-colors", pathname === '/members' ? "text-amber-700" : "group-hover:text-amber-600")} />
+                                        <span className="flex-1">Mitglieder</span>
+                                    </Link>
                                     {adminNavigation.map((item) => {
                                         const isActive = pathname === item.href
                                         return (
@@ -156,6 +261,97 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                                 </div>
                             )}
                         </nav>
+
+                        {/* Admin Section (Only visible if actual super_admin) */}
+                        {profile?.system_role === 'super_admin' && (
+                            <div className="space-y-4">
+                                <div className="px-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Admin-Bereich</p>
+
+                                        {/* God Mode Toggle */}
+                                        <button
+                                            onClick={() => setGodMode(!godMode)}
+                                            className={cn(
+                                                "text-[9px] font-black px-2 py-0.5 rounded-full transition-all border",
+                                                godMode
+                                                    ? "bg-red-500 text-white border-red-500 shadow-sm shadow-red-200"
+                                                    : "bg-slate-100 text-slate-400 border-slate-200"
+                                            )}
+                                            title="Toggle God Mode (Admin Rights)"
+                                        >
+                                            {godMode ? 'GOD MODE ON' : 'GOD MODE OFF'}
+                                        </button>
+                                    </div>
+
+                                    {/* View Mode Buttons (Moved here) */}
+                                    {godMode && !isFramed && (
+                                        <div className="flex bg-slate-100 rounded-lg p-1 border border-slate-200 mb-4">
+                                            <button
+                                                onClick={() => setViewMode('mobile')}
+                                                className="flex-1 p-2 rounded-md text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm transition-all flex justify-center"
+                                                title="Mobile View"
+                                            >
+                                                <Smartphone className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('tablet')}
+                                                className="flex-1 p-2 rounded-md text-slate-400 hover:text-primary hover:bg-white hover:shadow-sm transition-all flex justify-center"
+                                                title="Tablet View"
+                                            >
+                                                <Tablet className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setViewMode('desktop')}
+                                                className="flex-1 p-2 rounded-md bg-white text-primary shadow-sm transition-all flex justify-center border border-slate-100"
+                                                title="Desktop View"
+                                            >
+                                                <Monitor className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Admin Navigation (Hidden if God Mode is OFF) */}
+                                {godMode && (
+                                    <div className="space-y-1">
+                                        <Link
+                                            href="/members"
+                                            onClick={() => setSidebarOpen(false)}
+                                            className={cn(
+                                                "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group font-bold",
+                                                pathname === '/members'
+                                                    ? "bg-amber-100 text-amber-700 shadow-sm"
+                                                    : "text-slate-500 hover:bg-amber-50 hover:text-amber-600"
+                                            )}
+                                        >
+                                            <Users className={cn("w-5 h-5 transition-colors", pathname === '/members' ? "text-amber-700" : "group-hover:text-amber-600")} />
+                                            <span className="flex-1">Mitglieder</span>
+                                        </Link>
+
+                                        {adminNavigation.map((item) => {
+                                            const isActive = pathname === item.href
+                                            return (
+                                                <Link
+                                                    key={item.name}
+                                                    href={item.href}
+                                                    onClick={() => setSidebarOpen(false)}
+                                                    className={cn(
+                                                        "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group font-bold",
+                                                        isActive
+                                                            ? "bg-slate-800 text-white shadow-lg"
+                                                            : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                                                    )}
+                                                >
+                                                    <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-white" : "group-hover:text-slate-800")} />
+                                                    {item.name}
+                                                </Link>
+                                            )
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="mb-4 flex justify-end px-2">
                             <NotificationBell userId={user.id} />
@@ -201,11 +397,25 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 overflow-y-auto relative w-full p-6 lg:p-10">
-                    <div className="max-w-7xl mx-auto space-y-8">
+                <main className="flex-1 overflow-y-auto relative w-full p-4 md:p-6 lg:p-10">
+                    <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
                         {children}
                     </div>
                 </main>
+
+                {/* Global Feedback Button - Floating */}
+                <Link
+                    href="/features"
+                    className="fixed bottom-6 right-6 z-50 bg-white text-primary p-3 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-110 hover:shadow-lg transition-all duration-300 border border-blue-50 group flex items-center gap-2"
+                    title="Feedback geben"
+                >
+                    <div className="bg-blue-50 p-2 rounded-full group-hover:bg-blue-100 transition-colors">
+                        <Sparkles className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out font-bold text-sm whitespace-nowrap text-blue-900 pr-0 group-hover:pr-2">
+                        Feedback
+                    </span>
+                </Link>
             </div>
 
             {/* Mobile Overlay */}

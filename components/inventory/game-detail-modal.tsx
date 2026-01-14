@@ -9,8 +9,9 @@ import {
     DialogTrigger
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Info, Users, Clock, Star, ExternalLink, Loader2 } from 'lucide-react'
+import { Info, Users, Clock, Star, ExternalLink, Loader2, Archive, CheckCircle2 } from 'lucide-react'
 import { getBGGGameDetails } from '@/app/inventory/bgg-actions'
+import { updateGame } from '@/app/inventory/actions'
 
 export function GameDetailModal({
     game
@@ -109,16 +110,44 @@ export function GameDetailModal({
                                 />
                             </div>
 
-                            {/* Footer Actions */}
-                            <div className="flex gap-3 pt-4 border-t border-slate-100">
-                                {game.bgg_link && (
-                                    <a href={game.bgg_link} target="_blank" rel="noopener noreferrer" className="flex-1">
-                                        <Button className="w-full bg-slate-800 hover:bg-black text-white rounded-xl h-12 font-bold shadow-lg shadow-slate-200">
-                                            <ExternalLink className="w-4 h-4 mr-2" /> Auf BGG ansehen
-                                        </Button>
-                                    </a>
-                                )}
+                        </div>
+
+                        {/* Actions / Edit */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                            <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${game.is_unplayed ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                                        {game.is_unplayed ? <Archive className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-slate-800 text-sm">Pile of Shame</p>
+                                        <p className="text-xs text-slate-500">
+                                            {game.is_unplayed ? 'Noch ungespielt!' : 'Bereits gespielt'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    variant={game.is_unplayed ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={async () => {
+                                        setLoading(true)
+                                        await updateGame(game.id, { is_unplayed: !game.is_unplayed })
+                                        setLoading(false)
+                                        window.location.reload() // Simple reload to reflect props update
+                                    }}
+                                    className={game.is_unplayed ? "bg-red-500 hover:bg-red-600" : "hover:text-green-600"}
+                                >
+                                    {game.is_unplayed ? 'Gespielt markieren' : 'Ungespielt'}
+                                </Button>
                             </div>
+
+                            {game.bgg_link && (
+                                <a href={game.bgg_link} target="_blank" rel="noopener noreferrer" className="block">
+                                    <Button className="w-full bg-slate-800 hover:bg-black text-white rounded-xl h-12 font-bold shadow-lg shadow-slate-200">
+                                        <ExternalLink className="w-4 h-4 mr-2" /> Auf BGG ansehen
+                                    </Button>
+                                </a>
+                            )}
                         </div>
                     </>
                 )}

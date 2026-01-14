@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function upsertRSVP(eventId: string, status: string) {
+export async function upsertRSVP(eventId: string, status: string, guestCount: number = 0) {
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -14,7 +14,8 @@ export async function upsertRSVP(eventId: string, status: string) {
         .upsert({
             event_id: eventId,
             user_id: user.id,
-            status: status
+            status: status,
+            guest_count: guestCount
         }, { onConflict: 'event_id,user_id' })
 
     if (error) {

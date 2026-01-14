@@ -61,6 +61,31 @@ export async function voteForFeature(featureId: string) {
     return { success: true }
 }
 
+export async function markFeatureAsCompleted(featureId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    // Check Super Admin
+    const { data: profile } = await supabase.from('profiles').select('system_role').eq('id', user.id).single()
+    if (profile?.system_role !== 'super_admin') {
+        return { success: false, error: 'Keine Berechtigung' }
+    }
+
+    const { error } = await supabase
+        .from('feature_requests')
+        .update({ status: 'completed', implemented_at: new Date().toISOString() })
+        .eq('id', featureId)
+
+    if (error) {
+        console.error('Error marking feature as completed:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/features')
+    return { success: true }
+}
+
 export async function getFeatureRequests() {
     const supabase = await createClient()
 

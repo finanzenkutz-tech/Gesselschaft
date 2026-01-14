@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Dice5, Plus, Image, Search, Loader2, Link as LinkIcon, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import {
     Dialog,
     DialogContent,
@@ -35,6 +36,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     const [gameName, setGameName] = useState('')
     const [bggLink, setBggLink] = useState('')
     const [imageUrl, setImageUrl] = useState('')
+    const [isUnplayed, setIsUnplayed] = useState(false)
 
     const router = useRouter()
 
@@ -78,6 +80,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         if (gameName) formData.set('name', gameName)
         if (bggLink) formData.set('bgg_link', bggLink)
         if (imageUrl) formData.set('image_url_remote', imageUrl) // New field for remote images
+        formData.set('is_unplayed', isUnplayed.toString())
 
         const result = await addGameToInventory(formData)
 
@@ -123,6 +126,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         setBggLink('')
         setImageUrl('')
         setSelectedBggId(null)
+        setIsUnplayed(false)
     }
 
     return (
@@ -284,6 +288,19 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                     {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                                 </select>
                             </div>
+
+                            {/* Pile of Shame Toggle */}
+                            <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl border border-red-100">
+                                <div className="space-y-0.5">
+                                    <label className="text-sm font-bold text-red-900">Noch ungespielt? (Pile of Shame)</label>
+                                    <p className="text-xs text-red-600">Markiere dies, wenn es noch auf den Tisch kommen muss.</p>
+                                </div>
+                                <Switch
+                                    checked={isUnplayed}
+                                    onCheckedChange={setIsUnplayed}
+                                    className="data-[state=checked]:bg-red-500"
+                                />
+                            </div>
                         </div>
 
                         {error && (
@@ -301,7 +318,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                         </Button>
                     </form>
                 </div>
-            </DialogContent>
-        </Dialog>
+            </DialogContent >
+        </Dialog >
     )
 }

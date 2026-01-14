@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { login, signup } from './actions'
+import { login, signup, forgotPassword } from './actions'
 import { LayoutGrid, UserPlus, LogIn } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
@@ -12,6 +12,7 @@ function LoginForm() {
     const message = searchParams.get('message')
 
     const [isRegistering, setIsRegistering] = useState(false)
+    const [isRecovering, setIsRecovering] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
 
     const handleSignup = async (formData: FormData) => {
@@ -69,9 +70,16 @@ function LoginForm() {
                     </div>
 
                     <form className="space-y-5 max-w-sm">
+
+                        {message && (
+                            <div className="p-4 rounded-2xl bg-green-50 text-green-600 text-sm font-medium flex items-center gap-2">
+                                <span>✅</span> {message}
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             {/* Full Name - only shown when registering */}
-                            {isRegistering && (
+                            {isRegistering && !isRecovering && (
                                 <div className="animate-in slide-in-from-top-4 duration-300">
                                     <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="full_name">
                                         Dein Name
@@ -101,20 +109,33 @@ function LoginForm() {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="password">
-                                    Passwort
-                                </label>
-                                <input
-                                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    placeholder="••••••••"
-                                    required
-                                    minLength={6}
-                                />
-                            </div>
+                            {!isRecovering && (
+                                <div>
+                                    <div className="flex justify-between items-center mb-2 ml-1">
+                                        <label className="block text-sm font-bold text-slate-700" htmlFor="password">
+                                            Passwort
+                                        </label>
+                                        {!isRegistering && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsRecovering(true)}
+                                                className="text-sm font-medium text-primary hover:text-blue-600 transition-colors"
+                                            >
+                                                Vergessen?
+                                            </button>
+                                        )}
+                                    </div>
+                                    <input
+                                        className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        placeholder="••••••••"
+                                        required={!isRecovering}
+                                        minLength={6}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {error && (
@@ -124,7 +145,23 @@ function LoginForm() {
                         )}
 
                         <div className="space-y-3 pt-2">
-                            {isRegistering ? (
+                            {isRecovering ? (
+                                <>
+                                    <button
+                                        formAction={forgotPassword}
+                                        className="w-full py-4 rounded-2xl bg-primary hover:bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                                    >
+                                        Reset Link senden
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRecovering(false)}
+                                        className="w-full py-4 rounded-2xl bg-transparent hover:bg-slate-50 text-slate-500 font-semibold transition-all"
+                                    >
+                                        Zurück zum Login
+                                    </button>
+                                </>
+                            ) : isRegistering ? (
                                 <>
                                     <button
                                         formAction={handleSignup}

@@ -73,3 +73,34 @@ export async function updateGroup(formData: FormData) {
     revalidatePath(`/groups/${id}`)
     return { success: true }
 }
+
+export async function deleteGroup(groupId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    // Check if user is super_admin
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('system_role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.system_role !== 'super_admin') {
+        return { success: false, error: 'Keine Berechtigung' }
+    }
+
+    const { error } = await supabase
+        .from('groups')
+        .delete()
+        .eq('id', groupId)
+
+    if (error) {
+        console.error('Error deleting group:', error)
+        return { success: false, error: 'Gruppe konnte nicht gelöscht werden.' }
+    }
+
+    revalidatePath('/groups')
+    return { success: true }
+}

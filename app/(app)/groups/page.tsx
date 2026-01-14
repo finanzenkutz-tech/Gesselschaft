@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { CreateGroupDialog } from '@/components/groups/create-group-dialog'
+import { GroupCard } from '@/components/groups/group-card'
 import { Users, Search, Plus, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -9,6 +10,10 @@ export default async function GroupsPage() {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return null
+
+    // Check Super Admin
+    const { data: profile } = await supabase.from('profiles').select('system_role').eq('id', user.id).single()
+    const isSuperAdmin = profile?.system_role === 'super_admin'
 
     // Fetch my groups
     const { data: myMemberships } = await supabase
@@ -50,18 +55,7 @@ export default async function GroupsPage() {
                 {myGroups.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {myGroups.map((group: any) => (
-                            <Link href={`/groups/${group.id}`} key={group.id} className="block group">
-                                <div className="sky-card p-6 h-full flex flex-col justify-between hover:border-primary/20 hover:shadow-xl transition-all">
-                                    <div>
-                                        <h3 className="font-bold text-xl mb-2 text-slate-800 group-hover:text-primary transition-colors">{group.name}</h3>
-                                        <p className="text-sm text-slate-500 line-clamp-2">{group.description}</p>
-                                    </div>
-                                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-2 text-sm text-green-500 font-bold">
-                                        <div className="w-2 h-2 rounded-full bg-green-500" />
-                                        Mitglied
-                                    </div>
-                                </div>
-                            </Link>
+                            <GroupCard key={group.id} group={group} isMember={true} isSuperAdmin={isSuperAdmin} />
                         ))}
                     </div>
                 ) : (
@@ -81,17 +75,7 @@ export default async function GroupsPage() {
                 {discoverGroups && discoverGroups.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {discoverGroups.map((group: any) => (
-                            <Link href={`/groups/${group.id}`} key={group.id} className="block group">
-                                <div className="sky-card p-6 h-full flex flex-col justify-between hover:border-secondary/20 hover:shadow-xl transition-all border-dashed border-2 border-slate-100 bg-slate-50/50">
-                                    <div>
-                                        <h3 className="font-bold text-xl mb-2 text-slate-800 group-hover:text-secondary transition-colors">{group.name}</h3>
-                                        <p className="text-sm text-slate-500 line-clamp-2">{group.description || 'Keine Beschreibung'}</p>
-                                    </div>
-                                    <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-end gap-2 text-sm text-secondary font-bold">
-                                        Ansehen <ArrowRight className="w-4 h-4" />
-                                    </div>
-                                </div>
-                            </Link>
+                            <GroupCard key={group.id} group={group} isMember={false} isSuperAdmin={isSuperAdmin} />
                         ))}
                     </div>
                 ) : (

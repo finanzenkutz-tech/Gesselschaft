@@ -42,7 +42,8 @@ export async function addGameToInventory(formData: FormData) {
             owner_id: user.id,
             group_id: groupId || null,
             visibility: visibility,
-            image_url: imageUrl
+            image_url: imageUrl,
+            is_unplayed: formData.get('is_unplayed') === 'true'
         })
         .select()
         .single()
@@ -69,6 +70,26 @@ export async function removeGameFromInventory(gameId: string) {
 
     if (error) {
         console.error('Error removing game:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/inventory')
+    return { success: true }
+}
+
+export async function updateGame(gameId: string, updates: any) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const { error } = await supabase
+        .from('inventory')
+        .update(updates)
+        .eq('id', gameId)
+        .eq('owner_id', user.id)
+
+    if (error) {
+        console.error('Error updating game:', error)
         return { success: false, error: error.message }
     }
 

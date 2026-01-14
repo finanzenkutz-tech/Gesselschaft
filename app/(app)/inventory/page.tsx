@@ -95,6 +95,13 @@ export default async function InventoryPage() {
                                     <div className="absolute inset-0 bg-gradient-to-l from-transparent to-white" />
                                 </div>
                             )}
+
+                            {game.is_unplayed && (
+                                <div className="absolute top-2 left-2 z-20 bg-red-500 text-white text-[10px] uppercase font-black px-2 py-1 rounded-full shadow-lg border border-red-400">
+                                    Pile of Shame 😡
+                                </div>
+                            )}
+
                             <div className="flex justify-between items-start relative z-10">
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-bold text-lg text-slate-800 truncate group-hover:text-primary transition-colors" title={game.name}>
