@@ -43,7 +43,8 @@ export async function addGameToInventory(formData: FormData) {
             group_id: groupId || null,
             visibility: visibility,
             image_url: imageUrl,
-            is_unplayed: formData.get('is_unplayed') === 'true'
+            is_unplayed: formData.get('is_unplayed') === 'true',
+            complexity: formData.get('complexity') ? parseFloat(formData.get('complexity') as string) : null
         })
         .select()
         .single()

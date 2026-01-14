@@ -12,6 +12,19 @@ export async function addGroupPlace(formData: FormData) {
     const name = formData.get('name') as string
     const address = formData.get('address') as string
     const services = formData.get('services') as string
+    const description = formData.get('description') as string
+
+    // Parse coordinates if provided
+    const latStr = formData.get('latitude') as string
+    const lngStr = formData.get('longitude') as string
+    const latitude = latStr ? parseFloat(latStr) : null
+    const longitude = lngStr ? parseFloat(lngStr) : null
+
+    // Parse amenities from FormData (checkboxes usually send multiple values for same key, 
+    // but in Next.js Server Actions with standard FormData, we might need to handle it carefully.
+    // For now assuming we perform comma-joining in frontend or receive as JSON string)
+    const amenitiesJson = formData.get('amenities') as string
+    const amenities = amenitiesJson ? JSON.parse(amenitiesJson) : []
 
     const { error } = await supabase
         .from('group_places')
@@ -20,6 +33,10 @@ export async function addGroupPlace(formData: FormData) {
             name,
             address: address || null,
             services: services || null,
+            description: description || null,
+            latitude,
+            longitude,
+            amenities,
             created_by: user.id
         })
 
@@ -61,13 +78,26 @@ export async function updateGroupPlace(formData: FormData) {
     const name = formData.get('name') as string
     const address = formData.get('address') as string
     const services = formData.get('services') as string
+    const description = formData.get('description') as string
+
+    const latStr = formData.get('latitude') as string
+    const lngStr = formData.get('longitude') as string
+    const latitude = latStr ? parseFloat(latStr) : null
+    const longitude = lngStr ? parseFloat(lngStr) : null
+
+    const amenitiesJson = formData.get('amenities') as string
+    const amenities = amenitiesJson ? JSON.parse(amenitiesJson) : []
 
     const { error } = await supabase
         .from('group_places')
         .update({
             name,
             address: address || null,
-            services: services || null
+            services: services || null,
+            description: description || null,
+            latitude,
+            longitude,
+            amenities
         })
         .eq('id', placeId)
 

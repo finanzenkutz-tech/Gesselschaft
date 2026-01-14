@@ -98,7 +98,7 @@ export async function getLeaderboard() {
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, points, badges')
+        .select('id, full_name, email, avatar_url, points, badges')
         .order('points', { ascending: false })
         .limit(20)
 
@@ -107,5 +107,52 @@ export async function getLeaderboard() {
         return []
     }
 
-    return data
+    // Map data to ensure display name fallback
+    return data.map(entry => ({
+        ...entry,
+        full_name: entry.full_name || entry.email?.split('@')[0] || 'Spieler'
+    }))
+}
+
+export async function addSessionReport(sessionId: string, report: {
+    report_text: string
+    winner_id: string | null
+    report_image_url: string | null
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const { error } = await supabase
+        .from('game_sessions')
+        .update({
+            report_text: report.report_text,
+            winner_id: report.winner_id,
+            report_image_url: report.report_image_url
+        })
+        .eq('id', sessionId)
+
+    if (error) {
+        console.error('Error adding report:', error)
+        return { success: false, error: error.message }
+    }
+
+    // Award bonus points to winner
+    if (report.winner_id) {
+        const { data: currentProfile } = await supabase
+            .from('profiles')
+            .select('points')
+            .eq('id', report.winner_id)
+            .single()
+
+        if (currentProfile) {
+            await supabase
+                .from('profiles')
+                .update({ points: (currentProfile.points || 0) + 10 })
+                .eq('id', report.winner_id)
+        }
+    }
+
+    revalidatePath('/events')
+    return { success: true }
 }

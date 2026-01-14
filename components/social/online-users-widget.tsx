@@ -37,12 +37,17 @@ export function OnlineUsersWidget({ currentUserId }: { currentUserId?: string })
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
             const { data } = await supabase
                 .from('profiles')
-                .select('id, full_name, avatar_url, last_seen')
+                .select('id, full_name, email, avatar_url, last_seen')
                 .gte('last_seen', oneHourAgo)
                 .order('last_seen', { ascending: false })
 
             if (data) {
-                setOnlineUsers(data.filter(u => u.id !== currentUserId))
+                // Map to add display name fallback
+                const mappedData = data.map(u => ({
+                    ...u,
+                    full_name: u.full_name || u.email?.split('@')[0] || 'Spieler'
+                }))
+                setOnlineUsers(mappedData.filter(u => u.id !== currentUserId))
             }
         }
 

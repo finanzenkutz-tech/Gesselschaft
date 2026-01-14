@@ -13,6 +13,8 @@ import { deleteAnyEvent } from '@/app/admin/actions'
 import { RSVPButtons } from '@/components/events/rsvp-buttons'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GameSuggestions } from '@/components/events/game-suggestions'
+import { CalendarExport } from '@/components/events/calendar-export'
+import { SessionReportForm } from '@/components/events/session-report-form'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -136,11 +138,22 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                         </div>
                     </div>
 
+                </div>
+
+                <div className="flex flex-col gap-4">
                     <RSVPButtons
                         eventId={id}
                         currentStatus={userRSVP?.status}
                         currentGuestCount={userRSVP?.guest_count || 0}
                     />
+                    <div className="flex justify-end">
+                        <CalendarExport
+                            eventId={id}
+                            eventTitle={event.title}
+                            startTime={event.start_time}
+                            location={event.location}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -252,6 +265,17 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                         attendees={attendees as any}
                         userId={user?.id}
                     />
+
+                    {sessions && sessions.length > 0 && new Date(event.start_time) < new Date() && (
+                        <div className="border-t border-slate-100 pt-8 mt-8">
+                            <h3 className="text-xl font-bold text-slate-800 mb-4">Rückblick</h3>
+                            <SessionReportForm
+                                sessionId={sessions[0].id} // Simplified: Report for first session or need loop? Usually one report per session. Tracking widget lists sessions. 
+                                attendees={attendees as any}
+                                eventId={id}
+                            />
+                        </div>
+                    )}
                 </TabsContent>
 
                 <TabsContent value="chat" className="mt-6">
@@ -263,6 +287,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                     />
                 </TabsContent>
             </Tabs>
-        </div>
+        </div >
     )
 }

@@ -39,7 +39,12 @@ export async function searchBGG(query: string): Promise<BGGSearchResult[]> {
 
         const response = await fetch(
             `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame,boardgameexpansion`,
-            { signal: controller.signal }
+            {
+                signal: controller.signal,
+                headers: {
+                    'User-Agent': 'BoardGameHub/1.0 (contact@example.com)' // Replace with actual contact if available
+                }
+            }
         )
         clearTimeout(timeoutId)
 
@@ -93,7 +98,11 @@ export async function searchBGG(query: string): Promise<BGGSearchResult[]> {
  */
 export async function getBGGGameDetails(id: string): Promise<BGGGameDetails | null> {
     try {
-        const response = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${id}`)
+        const response = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${id}`, {
+            headers: {
+                'User-Agent': 'BoardGameHub/1.0 (contact@example.com)'
+            }
+        })
         const xml = await response.text()
         const result = await parseStringPromise(xml)
 

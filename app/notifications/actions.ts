@@ -40,6 +40,8 @@ export async function markAllAsRead() {
 // Internal helper to create a notification
 export async function createNotification(userId: string, type: string, title: string, message?: string, link?: string) {
     const supabase = await createClient()
+
+    // 1. Create In-App Notification
     await supabase
         .from('notifications')
         .insert({
@@ -49,4 +51,18 @@ export async function createNotification(userId: string, type: string, title: st
             message,
             link
         })
+
+    // 2. Try to send Push Notification (fire and forget)
+    try {
+        const { sendPushToUser } = await import('@/app/push/actions')
+        await sendPushToUser(userId, {
+            title,
+            body: message || 'Neue Benachrichtigung',
+            url: link || '/',
+            tag: type
+        })
+    } catch (e) {
+        // Ignore push errors to not block the main flow
+        console.error('Failed to trigger push notification:', e)
+    }
 }

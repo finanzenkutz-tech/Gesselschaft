@@ -3,6 +3,35 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+export async function confirmGodMode() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ has_seen_god_mode: true })
+        .eq('id', user.id)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/')
+    return { success: true }
+}
+
+export async function sendPasswordReset(email: string) {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/update-password`,
+    })
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
 async function checkSuperAdmin() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

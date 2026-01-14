@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { Nunito } from 'next/font/google'
 import './globals.css'
+import 'leaflet/dist/leaflet.css'
+import { Toaster } from "@/components/ui/sonner"
 
 const font = Nunito({ subsets: ['latin'] })
 
@@ -28,6 +30,7 @@ export default function RootLayout({
         className={`${font.className} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

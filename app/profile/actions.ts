@@ -31,6 +31,42 @@ export async function updateProfile(formData: FormData) {
     }
 
     const updateData: any = { full_name: fullName }
+
+    // Add new fields
+    const bio = formData.get('bio') as string
+    const location = formData.get('location') as string
+    const favoriteGames = formData.get('favorite_games') as string
+    const playStyleTags = formData.get('play_style_tags') as string // Expecting JSON string for tags
+    const showReputation = formData.get('show_reputation') === 'on'
+
+    if (bio !== null) updateData.bio = bio
+    if (location !== null) updateData.location = location
+    if (favoriteGames !== null) updateData.favorite_games = favoriteGames
+    if (playStyleTags) {
+        try {
+            updateData.play_style_tags = JSON.parse(playStyleTags)
+        } catch (e) {
+            console.error('Error parsing play_style_tags:', e)
+        }
+    }
+    // Only update boolean if it's present in the form or we need to handle unchecked checkboxes carefully.
+    // Ideally, for a checkbox, if it's unchecked it sends nothing. 
+    // We should probably rely on a hidden input or just assume false if missing?
+    // Actually, for a pure server action with FormData, unchecked checkboxes are just missing.
+    // To properly handle "unchecking", we'd usually need a hidden input with the same name before it, or handle it in client state.
+    // For now, let's assume valid input. To safe-guard against partial updates overwriting with false, we might want to be careful.
+    // But since this is a dedicated profile update form, we can probably treat presence as true and absence as false IF we are submitting the whole form.
+    // However, the current UI has separate sections. The "Name" section only submits "full_name".
+    // We should probably consolidate the profile update or handle partial updates. 
+    // The current implementation sets `updateData` with `full_name`. 
+    // If we add other fields to `updateData` only if they are in `formData`, we support partial updates.
+
+    // So, checking for null/presence is key.
+    if (formData.has('show_reputation_present')) {
+        updateData.show_reputation = showReputation
+    }
+
+
     if (avatarUrl) updateData.avatar_url = avatarUrl
 
     const { error } = await supabase

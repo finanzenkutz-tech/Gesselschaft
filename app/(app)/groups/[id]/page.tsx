@@ -1,15 +1,27 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { Dice5, Calendar, Users, Settings, UserPlus, LogOut, Plus, MapPin, History } from 'lucide-react'
+import { Dice5, Calendar, Users, Settings, UserPlus, LogOut, Plus, MapPin, History, Swords } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { joinGroup, leaveGroup } from '@/app/groups/member-actions'
+import { getChallengesForGroup } from '@/app/groups/challenge-actions'
 import { revalidatePath } from 'next/cache'
 import { GroupPlacesWidget } from '@/components/groups/group-places-widget'
 import { CreateEventDialog } from '@/components/events/create-event-dialog'
 import { GroupJoinButton, GroupLeaveButton } from '@/components/groups/group-actions-buttons'
 import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
 import { EditGroupDialog } from '@/components/groups/edit-group-dialog'
+import { ChallengeList } from '@/components/groups/challenge-list'
+import { LocationPicker } from '@/components/groups/location-picker'
+import { PollWidget } from '@/components/groups/poll-widget'
+import { CreatePollForm } from '@/components/groups/create-poll-form'
+import { getPollsForGroup } from '@/app/groups/poll-actions'
 import Link from 'next/link'
+import {
+    Accordion,
+    AccordionContent,
+    AccordionItem,
+    AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -77,6 +89,15 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
     const isMember = groupMembers.some((m: any) => m.user_id === user?.id)
     const isAdmin = groupMembers.some((m: any) => m.user_id === user?.id && m.role === 'admin')
 
+    // Fetch Challenges if member
+    let challenges: { incoming: any[], outgoing: any[] } = { incoming: [], outgoing: [] }
+    if (isMember) {
+        challenges = await getChallengesForGroup(id)
+    }
+
+    // Fetch Polls
+    const polls = await getPollsForGroup(id)
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Banner */}
@@ -87,6 +108,12 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                         <div className="space-y-2">
                             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{group.name}</h1>
                             <p className="text-blue-100 text-lg max-w-2xl">{group.description || 'Keine Beschreibung vorhanden.'}</p>
+                            {group.location_name && (
+                                <p className="text-white/80 flex items-center gap-2">
+                                    <MapPin className="w-4 h-4" />
+                                    {group.location_name}
+                                </p>
+                            )}
                         </div>
                         {isMember && (
                             <div className="flex gap-3">
@@ -118,6 +145,11 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                             <Button variant="ghost" className="gap-2 text-slate-600 hover:text-primary hover:bg-blue-50">
                                 <Users className="w-4 h-4" /> Mitglieder
                             </Button>
+                            <Link href="/groups/map">
+                                <Button variant="ghost" className="gap-2 text-slate-600 hover:text-primary hover:bg-blue-50">
+                                    <MapPin className="w-4 h-4" /> Karte
+                                </Button>
+                            </Link>
                         </div>
                         <div className="flex items-center gap-3">
                             {isMember && (
@@ -143,6 +175,45 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                             </div>
                         </div>
                     </div>
+
+                    {/* Challenges Section */}
+                    {isMember && (challenges.incoming.length > 0 || challenges.outgoing.length > 0) && (
+                        <div className="space-y-4">
+                            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                <Swords className="w-6 h-6 text-orange-500" />
+                                Herausforderungen
+                            </h2>
+                            <div className="sky-card p-6">
+                                <ChallengeList
+                                    incoming={challenges.incoming}
+                                    outgoing={challenges.outgoing}
+                                    isAdmin={isAdmin}
+                                    groupName={group.name}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Polls Section */}
+                    {isMember && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                                    <Calendar className="w-6 h-6 text-primary" />
+                                    Termin-Findung
+                                </h2>
+                                <CreatePollForm groupId={id} />
+                            </div>
+
+                            {polls.length > 0 ? (
+                                <PollWidget polls={polls} groupId={id} userId={user?.id} />
+                            ) : (
+                                <div className="sky-card p-6 text-center text-slate-500 text-sm">
+                                    Aktuell laufen keine Termin-Umfragen.
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Events Preview */}
                     <div className="space-y-4">
@@ -239,6 +310,31 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
 
                 {/* Sidebar info */}
                 <div className="space-y-8">
+                    {/* Admin Location Settings */}
+                    {isAdmin && (
+                        <div className="sky-card p-0 overflow-hidden">
+                            <Accordion type="single" collapsible className="w-full">
+                                <AccordionItem value="location" className="border-0">
+                                    <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-slate-50">
+                                        <div className="flex items-center gap-2 font-bold text-slate-800">
+                                            <MapPin className="w-5 h-5 text-secondary" />
+                                            Gruppen-Standort
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="px-6 pb-6 pt-0">
+                                        <LocationPicker
+                                            groupId={id}
+                                            initialLat={group.latitude}
+                                            initialLng={group.longitude}
+                                            initialName={group.location_name}
+                                            initialPublic={group.is_location_public}
+                                        />
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
+                        </div>
+                    )}
+
                     <div className="sky-card p-6">
                         <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
                             <Users className="w-5 h-5 text-secondary" />

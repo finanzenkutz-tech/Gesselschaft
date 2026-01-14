@@ -5,6 +5,7 @@ import { Dice5, Plus, Image, Search, Loader2, Link as LinkIcon, Check } from 'lu
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { Star } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -37,6 +38,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     const [bggLink, setBggLink] = useState('')
     const [imageUrl, setImageUrl] = useState('')
     const [isUnplayed, setIsUnplayed] = useState(false)
+    const [complexity, setComplexity] = useState(3)
 
     const router = useRouter()
 
@@ -81,6 +83,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         if (bggLink) formData.set('bgg_link', bggLink)
         if (imageUrl) formData.set('image_url_remote', imageUrl) // New field for remote images
         formData.set('is_unplayed', isUnplayed.toString())
+        formData.set('complexity', complexity.toString())
 
         const result = await addGameToInventory(formData)
 
@@ -127,6 +130,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         setImageUrl('')
         setSelectedBggId(null)
         setIsUnplayed(false)
+        setComplexity(3)
     }
 
     return (
@@ -172,7 +176,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                             </Button>
                         </div>
 
-                        {searchResults.length > 0 && (
+                        {(searchResults.length > 0 || (searchQuery.length >= 3 && !searching)) && (
                             <div className="bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden max-h-48 overflow-y-auto mt-2 shadow-inner">
                                 {searchResults.length > 0 ? (
                                     searchResults.map((game) => (
@@ -287,6 +291,30 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                     <option value="">Keine bestimmte Gruppe</option>
                                     {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
                                 </select>
+                            </div>
+
+                            {/* Complexity Rating */}
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                    <Star className="w-4 h-4 text-yellow-500" /> Komplexität (1-5)
+                                </label>
+                                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="5"
+                                        step="0.5"
+                                        value={complexity}
+                                        onChange={(e) => setComplexity(parseFloat(e.target.value))}
+                                        className="flex-1 accent-primary"
+                                    />
+                                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center font-black text-primary shadow-sm">
+                                        {complexity.toFixed(1)}
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-slate-400 ml-1">
+                                    1 = Sehr einfach (z.B. Uno), 5 = Sehr komplex (z.B. Gaia Project)
+                                </p>
                             </div>
 
                             {/* Pile of Shame Toggle */}

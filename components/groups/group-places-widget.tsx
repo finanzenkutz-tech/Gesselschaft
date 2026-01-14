@@ -15,12 +15,18 @@ import {
 import { addGroupPlace, deleteGroupPlace } from '@/app/groups/place-actions'
 import { useRouter } from 'next/navigation'
 import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
+import { PLACE_AMENITIES } from '@/lib/constants/amenities'
+import { ViewPlaceMapDialog } from './view-place-map-dialog'
 
 type Place = {
     id: string
     name: string
     address: string | null
     services: string | null
+    description: string | null
+    latitude: number | null
+    longitude: number | null
+    amenities: string[] | null
     created_by: string
 }
 
@@ -75,17 +81,47 @@ export function GroupPlacesWidget({
                         <div key={place.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group relative">
                             <div className="flex items-start justify-between">
                                 <div className="space-y-3 flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
-                                            <Navigation className="w-4 h-4" />
+                                    <div className="flex items-center justify-between mr-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
+                                                <Navigation className="w-4 h-4" />
+                                            </div>
+                                            <h3 className="font-bold text-slate-800">{place.name}</h3>
                                         </div>
-                                        <h3 className="font-bold text-slate-800">{place.name}</h3>
+                                        {place.latitude && place.longitude && (
+                                            <ViewPlaceMapDialog
+                                                latitude={place.latitude}
+                                                longitude={place.longitude}
+                                                name={place.name}
+                                            />
+                                        )}
                                     </div>
 
                                     {place.address && (
                                         <div className="flex items-start gap-2 text-sm text-slate-500">
                                             <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                                             <span>{place.address}</span>
+                                        </div>
+                                    )}
+
+                                    {place.description && (
+                                        <p className="text-sm text-slate-500 italic border-l-2 border-slate-200 pl-2">
+                                            {place.description}
+                                        </p>
+                                    )}
+
+                                    {/* Amenities Badges */}
+                                    {place.amenities && place.amenities.length > 0 && (
+                                        <div className="flex flex-wrap gap-1">
+                                            {place.amenities.map(amId => {
+                                                const am = PLACE_AMENITIES.find(a => a.id === amId)
+                                                if (!am) return null
+                                                return (
+                                                    <span key={amId} className="px-2 py-1 bg-slate-50 text-slate-600 rounded-lg text-xs font-medium border border-slate-100 flex items-center gap-1">
+                                                        <span>{am.icon}</span> {am.label}
+                                                    </span>
+                                                )
+                                            })}
                                         </div>
                                     )}
 

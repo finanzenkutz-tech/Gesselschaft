@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut, Trophy, MessageCircle, Shield, Smartphone, Tablet, Monitor } from 'lucide-react'
+import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut, Trophy, MessageCircle, Shield, Smartphone, Tablet, Monitor, Globe, Store, History as HistoryIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { User as SupabaseUser } from '@supabase/supabase-js'
@@ -12,16 +12,20 @@ import { logout } from '@/app/login/actions'
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getLevelInfo } from '@/lib/utils/gamification'
+import { GodModePopup } from '@/components/admin/god-mode-popup'
+import { updateLastSeen } from '@/app/profile/actions'
 
 const menuNavigation = [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Nachrichten', href: '/chat', icon: MessageCircle },
     { name: 'Gruppen', href: '/groups', icon: Users },
     { name: 'Events', href: '/events', icon: Calendar },
+    { name: 'Marktplatz', href: '/marketplace', icon: Store },
     { name: 'Meine Spiele', href: '/inventory', icon: Box },
-    { name: 'Mein Level', href: '/level', icon: Trophy },
-    { name: 'Herausforderung', href: '/challenge', icon: Swords },
+    { name: 'Top-Liste', href: '/leaderboard', icon: Trophy },
+    { name: 'Karte', href: '/groups/map', icon: Globe },
     { name: 'Ideen', href: '/features', icon: Sparkles },
+    { name: 'Jahresrückblick', href: '/wrapped', icon: HistoryIcon },
     { name: 'Profil', href: '/profile', icon: User },
 ]
 
@@ -41,18 +45,22 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
     const isFramed = searchParams.get('framed') === 'true'
 
     // Presence Heartbeat
+    // Presence Heartbeat and Session Check
     useEffect(() => {
-        if (!user) return
-
-        const updatePresence = async () => {
-            await supabase
-                .from('profiles')
-                .update({ last_seen: new Date().toISOString() })
-                .eq('id', user.id)
+        if (user) {
+            updateLastSeen() // Initial call
         }
 
-        updatePresence()
-        const interval = setInterval(updatePresence, 1000 * 60 * 5) // Every 5 minutes
+        const interval = setInterval(async () => {
+            if (user) {
+                updateLastSeen() // Periodic call
+            }
+            const { data: { user: sessionUser } } = await supabase.auth.getUser()
+            if (!sessionUser) {
+                // Optionally, log out the user if their session is no longer valid
+                // logout() 
+            }
+        }, 30000) // Every 30 seconds
 
         return () => clearInterval(interval)
     }, [user, supabase])
@@ -103,10 +111,7 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                             </button>
                             <button
                                 onClick={() => setViewMode('desktop')}
-                                className={cn(
-                                    "p-2 rounded-md transition-all flex items-center gap-2 text-sm font-medium",
-                                    viewMode === 'desktop' ? "bg-blue-600 text-white shadow-md" : "text-slate-400 hover:text-white hover:bg-slate-600"
-                                )}
+                                className="p-2 rounded-md transition-all flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-600"
                             >
                                 <Monitor className="w-4 h-4" />
                                 Desktop
@@ -174,7 +179,7 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                         sidebarOpen ? "translate-x-0" : "-translate-x-full"
                     )}
                 >
-                    <div className="h-full flex flex-col p-6">
+                    <div className="h-full flex flex-col p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
                         <Link href="/" className="relative flex items-center gap-3 font-extrabold text-2xl text-slate-800 px-2 mb-8 hover:opacity-80 transition-opacity">
                             <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center overflow-hidden">
                                 <img src="/würfel.png" alt="Logo" className="w-8 h-8" />
@@ -416,6 +421,8 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                         Feedback
                     </span>
                 </Link>
+
+                <GodModePopup profile={profile} />
             </div>
 
             {/* Mobile Overlay */}

@@ -1,153 +1,152 @@
 'use client'
 
-import { useState, useEffect, useRef, useOptimistic, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { sendMessage } from '@/app/events/chat-actions'
-import { MessageCircle, Send, Smile } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Send, Trash2, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { addEventComment, deleteEventComment } from '@/app/events/comment-actions'
+import { useRouter } from 'next/navigation'
+import { formatDate } from '@/lib/utils'
 
-type Message = {
+type Comment = {
     id: string
     content: string
     created_at: string
     user_id: string
-    profiles: {
+    user: {
         full_name: string | null
-        email: string
+        avatar_url: string | null
     }
 }
 
-export function EventChatWidget({ eventId, initialMessages, userId }: { eventId: string, initialMessages: Message[], userId?: string }) {
-    const [messages, setMessages] = useState<Message[]>(initialMessages)
-    const [inputValue, setInputValue] = useState('')
-    const [isPending, startTransition] = useTransition()
-    const messagesEndRef = useRef<HTMLDivElement>(null)
-    const supabase = createClient()
+export function EventChatWidget({
+    eventId,
+    comments,
+    currentUserId
+}: {
+    eventId: string,
+    comments: Comment[],
+    currentUserId: string
+}) {
+    const [newMessage, setNewMessage] = useState('')
+    const [isSending, setIsSending] = useState(false)
+    const router = useRouter()
+    const scrollRef = useRef<HTMLDivElement>(null)
 
-    // Subscribe to real-time updates
+    // Scroll to bottom on mount or new messages
     useEffect(() => {
-        const channel = supabase
-            .channel(`event-${eventId}`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'INSERT',
-                    schema: 'public',
-                    table: 'event_messages',
-                    filter: `event_id=eq.${eventId}`
-                },
-                async (payload) => {
-                    // Fetch profile for new message
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('full_name, email')
-                        .eq('id', payload.new.user_id)
-                        .single()
-
-                    const newMessage: Message = {
-                        id: payload.new.id,
-                        content: payload.new.content,
-                        created_at: payload.new.created_at,
-                        user_id: payload.new.user_id,
-                        profiles: profile || { full_name: null, email: 'Unknown' }
-                    }
-
-                    setMessages(prev => {
-                        // Avoid duplicates
-                        if (prev.some(m => m.id === newMessage.id)) return prev
-                        return [...prev, newMessage]
-                    })
-                }
-            )
-            .subscribe()
-
-        return () => {
-            supabase.removeChannel(channel)
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
-    }, [eventId, supabase])
+    }, [comments.length])
 
-    // Scroll to bottom when new messages arrive
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages])
+    async function handleSend() {
+        if (!newMessage.trim()) return
+        setIsSending(true)
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault()
-        if (!inputValue.trim() || !userId) return
+        // Optimistic update could be added here
+        const result = await addEventComment(eventId, newMessage)
 
-        const formData = new FormData()
-        formData.append('event_id', eventId)
-        formData.append('content', inputValue)
-
-        setInputValue('')
-
-        startTransition(async () => {
-            await sendMessage(formData)
-        })
+        setIsSending(false)
+        if (result.success) {
+            setNewMessage('')
+            router.refresh()
+        } else {
+            alert(result.error)
+        }
     }
 
-    const formatTime = (dateString: string) => {
-        return new Date(dateString).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+    async function handleDelete(commentId: string) {
+        if (!confirm('Kommentar löschen?')) return
+        const result = await deleteEventComment(commentId)
+        if (result.success) {
+            router.refresh()
+        }
     }
 
     return (
-        <section className="sky-card p-0 overflow-hidden flex flex-col h-[400px]">
-            <div className="bg-gradient-to-r from-primary to-blue-600 p-4 text-white flex items-center gap-3">
-                <MessageCircle className="w-5 h-5" />
-                <h2 className="font-bold">Event Chat</h2>
-                <span className="ml-auto text-xs bg-white/20 px-2 py-1 rounded-full">{messages.length} Nachrichten</span>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[600px]">
+            <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-blue-500" />
+                    Event Chat
+                </h3>
+                <span className="text-xs font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                    {comments.length}
+                </span>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
-                {messages.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-slate-400 text-sm">
-                        <div className="text-center">
-                            <Smile className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                            <p>Noch keine Nachrichten. Starte die Unterhaltung!</p>
-                        </div>
+            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+                {comments.length === 0 ? (
+                    <div className="text-center text-slate-400 py-10">
+                        <p>Noch keine Nachrichten.</p>
+                        <p className="text-sm">Schreib als Erster!</p>
                     </div>
                 ) : (
-                    messages.map((msg) => {
-                        const isOwn = msg.user_id === userId
+                    comments.map(comment => {
+                        const isMe = comment.user_id === currentUserId
                         return (
-                            <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`max-w-[80%] ${isOwn ? 'order-2' : ''}`}>
-                                    {!isOwn && (
-                                        <p className="text-xs text-slate-400 font-bold mb-1 ml-1">
-                                            {msg.profiles?.full_name || msg.profiles?.email?.split('@')[0]}
-                                        </p>
+                            <div key={comment.id} className={`flex gap-3 ${isMe ? 'flex-row-reverse' : ''}`}>
+                                <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden shrink-0">
+                                    {comment.user.avatar_url ? (
+                                        <img src={comment.user.avatar_url} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs font-bold">
+                                            {comment.user.full_name?.[0] || '?'}
+                                        </div>
                                     )}
-                                    <div className={`p-3 rounded-2xl ${isOwn ? 'bg-primary text-white rounded-br-sm' : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm shadow-sm'}`}>
-                                        <p className="text-sm font-medium">{msg.content}</p>
+                                </div>
+                                <div className={`max-w-[80%] ${isMe ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
+                                    <div className="flex items-center gap-2 text-xs text-slate-400 mx-1">
+                                        <span>{comment.user.full_name}</span>
+                                        <span>•</span>
+                                        <span>{new Date(comment.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
-                                    <p className={`text-[10px] text-slate-400 mt-1 ${isOwn ? 'text-right mr-1' : 'ml-1'}`}>
-                                        {formatTime(msg.created_at)}
-                                    </p>
+                                    <div className={`p-3 rounded-2xl text-sm leading-relaxed relative group ${isMe
+                                            ? 'bg-blue-500 text-white rounded-tr-none'
+                                            : 'bg-slate-100 text-slate-700 rounded-tl-none'
+                                        }`}>
+                                        <p className="whitespace-pre-wrap">{comment.content}</p>
+
+                                        {isMe && (
+                                            <button
+                                                onClick={() => handleDelete(comment.id)}
+                                                className="absolute -left-8 top-2 p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )
                     })
                 )}
-                <div ref={messagesEndRef} />
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 border-t border-slate-100 bg-white flex gap-2">
-                <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Nachricht schreiben..."
-                    className="flex-1 rounded-xl border-slate-200 focus:border-primary h-12"
-                    disabled={!userId || isPending}
-                />
-                <Button
-                    type="submit"
-                    disabled={!inputValue.trim() || !userId || isPending}
-                    className="bg-primary hover:bg-blue-600 text-white rounded-xl h-12 w-12 p-0"
-                >
-                    <Send className="w-5 h-5" />
-                </Button>
-            </form>
-        </section>
+            <div className="p-4 bg-white border-t border-slate-100">
+                <div className="flex gap-2">
+                    <Textarea
+                        value={newMessage}
+                        onChange={e => setNewMessage(e.target.value)}
+                        placeholder="Nachricht schreiben..."
+                        className="min-h-[50px] max-h-[150px] resize-none border-slate-200 focus:border-blue-500 rounded-xl"
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                handleSend()
+                            }
+                        }}
+                    />
+                    <Button
+                        onClick={handleSend}
+                        disabled={isSending || !newMessage.trim()}
+                        className="h-auto rounded-xl bg-blue-500 hover:bg-blue-600 shadow-blue-200 shadow-lg px-4"
+                    >
+                        <Send className="w-5 h-5" />
+                    </Button>
+                </div>
+            </div>
+        </div>
     )
 }

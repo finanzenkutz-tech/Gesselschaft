@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
-import { Dice5, Trash2, ExternalLink, Box, Trophy, Lock, Globe, Users } from 'lucide-react'
+import { Dice5, Trash2, ExternalLink, Box, Trophy, Lock, Globe, Users, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { removeGameFromInventory } from '@/app/inventory/actions'
 import { AddGameForm } from '@/components/inventory/add-game-form'
 import { GameDetailModal } from '@/components/inventory/game-detail-modal'
+import { BGGSyncButton } from '@/components/inventory/bgg-sync-button'
 
 export default async function InventoryPage() {
     const supabase = await createClient()
@@ -46,7 +47,10 @@ export default async function InventoryPage() {
                     <p className="text-slate-500 text-lg mt-1">Verwalte deine persönliche Brettspiel-Sammlung.</p>
                 </div>
 
-                <AddGameForm groups={groups} />
+                <div className="flex items-center gap-2">
+                    <BGGSyncButton />
+                    <AddGameForm groups={groups} />
+                </div>
             </header>
 
             {/* Ranking Card */}
@@ -118,6 +122,12 @@ export default async function InventoryPage() {
                                                         game.visibility === 'buddies' ? 'Buddies' : 'Privat'}
                                         </span>
                                     </div>
+                                    {game.complexity && (
+                                        <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                            <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
+                                            <span>Komplexität: {game.complexity.toFixed(1)}/5</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {game.bgg_link && (

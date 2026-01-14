@@ -41,12 +41,6 @@ export async function createEvent(formData: FormData) {
         }
 
         eventsToCreate.push({
-            title: i > 0 ? `${title} (Woche ${i + 1})` : title, // Maybe just keep title same? "Catan Abend" is fine for all.
-            // Actually, keep title same.
-            // title,
-            // But wait, user might want to distinguish.
-            // "Jeden Montag 17:00" -> Title "Spieleabend".
-            // Let's keep title identical.
             title,
             group_id: groupId,
             description,

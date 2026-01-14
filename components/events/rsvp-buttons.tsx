@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Check, HelpCircle, X, Users } from 'lucide-react'
 import { upsertRSVP } from '@/app/events/rsvp-actions'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 interface RSVPButtonsProps {
     eventId: string
@@ -29,7 +28,7 @@ export function RSVPButtons({ eventId, currentStatus, currentGuestCount = 0 }: R
 
             <div className="flex items-center gap-2 mb-2 px-2">
                 <Users className="w-4 h-4 text-slate-400" />
-                <Label htmlFor="guestCount" className="text-xs font-bold text-slate-500 uppercase">Gäste (+)</Label>
+                <label htmlFor="guestCount" className="text-xs font-bold text-slate-500 uppercase">Gäste (+)</label>
                 <Input
                     type="number"
                     id="guestCount"

@@ -1,11 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
-import { User, Mail, Lock, Camera, Trophy, Star, Award, AlertTriangle } from 'lucide-react'
+import { User, Mail, Lock, Camera, Trophy, Star, Award, AlertTriangle, Bell, History as HistoryIcon } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { updateProfile, updateEmail, updatePassword } from '@/app/profile/actions'
 import { getBuddies, getPendingBuddyRequests } from '@/app/profile/buddy-actions'
+import { getUserBadges } from '@/app/gamification/actions'
 import { BuddyWidget } from '@/components/profile/buddy-widget'
 import { DeleteAccountButton } from '@/components/profile/delete-account-button'
+import { PushNotificationManager } from '@/components/settings/push-notification-manager'
+import { PersonalDetailsForm } from '@/components/profile/personal-details-form'
 
 export default async function ProfilePage() {
     const supabase = await createClient()
@@ -23,11 +27,21 @@ export default async function ProfilePage() {
     const buddies = await getBuddies()
     const pendingRequests = await getPendingBuddyRequests()
 
+    const detailedBadges = await getUserBadges(user?.id || '')
+
     return (
         <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
-            <header>
-                <h1 className="text-3xl font-extrabold text-slate-800">Mein Profil</h1>
-                <p className="text-slate-500 text-lg mt-1">Bearbeite deine persönlichen Informationen.</p>
+            <header className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-extrabold text-slate-800">Mein Profil</h1>
+                    <p className="text-slate-500 text-lg mt-1">Bearbeite deine persönlichen Informationen.</p>
+                </div>
+                <Link href="/wrapped">
+                    <Button variant="outline" className="gap-2 rounded-xl border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20">
+                        <HistoryIcon className="w-4 h-4" />
+                        Jahresrückblick
+                    </Button>
+                </Link>
             </header>
 
             {/* Avatar & Points Section */}
@@ -66,29 +80,42 @@ export default async function ProfilePage() {
                             </div>
                             <div className="flex items-center gap-2 bg-purple-50 text-purple-600 px-4 py-2 rounded-xl font-bold">
                                 <Star className="w-5 h-5" />
-                                <span>{badges.length} Badges</span>
+                                <span>{detailedBadges.length} Badges</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Badges */}
-                {badges.length > 0 && (
+                {detailedBadges.length > 0 && (
                     <div className="mt-8 pt-8 border-t border-slate-100">
                         <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                             <Award className="w-5 h-5 text-purple-500" />
                             Meine Badges
                         </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {badges.map((badge: string, idx: number) => (
-                                <span key={idx} className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-bold">
-                                    {badge}
-                                </span>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {detailedBadges.map((badge: any) => (
+                                <div key={badge.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl" title={badge.badge_definitions?.description}>
+                                    <div className="text-2xl">{badge.badge_definitions?.icon || '🏅'}</div>
+                                    <div className="min-w-0">
+                                        <p className="font-bold text-sm text-slate-700 truncate">{badge.badge_definitions?.name}</p>
+                                        <p className="text-xs text-slate-400">{new Date(badge.earned_at).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     </div>
                 )}
             </section>
+
+            {/* Personal Details */}
+            <PersonalDetailsForm
+                initialBio={profile?.bio}
+                initialLocation={profile?.location}
+                initialFavoriteGames={profile?.favorite_games}
+                initialPlayStyleTags={profile?.play_style_tags}
+                initialShowReputation={profile?.show_reputation}
+            />
 
             {/* Buddy Management */}
             <BuddyWidget
@@ -160,6 +187,18 @@ export default async function ProfilePage() {
                         Passwort ändern
                     </Button>
                 </form>
+            </section>
+
+            {/* Push Notifications */}
+            <section className="sky-card p-8 space-y-6">
+                <h3 className="font-bold text-xl text-slate-800 flex items-center gap-3">
+                    <Bell className="w-6 h-6 text-primary" />
+                    Benachrichtigungen
+                </h3>
+                <p className="text-sm text-slate-500">
+                    Erhalte Push-Benachrichtigungen für neue Events, Chat-Nachrichten und mehr.
+                </p>
+                <PushNotificationManager />
             </section>
 
             {/* Danger Zone */}
