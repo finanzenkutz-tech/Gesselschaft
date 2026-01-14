@@ -47,3 +47,29 @@ export async function createGroup(formData: FormData) {
     revalidatePath('/groups')
     redirect(`/groups/${group.id}`)
 }
+
+export async function updateGroup(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const id = formData.get('id') as string
+    const name = formData.get('name') as string
+    const description = formData.get('description') as string
+
+    const { error } = await supabase
+        .from('groups')
+        .update({
+            name,
+            description,
+        })
+        .eq('id', id)
+
+    if (error) {
+        console.error('Error updating group:', error)
+        return { success: false, error: 'Gruppe konnte nicht aktualisiert werden.' }
+    }
+
+    revalidatePath(`/groups/${id}`)
+    return { success: true }
+}

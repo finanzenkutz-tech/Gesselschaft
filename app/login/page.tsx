@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { login, signup } from './actions'
 import { LayoutGrid, UserPlus, LogIn } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
-export default function LoginPage() {
+function LoginForm() {
     const searchParams = useSearchParams()
     const error = searchParams.get('error')
     const message = searchParams.get('message')
@@ -195,5 +195,17 @@ export default function LoginPage() {
                 Ultimate Board Game Hub © 2026
             </div>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     )
 }

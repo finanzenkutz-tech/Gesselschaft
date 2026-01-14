@@ -8,6 +8,7 @@ import { GroupPlacesWidget } from '@/components/groups/group-places-widget'
 import { CreateEventDialog } from '@/components/events/create-event-dialog'
 import { GroupJoinButton, GroupLeaveButton } from '@/components/groups/group-actions-buttons'
 import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
+import { EditGroupDialog } from '@/components/groups/edit-group-dialog'
 import Link from 'next/link'
 
 export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
@@ -124,9 +125,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                 ) : (
                                     <div className="flex gap-2">
                                         {isAdmin && (
-                                            <Button variant="outline" className="border-2 border-slate-100 text-slate-600 rounded-xl">
-                                                <Settings className="w-4 h-4" />
-                                            </Button>
+                                            <EditGroupDialog group={group} />
                                         )}
                                         {!isAdmin && (
                                             <GroupLeaveButton groupId={id} />
