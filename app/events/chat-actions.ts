@@ -3,13 +3,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
-export async function sendMessage(formData: FormData) {
+export async function sendMessage(eventId: string, content: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Nicht authentifiziert' }
-
-    const eventId = formData.get('event_id') as string
-    const content = formData.get('content') as string
 
     if (!content || content.trim() === '') {
         return { success: false, error: 'Nachricht darf nicht leer sein' }
@@ -57,12 +54,41 @@ export async function sendMessage(formData: FormData) {
     return { success: true, data }
 }
 
+export async function deleteMessage(messageId: string, eventId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const { error } = await supabase
+        .from('event_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('user_id', user.id)
+
+    if (error) {
+        console.error('Error deleting message:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath(`/events/${eventId}`)
+    return { success: true }
+}
+
 export async function getMessages(eventId: string) {
     const supabase = await createClient()
 
     const { data, error } = await supabase
         .from('event_messages')
-        .select('*, profiles(*)')
+        .select(`
+            id,
+            content,
+            created_at,
+            user_id,
+            profiles (
+                full_name,
+                avatar_url
+            )
+        `)
         .eq('event_id', eventId)
         .order('created_at', { ascending: true })
 
@@ -71,5 +97,8 @@ export async function getMessages(eventId: string) {
         return []
     }
 
-    return data
+    return (data || []).map(msg => ({
+        ...msg,
+        user: msg.profiles
+    }))
 }

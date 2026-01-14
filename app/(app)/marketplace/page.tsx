@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { ListingCard } from '@/components/marketplace/listing-card'
 import { MarketplaceFilters } from '@/components/marketplace/marketplace-filters'
-import { FavoriteButton } from '@/components/marketplace/favorite-button'
 import { Button } from '@/components/ui/button'
 import { Plus, Store, Heart, Package } from 'lucide-react'
 import Link from 'next/link'
@@ -94,7 +93,6 @@ export default async function MarketplacePage({
 
     // Fetch user favorites
     let favoriteIds: string[] = []
-    const { data: { user } } = await supabase.auth.getUser()
     if (user) {
         const { data: favorites } = await supabase
             .from('marketplace_favorites')
@@ -157,7 +155,7 @@ export default async function MarketplacePage({
                         <ListingCard
                             key={listing.id}
                             listing={listing}
-                            isFavorite={favoritedIds.has(listing.id)}
+                            isFavorite={favoriteIds.includes(listing.id)}
                             isOwner={user?.id === listing.seller_id}
                         />
                     ))}
@@ -166,4 +164,3 @@ export default async function MarketplacePage({
         </div>
     )
 }
-```

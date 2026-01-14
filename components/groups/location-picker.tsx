@@ -71,7 +71,6 @@ export function LocationPicker({
             if (!mapRef.current || mapInstanceRef.current) return
 
             const L = (await import('leaflet')).default
-            await import('leaflet/dist/leaflet.css')
 
             const center: [number, number] = position || [51.1657, 10.4515]
             const zoom = position ? 13 : 6

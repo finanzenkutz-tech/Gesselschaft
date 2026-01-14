@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getLevelInfo } from '@/lib/utils/gamification'
 import { GodModePopup } from '@/components/admin/god-mode-popup'
 import { updateLastSeen } from '@/app/profile/actions'
+import { RewardEffects } from '@/components/gamification/reward-effects'
 
 const menuNavigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -404,6 +405,10 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                 {/* Main Content */}
                 <main className="flex-1 overflow-y-auto relative w-full p-4 md:p-6 lg:p-10">
                     <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+                        <RewardEffects
+                            points={profile?.points}
+                            badges={profile?.badges}
+                        />
                         {children}
                     </div>
                 </main>

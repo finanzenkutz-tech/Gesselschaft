@@ -33,7 +33,6 @@ export function MarketplaceLocationPicker({
             if (!mapRef.current || mapInstanceRef.current) return
 
             const L = (await import('leaflet')).default
-            await import('leaflet/dist/leaflet.css')
 
             // Fix Leaflet icons in Next.js
             // @ts-ignore
