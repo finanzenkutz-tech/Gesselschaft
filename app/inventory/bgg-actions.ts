@@ -32,26 +32,58 @@ export async function searchBGG(query: string): Promise<BGGSearchResult[]> {
     if (!query || query.length < 3) return []
 
     try {
-        console.log(`Searching BGG for: ${query}`)
-        const response = await fetch(`https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame,boardgameexpansion`)
+        console.log(`[BGG] Searching for: ${query}`)
+        // Set a timeout to avoid hanging
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+        const response = await fetch(
+            `https://boardgamegeek.com/xmlapi2/search?query=${encodeURIComponent(query)}&type=boardgame,boardgameexpansion`,
+            { signal: controller.signal }
+        )
+        clearTimeout(timeoutId)
+
+        if (!response.ok) {
+            throw new Error(`BGG Search API returned ${response.status}`)
+        }
+
         const xml = await response.text()
-        console.log(`BGG Search raw XML length: ${xml.length}`)
         const result = await parseStringPromise(xml)
 
-        if (!result.items || !result.items.item) {
-            console.log('BGG Search: No items found in result')
+        if (!result || !result.items || !result.items.item) {
+            console.log('[BGG] No items found in XML result')
             return []
         }
 
         const items = result.items.item
-        console.log(`BGG Search: Found ${items.length} items`)
-        return items.map((item: any) => ({
-            id: item.$.id,
-            name: item.name[0].$.value,
-            yearpublished: item.yearpublished ? item.yearpublished[0].$.value : undefined
-        }))
+        console.log(`[BGG] Processing ${items.length} results`)
+
+        return items.map((item: any) => {
+            try {
+                // Determine ID (from attributes)
+                const id = item.$.id
+
+                // Determine Name (often in name[0].$.value)
+                let name = 'Unbekanntes Spiel'
+                if (item.name && item.name[0]) {
+                    name = item.name[0].$.value || item.name[0].$.value
+                } else if (item.name) {
+                    name = item.name.$.value || name
+                }
+
+                // Determine Year
+                const yearpublished = (item.yearpublished && item.yearpublished[0])
+                    ? item.yearpublished[0].$.value
+                    : undefined
+
+                return { id, name, yearpublished }
+            } catch (err) {
+                console.error('[BGG] Error processing item:', err, item)
+                return null
+            }
+        }).filter(Boolean) as BGGSearchResult[]
     } catch (error) {
-        console.error('BGG Search failed:', error)
+        console.error('[BGG] Search failed:', error)
         return []
     }
 }

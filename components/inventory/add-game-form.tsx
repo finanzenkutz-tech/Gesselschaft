@@ -264,7 +264,11 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                             {/* Visibility */}
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-slate-700 ml-1">Sichtbarkeit</label>
-                                <select name="visibility" className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-100 focus:bg-white text-sm outline-none">
+                                <select
+                                    name="visibility"
+                                    defaultValue="groups"
+                                    className="w-full h-12 px-4 rounded-xl bg-slate-50 border border-slate-100 focus:bg-white text-sm outline-none"
+                                >
                                     <option value="private">🔒 Nur für mich</option>
                                     <option value="profile">👤 Alle, die mein Profil sehen</option>
                                     <option value="groups">👥 Alle in meinen Gruppen</option>

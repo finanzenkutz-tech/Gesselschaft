@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { User, Mail, Lock, Camera, Trophy, Star, Award } from 'lucide-react'
+import { User, Mail, Lock, Camera, Trophy, Star, Award, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { updateProfile, updateEmail, updatePassword } from '@/app/profile/actions'
 import { getBuddies, getPendingBuddyRequests } from '@/app/profile/buddy-actions'
 import { BuddyWidget } from '@/components/profile/buddy-widget'
+import { DeleteAccountButton } from '@/components/profile/delete-account-button'
 
 export default async function ProfilePage() {
     const supabase = await createClient()
@@ -159,6 +160,18 @@ export default async function ProfilePage() {
                         Passwort ändern
                     </Button>
                 </form>
+            </section>
+
+            {/* Danger Zone */}
+            <section className="sky-card p-8 space-y-6 border-2 border-red-100">
+                <h3 className="font-bold text-xl text-red-500 flex items-center gap-3">
+                    <AlertTriangle className="w-6 h-6" />
+                    Gefahrenzone
+                </h3>
+                <p className="text-sm text-slate-500">
+                    Hier kannst du deinen Account unwiderruflich löschen. Alle deine Daten werden entfernt.
+                </p>
+                <DeleteAccountButton />
             </section>
         </div>
     )

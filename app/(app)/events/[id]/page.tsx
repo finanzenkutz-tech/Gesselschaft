@@ -16,13 +16,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { data: event } = await supabase
+    const { data: event, error: fetchError } = await supabase
         .from('events')
         .select('*, groups(*), profiles(*), event_attendees(*, profiles(*)), carpooling(*, profiles(*), carpool_passengers(*))')
         .eq('id', id)
-        .single()
+        .maybeSingle()
 
-    if (!event) {
+    if (fetchError || !event) {
+        console.error('Event fetch error:', fetchError)
         return notFound()
     }
 

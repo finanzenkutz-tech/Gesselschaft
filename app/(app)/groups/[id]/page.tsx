@@ -6,6 +6,8 @@ import { joinGroup, leaveGroup } from '@/app/groups/member-actions'
 import { revalidatePath } from 'next/cache'
 import { GroupPlacesWidget } from '@/components/groups/group-places-widget'
 import { CreateEventDialog } from '@/components/events/create-event-dialog'
+import { GroupJoinButton, GroupLeaveButton } from '@/components/groups/group-actions-buttons'
+import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
 import Link from 'next/link'
 
 export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
@@ -71,9 +73,27 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
             {/* Banner */}
             <div className="relative h-64 rounded-[2.5rem] bg-gradient-to-r from-primary to-blue-600 overflow-hidden shadow-xl">
                 <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:64px_64px] opacity-20" />
-                <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white">
-                    <h1 className="text-4xl md:text-5xl font-extrabold mb-2 tracking-tight">{group.name}</h1>
-                    <p className="text-blue-100 text-lg max-w-2xl">{group.description || 'Keine Beschreibung vorhanden.'}</p>
+                <div className="absolute bottom-0 left-0 p-8 md:p-12 text-white w-full">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                        <div className="space-y-2">
+                            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{group.name}</h1>
+                            <p className="text-blue-100 text-lg max-w-2xl">{group.description || 'Keine Beschreibung vorhanden.'}</p>
+                        </div>
+                        {isMember && (
+                            <div className="flex gap-3">
+                                <AddPlaceDialog
+                                    groupId={id}
+                                    trigger={
+                                        <Button variant="secondary" className="rounded-xl shadow-lg bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 border-2">
+                                            <MapPin className="w-4 h-4 mr-2" />
+                                            <span>Ort hinzufügen</span>
+                                        </Button>
+                                    }
+                                />
+                                <CreateEventDialog groups={[group]} defaultGroupId={id} places={places || []} />
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -95,15 +115,12 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                 <CreateEventDialog
                                     groups={[group]}
                                     defaultGroupId={id}
+                                    places={places || []}
                                 />
                             )}
                             <div>
                                 {!isMember ? (
-                                    <form action={async () => { 'use server'; await joinGroup(id); revalidatePath(`/groups/${id}`) }}>
-                                        <Button type="submit" className="bg-primary hover:bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-200">
-                                            <UserPlus className="w-4 h-4 mr-2" /> Beitreten
-                                        </Button>
-                                    </form>
+                                    <GroupJoinButton groupId={id} />
                                 ) : (
                                     <div className="flex gap-2">
                                         {isAdmin && (
@@ -112,11 +129,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                             </Button>
                                         )}
                                         {!isAdmin && (
-                                            <form action={async () => { 'use server'; await leaveGroup(id); revalidatePath(`/groups/${id}`) }}>
-                                                <Button type="submit" variant="outline" className="border-2 border-red-100 text-red-500 hover:bg-red-50 rounded-xl">
-                                                    <LogOut className="w-4 h-4 mr-2" /> Verlassen
-                                                </Button>
-                                            </form>
+                                            <GroupLeaveButton groupId={id} />
                                         )}
                                     </div>
                                 )}
@@ -135,7 +148,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                 Noch keine Events geplant.
                                 {isMember && (
                                     <div className="mt-4">
-                                        <CreateEventDialog groups={[group]} defaultGroupId={id} />
+                                        <CreateEventDialog groups={[group]} defaultGroupId={id} places={places || []} />
                                     </div>
                                 )}
                             </div>
@@ -145,9 +158,29 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                     <Link key={event.id} href={`/events/${event.id}`}>
                                         <div className="sky-card p-6 hover:shadow-lg transition-shadow border-l-4 border-l-primary">
                                             <h3 className="font-bold text-slate-800 mb-2 truncate">{event.title}</h3>
-                                            <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                <Calendar className="w-3 h-3" />
-                                                {new Date(event.start_time).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                    <Calendar className="w-3 h-3" />
+                                                    {new Date(event.start_time).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                                {event.location && (
+                                                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                                                        <MapPin className="w-3 h-3" />
+                                                        <span className="truncate">{event.location}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-3">
+                                                <div className="flex -space-x-1.5">
+                                                    {event.event_attendees?.filter((a: any) => a.status === 'going').slice(0, 3).map((a: any, idx: number) => (
+                                                        <div key={idx} className="w-5 h-5 rounded-full bg-green-100 border-2 border-white text-[8px] flex items-center justify-center font-bold text-green-600" />
+                                                    ))}
+                                                </div>
+                                                {event.event_attendees?.filter((a: any) => a.status === 'going').length > 0 && (
+                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                        {event.event_attendees.filter((a: any) => a.status === 'going').length} dabei
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </Link>
@@ -205,21 +238,41 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                             Mitglieder ({groupMembers.length})
                         </h3>
                         <div className="space-y-3">
-                            {groupMembers.map((member: any) => (
-                                <div key={member.user_id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold border border-blue-200">
-                                        {member.profiles?.full_name?.[0] || member.profiles?.email?.[0] || '?'}
-                                    </div>
-                                    <div className="overflow-hidden">
-                                        <p className="text-sm font-bold text-slate-700 truncate">
-                                            {member.profiles?.full_name || 'User'}
-                                        </p>
-                                        <p className="text-xs text-slate-400 truncate">
-                                            {member.role === 'admin' ? '👑 Admin' : 'Mitglied'}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
+                            {groupMembers
+                                .sort((a: any, b: any) => {
+                                    // Admins zuerst
+                                    if (a.role === 'admin' && b.role !== 'admin') return -1
+                                    if (a.role !== 'admin' && b.role === 'admin') return 1
+                                    return 0
+                                })
+                                .map((member: any) => {
+                                    const isFounder = member.role === 'admin' && member.user_id === group.created_by
+                                    return (
+                                        <div key={member.user_id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-colors">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 ${isFounder
+                                                ? 'bg-amber-100 text-amber-600 border-amber-300'
+                                                : member.role === 'admin'
+                                                    ? 'bg-purple-100 text-purple-600 border-purple-200'
+                                                    : 'bg-blue-100 text-blue-600 border-blue-200'
+                                                }`}>
+                                                {member.profiles?.full_name?.[0] || member.profiles?.email?.[0] || '?'}
+                                            </div>
+                                            <div className="overflow-hidden flex-1">
+                                                <p className="text-sm font-bold text-slate-700 truncate">
+                                                    {member.profiles?.full_name || 'User'}
+                                                </p>
+                                                <p className={`text-xs font-bold truncate ${isFounder
+                                                    ? 'text-amber-500'
+                                                    : member.role === 'admin'
+                                                        ? 'text-purple-500'
+                                                        : 'text-slate-400'
+                                                    }`}>
+                                                    {isFounder ? '👑 Gründer' : member.role === 'admin' ? '⭐ Admin' : '👤 Mitglied'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                         </div>
                     </div>
 

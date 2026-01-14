@@ -50,3 +50,32 @@ export async function deleteGroupPlace(placeId: string, groupId: string) {
     revalidatePath(`/groups/${groupId}`)
     return { success: true }
 }
+
+export async function updateGroupPlace(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const placeId = formData.get('id') as string
+    const groupId = formData.get('group_id') as string
+    const name = formData.get('name') as string
+    const address = formData.get('address') as string
+    const services = formData.get('services') as string
+
+    const { error } = await supabase
+        .from('group_places')
+        .update({
+            name,
+            address: address || null,
+            services: services || null
+        })
+        .eq('id', placeId)
+
+    if (error) {
+        console.error('Error updating place:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath(`/groups/${groupId}`)
+    return { success: true }
+}

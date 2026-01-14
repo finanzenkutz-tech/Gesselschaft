@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Calendar, MapPin, FileText, Dice5, Plus, X } from 'lucide-react'
 import {
@@ -15,24 +15,54 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { createEvent } from '@/app/events/actions'
+import confetti from 'canvas-confetti'
 
-export function CreateEventDialog({ groups, defaultGroupId }: { groups: any[], defaultGroupId?: string }) {
+type Place = { id: string; name: string; address?: string }
+
+export function CreateEventDialog({ groups, defaultGroupId, places = [] }: { groups: any[], defaultGroupId?: string, places?: Place[] }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [selectedLocation, setSelectedLocation] = useState('')
+    const [customLocation, setCustomLocation] = useState(false)
     const router = useRouter()
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
+        setError(null)
         try {
             const result = await createEvent(formData)
             if (result.success) {
+                // 🎉 Fire confetti on success!
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444']
+                })
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 80,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0, y: 0.7 }
+                    })
+                    confetti({
+                        particleCount: 80,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1, y: 0.7 }
+                    })
+                }, 200)
+
                 setOpen(false)
                 router.refresh()
             } else {
-                alert('Fehler beim Erstellen des Events: ' + result.error)
+                setError(result.error || 'Unbekannter Fehler')
             }
         } catch (e) {
             console.error(e)
+            setError('Netzwerkfehler beim Erstellen')
         } finally {
             setLoading(false)
         }
@@ -107,14 +137,54 @@ export function CreateEventDialog({ groups, defaultGroupId }: { groups: any[], d
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-slate-700 ml-1">Ort</label>
-                            <div className="relative">
-                                <Input
-                                    name="location"
-                                    placeholder="Bei Markus / Online / etc."
-                                    className="pl-11 rounded-xl bg-slate-50 border-slate-100 focus:bg-white h-12"
-                                />
-                                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            </div>
+                            {places.length > 0 && !customLocation ? (
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <select
+                                            name="location"
+                                            value={selectedLocation}
+                                            onChange={(e) => {
+                                                if (e.target.value === '__custom__') {
+                                                    setCustomLocation(true)
+                                                    setSelectedLocation('')
+                                                } else {
+                                                    setSelectedLocation(e.target.value)
+                                                }
+                                            }}
+                                            className="w-full h-12 pl-11 pr-4 rounded-xl bg-slate-50 border border-slate-100 focus:bg-white text-sm outline-none appearance-none"
+                                        >
+                                            <option value="">Ort auswählen...</option>
+                                            {places.map(place => (
+                                                <option key={place.id} value={place.name}>
+                                                    {place.name} {place.address ? `(${place.address})` : ''}
+                                                </option>
+                                            ))}
+                                            <option value="__custom__">✏️ Anderen Ort eingeben...</option>
+                                        </select>
+                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <div className="relative">
+                                        <Input
+                                            name="location"
+                                            placeholder="Bei Markus / Online / etc."
+                                            className="pl-11 rounded-xl bg-slate-50 border-slate-100 focus:bg-white h-12"
+                                        />
+                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    </div>
+                                    {places.length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setCustomLocation(false)}
+                                            className="text-xs text-primary hover:underline font-medium"
+                                        >
+                                            ← Gespeicherte Orte anzeigen
+                                        </button>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-2">
@@ -129,6 +199,12 @@ export function CreateEventDialog({ groups, defaultGroupId }: { groups: any[], d
                             </div>
                         </div>
                     </div>
+
+                    {error && (
+                        <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium flex items-center gap-2">
+                            <span>⚠️</span> {error}
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-4">
                         <Button

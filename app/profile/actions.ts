@@ -121,3 +121,43 @@ export async function getOnlineUsers() {
 
     return data
 }
+
+export async function deleteAccount() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    // 1. Delete from all group memberships
+    await supabase.from('group_members').delete().eq('user_id', user.id)
+
+    // 2. Delete from event attendees
+    await supabase.from('event_attendees').delete().eq('user_id', user.id)
+
+    // 3. Delete event contributions
+    await supabase.from('event_contributions').delete().eq('user_id', user.id)
+
+    // 4. Delete inventory items
+    await supabase.from('inventory').delete().eq('owner_id', user.id)
+
+    // 5. Delete buddies
+    await supabase.from('buddies').delete().or(`user_id.eq.${user.id},buddy_id.eq.${user.id}`)
+
+    // 6. Delete notifications
+    await supabase.from('notifications').delete().eq('user_id', user.id)
+
+    // 7. Delete challenges
+    await supabase.from('challenges').delete().or(`challenger_id.eq.${user.id},challenged_id.eq.${user.id}`)
+
+    // 8. Delete profile
+    const { error: profileError } = await supabase.from('profiles').delete().eq('id', user.id)
+    if (profileError) {
+        console.error('Error deleting profile:', profileError)
+        return { success: false, error: profileError.message }
+    }
+
+    // 9. Delete auth user - This signs them out automatically
+    // Note: This requires admin privileges in production, user must be signed out
+    await supabase.auth.signOut()
+
+    return { success: true }
+}

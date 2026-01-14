@@ -4,6 +4,21 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
+// Deutsche Übersetzungen für Supabase Fehlermeldungen
+function translateError(errorMessage: string): string {
+    const translations: Record<string, string> = {
+        'Invalid login credentials': 'E-Mail oder Passwort ist falsch',
+        'Email not confirmed': 'Bitte bestätige zuerst deine E-Mail-Adresse',
+        'User already registered': 'Diese E-Mail ist bereits registriert',
+        'Password should be at least 6 characters': 'Das Passwort muss mindestens 6 Zeichen haben',
+        'Unable to validate email address: invalid format': 'Ungültiges E-Mail-Format',
+        'Signup requires a valid password': 'Bitte gib ein Passwort ein',
+        'To signup, please provide your email': 'Bitte gib eine E-Mail-Adresse ein',
+    }
+
+    return translations[errorMessage] || errorMessage
+}
+
 export async function login(formData: FormData) {
     const supabase = await createClient()
 
@@ -16,7 +31,8 @@ export async function login(formData: FormData) {
     })
 
     if (error) {
-        redirect(`/login?error=${encodeURIComponent(error.message)}`)
+        const germanError = translateError(error.message)
+        redirect(`/login?error=${encodeURIComponent(germanError)}`)
     }
 
     revalidatePath('/', 'layout')
@@ -41,29 +57,12 @@ export async function signup(formData: FormData) {
     })
 
     if (error) {
-        redirect(`/login?error=${encodeURIComponent(error.message)}`)
+        const germanError = translateError(error.message)
+        redirect(`/login?error=${encodeURIComponent(germanError)}`)
     }
 
     revalidatePath('/', 'layout')
     redirect('/')
-}
-
-export async function signInWithGoogle() {
-    const supabase = await createClient()
-    const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
-        },
-    })
-
-    if (data.url) {
-        redirect(data.url)
-    }
-
-    if (error) {
-        redirect('/login?error=Google Login fehlgeschlagen')
-    }
 }
 
 export async function logout() {
@@ -72,3 +71,4 @@ export async function logout() {
     revalidatePath('/', 'layout')
     redirect('/login')
 }
+

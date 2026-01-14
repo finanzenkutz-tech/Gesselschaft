@@ -1,12 +1,48 @@
-import { login, signup, signInWithGoogle } from './actions'
-import { Dice5, LayoutGrid, Chrome } from 'lucide-react' // Using Chrome as placeholder for Google if needed, or SVG
+'use client'
 
-export default async function LoginPage({
-    searchParams,
-}: {
-    searchParams: Promise<{ message: string, error?: string }>
-}) {
-    const params = await searchParams
+import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { login, signup } from './actions'
+import { LayoutGrid, UserPlus, LogIn } from 'lucide-react'
+import confetti from 'canvas-confetti'
+
+export default function LoginPage() {
+    const searchParams = useSearchParams()
+    const error = searchParams.get('error')
+    const message = searchParams.get('message')
+
+    const [isRegistering, setIsRegistering] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleSignup = async (formData: FormData) => {
+        setIsLoading(true)
+
+        // Fire confetti on signup attempt! 🎉
+        confetti({
+            particleCount: 150,
+            spread: 100,
+            origin: { y: 0.6 },
+            colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444']
+        })
+
+        setTimeout(() => {
+            confetti({
+                particleCount: 80,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 0.7 }
+            })
+            confetti({
+                particleCount: 80,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 0.7 }
+            })
+        }, 200)
+
+        // Call the signup action
+        await signup(formData)
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-gradient-to-br from-blue-50 to-white">
@@ -23,34 +59,33 @@ export default async function LoginPage({
                             <img src="/würfel.png" alt="Dice Logo" className="w-12 h-12 object-contain" />
                         </div>
                         <h1 className="text-4xl font-extrabold text-slate-800 mb-3 tracking-tight">
-                            Willkommen zurück!
+                            {isRegistering ? 'Account erstellen' : 'Willkommen zurück!'}
                         </h1>
                         <p className="text-slate-500 text-lg">
-                            Logge dich ein, um deinen nächsten Spieleabend zu planen.
+                            {isRegistering
+                                ? 'Erstelle deinen Account und werde Teil der Community.'
+                                : 'Logge dich ein, um deinen nächsten Spieleabend zu planen.'}
                         </p>
                     </div>
 
                     <form className="space-y-5 max-w-sm">
-                        {/* Admin Credentials Hint */}
-                        <div className="p-4 bg-sky-50 border border-sky-100 rounded-xl text-sm text-sky-800 mb-4">
-                            <p className="font-bold mb-1">👑 Admin Login:</p>
-                            <code className="block bg-white/50 p-1 rounded">admin@example.com</code>
-                            <code className="block bg-white/50 p-1 rounded mt-1">password123</code>
-                        </div>
-
                         <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="full_name">
-                                    Vollständiger Name (nur bei Registrierung)
-                                </label>
-                                <input
-                                    className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
-                                    id="full_name"
-                                    name="full_name"
-                                    type="text"
-                                    placeholder="Max Mustermann"
-                                />
-                            </div>
+                            {/* Full Name - only shown when registering */}
+                            {isRegistering && (
+                                <div className="animate-in slide-in-from-top-4 duration-300">
+                                    <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="full_name">
+                                        Dein Name
+                                    </label>
+                                    <input
+                                        className="w-full px-6 py-4 rounded-2xl bg-slate-50 border-2 border-slate-100 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all outline-none text-slate-800 placeholder:text-slate-400 font-medium"
+                                        id="full_name"
+                                        name="full_name"
+                                        type="text"
+                                        placeholder="Max Mustermann"
+                                        required
+                                    />
+                                </div>
+                            )}
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-2 ml-1" htmlFor="email">
@@ -77,55 +112,54 @@ export default async function LoginPage({
                                     type="password"
                                     placeholder="••••••••"
                                     required
+                                    minLength={6}
                                 />
                             </div>
                         </div>
 
-                        {params?.error && (
+                        {error && (
                             <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-sm font-medium flex items-center gap-2">
-                                <span>⚠️</span> {params.error}
+                                <span>⚠️</span> {error}
                             </div>
                         )}
 
                         <div className="space-y-3 pt-2">
-                            <button
-                                formAction={login}
-                                className="w-full py-4 rounded-2xl bg-primary hover:bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                                Anmelden
-                            </button>
-
-                            <button
-                                formAction={signInWithGoogle}
-                                className="w-full py-4 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-bold border-2 border-slate-100 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                            >
-                                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                                    <path
-                                        fill="currentColor"
-                                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                    />
-                                    <path
-                                        fill="currentColor"
-                                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                    />
-                                    <path
-                                        fill="currentColor"
-                                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                    />
-                                    <path
-                                        fill="currentColor"
-                                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                    />
-                                </svg>
-                                Mit Google anmelden
-                            </button>
-
-                            <button
-                                formAction={signup}
-                                className="w-full py-4 rounded-2xl bg-transparent hover:bg-slate-50 text-slate-500 font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                                Neuen Account erstellen
-                            </button>
+                            {isRegistering ? (
+                                <>
+                                    <button
+                                        formAction={handleSignup}
+                                        disabled={isLoading}
+                                        className="w-full py-4 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold shadow-lg shadow-green-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        <UserPlus className="w-5 h-5" />
+                                        {isLoading ? 'Wird erstellt...' : 'Account erstellen 🎉'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRegistering(false)}
+                                        className="w-full py-4 rounded-2xl bg-transparent hover:bg-slate-50 text-slate-500 font-semibold transition-all"
+                                    >
+                                        Zurück zum Login
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        formAction={login}
+                                        className="w-full py-4 rounded-2xl bg-primary hover:bg-blue-600 text-white font-bold shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                                    >
+                                        <LogIn className="w-5 h-5" />
+                                        Anmelden
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsRegistering(true)}
+                                        className="w-full py-4 rounded-2xl bg-transparent hover:bg-slate-50 text-slate-500 font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                    >
+                                        Noch kein Account? Registrieren
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </form>
                 </div>

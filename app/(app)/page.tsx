@@ -105,63 +105,92 @@ export default async function DashboardPage() {
                 </p>
             </header>
 
-            {/* Dashboard Stats */}
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <Link href="/events">
-                    <div className="sky-card p-8 flex flex-col justify-between h-48 group cursor-pointer relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Calendar className="w-24 h-24 text-primary" />
+            {/* Dashboard Stats - New Premium Design */}
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Nächste Events Widget */}
+                <Link href="/events" className="group">
+                    <div className="relative h-52 rounded-[2rem] bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 p-6 text-white shadow-xl shadow-blue-200/50 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                        {/* Decorative elements */}
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent" />
+
+                        {/* Icon */}
+                        <div className="relative z-10 w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 border border-white/30 group-hover:rotate-6 transition-transform">
+                            <Calendar className="w-7 h-7" />
                         </div>
-                        <div>
-                            <div className="w-12 h-12 rounded-2xl bg-blue-50 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <Calendar className="w-6 h-6" />
-                            </div>
-                            <h3 className="font-bold text-xl text-slate-700">Nächste Events</h3>
-                            <p className="text-sm text-slate-500 mt-1">Keine geplanten Events</p>
+
+                        {/* Content */}
+                        <div className="relative z-10">
+                            <h3 className="font-black text-2xl tracking-tight">Nächste Events</h3>
+                            <p className="text-blue-100/80 text-sm mt-1">Plane deinen nächsten Spieleabend</p>
                         </div>
-                        <div className="flex items-center gap-2 text-primary font-bold text-sm mt-4">
+
+                        {/* Action */}
+                        <div className="absolute bottom-6 right-6 z-10 flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white font-bold text-sm px-4 py-2 rounded-xl border border-white/30 group-hover:bg-white group-hover:text-blue-600 transition-all">
                             Planen <ArrowRight className="w-4 h-4" />
                         </div>
                     </div>
                 </Link>
 
-                <Link href="/groups">
-                    <div className="sky-card p-8 flex flex-col justify-between h-48 group cursor-pointer relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Users className="w-24 h-24 text-secondary" />
+                {/* Meine Gruppen Widget */}
+                <Link href="/groups" className="group">
+                    <div className="relative h-52 rounded-[2rem] bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 p-6 text-white shadow-xl shadow-teal-200/50 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                        {/* Decorative elements */}
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent" />
+
+                        {/* Big Number */}
+                        <div className="absolute top-4 right-6 text-7xl font-black text-white/20 group-hover:text-white/30 transition-colors">
+                            {groupCount || 0}
                         </div>
-                        <div>
-                            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <Users className="w-6 h-6" />
-                            </div>
-                            <h3 className="font-bold text-xl text-slate-700">Meine Gruppen</h3>
-                            <p className="text-sm text-slate-500 mt-1">Starte neue Events</p>
+
+                        {/* Icon */}
+                        <div className="relative z-10 w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 border border-white/30 group-hover:rotate-6 transition-transform">
+                            <Users className="w-7 h-7" />
                         </div>
-                        <div className="flex items-center gap-3 mt-4">
-                            <div className="flex items-center gap-2 text-secondary font-bold text-sm">
-                                Ansehen <ArrowRight className="w-4 h-4" />
-                            </div>
-                            <div className="text-slate-300">|</div>
-                            <div className="text-slate-400 text-xs hover:text-secondary font-medium transition-colors">
-                                Neue finden
-                            </div>
+
+                        {/* Content */}
+                        <div className="relative z-10">
+                            <h3 className="font-black text-2xl tracking-tight">Meine Gruppen</h3>
+                            <p className="text-emerald-100/80 text-sm mt-1">
+                                {groupCount === 0 ? 'Tritt einer Gruppe bei!' : `${groupCount} aktive Gruppen`}
+                            </p>
+                        </div>
+
+                        {/* Action */}
+                        <div className="absolute bottom-6 right-6 z-10 flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white font-bold text-sm px-4 py-2 rounded-xl border border-white/30 group-hover:bg-white group-hover:text-teal-600 transition-all">
+                            Ansehen <ArrowRight className="w-4 h-4" />
                         </div>
                     </div>
                 </Link>
 
-                <Link href="/inventory">
-                    <div className="sky-card p-8 flex flex-col justify-between h-48 group cursor-pointer relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Dice5 className="w-24 h-24 text-purple-500" />
+                {/* Meine Sammlung Widget */}
+                <Link href="/inventory" className="group">
+                    <div className="relative h-52 rounded-[2rem] bg-gradient-to-br from-purple-500 via-violet-600 to-fuchsia-700 p-6 text-white shadow-xl shadow-purple-200/50 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]">
+                        {/* Decorative elements */}
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black/20 to-transparent" />
+
+                        {/* Big Number */}
+                        <div className="absolute top-4 right-6 text-7xl font-black text-white/20 group-hover:text-white/30 transition-colors">
+                            {inventoryCount || 0}
                         </div>
-                        <div>
-                            <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <Dice5 className="w-6 h-6" />
-                            </div>
-                            <h3 className="font-bold text-xl text-slate-700">Sammlung</h3>
-                            <p className="text-sm text-slate-500 mt-1">{inventoryCount || 0} Spiele eingetragen</p>
+
+                        {/* Icon */}
+                        <div className="relative z-10 w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 border border-white/30 group-hover:rotate-6 transition-transform">
+                            <Dice5 className="w-7 h-7" />
                         </div>
-                        <div className="flex items-center gap-2 text-purple-500 font-bold text-sm mt-4">
+
+                        {/* Content */}
+                        <div className="relative z-10">
+                            <h3 className="font-black text-2xl tracking-tight">Meine Sammlung</h3>
+                            <p className="text-purple-100/80 text-sm mt-1">
+                                {inventoryCount === 0 ? 'Füge dein erstes Spiel hinzu!' : `${inventoryCount} Spiele eingetragen`}
+                            </p>
+                        </div>
+
+                        {/* Action */}
+                        <div className="absolute bottom-6 right-6 z-10 flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white font-bold text-sm px-4 py-2 rounded-xl border border-white/30 group-hover:bg-white group-hover:text-purple-600 transition-all">
                             Verwalten <ArrowRight className="w-4 h-4" />
                         </div>
                     </div>

@@ -113,7 +113,7 @@ export function OnlineUsersWidget({ currentUserId }: { currentUserId?: string })
                                         {active && <Circle className="w-3 h-3 fill-green-500 text-green-500 absolute -bottom-0.5 -right-0.5 border-2 border-white rounded-full" />}
                                     </div>
                                     <div>
-                                        <p className="font-bold text-slate-700 text-sm">{user.full_name || 'Anonym'}</p>
+                                        <p className="font-bold text-slate-700 text-sm">{user.full_name || 'Spieler'}</p>
                                         <p className={cn("text-[10px] font-medium uppercase tracking-wider", active ? "text-green-500" : "text-slate-400")}>
                                             {active ? 'Gerade Online' : `Aktiv ${formatDistanceToNow(new Date(user.last_seen), { addSuffix: true, locale: de })}`}
                                         </p>
