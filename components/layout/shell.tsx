@@ -3,11 +3,15 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell } from 'lucide-react'
+import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { User as SupabaseUser } from '@supabase/supabase-js'
 import { NotificationBell } from '@/components/layout/notification-bell'
+import { logout } from '@/app/login/actions'
+import { useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { getLevelInfo } from '@/lib/utils/gamification'
 
 const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -22,8 +26,33 @@ const navigation = [
 export function Shell({ children, user, profile }: { children: React.ReactNode, user: SupabaseUser, profile: any }) {
     const pathname = usePathname()
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const supabase = createClient()
+
+    // Presence Heartbeat
+    useEffect(() => {
+        if (!user) return
+
+        const updatePresence = async () => {
+            await supabase
+                .from('profiles')
+                .update({ last_seen: new Date().toISOString() })
+                .eq('id', user.id)
+        }
+
+        updatePresence()
+        const interval = setInterval(updatePresence, 1000 * 60 * 5) // Every 5 minutes
+
+        return () => clearInterval(interval)
+    }, [user, supabase])
+
+    const isAdmin = profile?.role === 'admin'
+    const currentNavigation = [...navigation]
+    if (isAdmin) {
+        currentNavigation.push({ name: 'Admin', href: '/admin/users', icon: Settings })
+    }
 
     const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
+    const levelInfo = getLevelInfo(profile?.points || 0)
 
     return (
         <div className="min-h-screen bg-background text-slate-800">
@@ -58,7 +87,7 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                         </div>
 
                         <nav className="flex-1 space-y-2">
-                            {navigation.map((item) => {
+                            {currentNavigation.map((item) => {
                                 const isActive = pathname === item.href
                                 return (
                                     <Link
@@ -83,14 +112,41 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                             <NotificationBell userId={user.id} />
                         </div>
 
-                        <div className="mt-auto p-4 bg-blue-50 rounded-2xl flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white text-primary flex items-center justify-center font-bold text-lg border-2 border-primary/10">
-                                {displayName[0].toUpperCase()}
+                        <div className="mt-auto space-y-4">
+                            <div className="p-4 bg-blue-50 rounded-2xl space-y-3 shadow-inner">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-white text-primary flex items-center justify-center font-bold text-lg border-2 border-primary/10 shadow-sm shrink-0">
+                                        {displayName[0].toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={cn("text-[10px] font-black uppercase tracking-wider", levelInfo.color)}>{levelInfo.rank}</p>
+                                        <p className="text-sm font-bold truncate text-slate-700" title={user.email}>{displayName}</p>
+                                    </div>
+                                    <div className="bg-primary text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-sm">
+                                        Lvl {levelInfo.level}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                                        <span>Fortschritt</span>
+                                        <span>{Math.round(levelInfo.progress)}%</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white rounded-full overflow-hidden border border-blue-100">
+                                        <div
+                                            className="h-full bg-primary transition-all duration-1000 ease-out"
+                                            style={{ width: `${levelInfo.progress}%` }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs text-blue-400 font-bold uppercase tracking-wider">Player</p>
-                                <p className="text-sm font-bold truncate text-slate-700" title={user.email}>{displayName}</p>
-                            </div>
+                            <Button
+                                variant="ghost"
+                                onClick={() => logout()}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 hover:text-red-500 hover:bg-red-50 font-bold transition-all text-sm"
+                            >
+                                <LogOut className="w-5 h-5" />
+                                Abmelden
+                            </Button>
                         </div>
                     </div>
                 </aside>

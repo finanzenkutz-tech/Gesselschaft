@@ -65,3 +65,10 @@ export async function signInWithGoogle() {
         redirect('/login?error=Google Login fehlgeschlagen')
     }
 }
+
+export async function logout() {
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+    revalidatePath('/', 'layout')
+    redirect('/login')
+}
