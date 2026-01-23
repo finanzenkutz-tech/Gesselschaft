@@ -50,6 +50,8 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     const [strategy, setStrategy] = useState<number | null>(null)
     const [luck, setLuck] = useState<number | null>(null)
     const [category, setCategory] = useState<string | null>(null)
+    const [priceNew, setPriceNew] = useState<string>('')
+    const [priceUsed, setPriceUsed] = useState<string>('')
 
     const router = useRouter()
 
@@ -186,6 +188,8 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         if (playtime) formData.set('playtime', playtime.toString())
         if (strategy) formData.set('strategy_score', strategy.toString())
         if (luck) formData.set('luck_score', luck.toString())
+        if (priceNew) formData.set('price_new', priceNew)
+        if (priceUsed) formData.set('price_used', priceUsed)
 
         const result = await addGameToInventory(formData)
 
@@ -238,6 +242,8 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         setPlaytime(null)
         setStrategy(null)
         setLuck(null)
+        setPriceNew('')
+        setPriceUsed('')
     }
 
     return (
@@ -426,6 +432,34 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                 <p className="text-[10px] text-slate-400 ml-1">
                                     1 = Sehr einfach (z.B. Uno), 5 = Sehr komplex (z.B. Gaia Project)
                                 </p>
+                            </div>
+
+                            {/* Price Section */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1">Neupreis (€)</label>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        name="price_new"
+                                        value={priceNew}
+                                        onChange={(e) => setPriceNew(e.target.value)}
+                                        placeholder="0.00"
+                                        className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1">Gebrauchtwert (€)</label>
+                                    <Input
+                                        type="number"
+                                        step="0.01"
+                                        name="price_used"
+                                        value={priceUsed}
+                                        onChange={(e) => setPriceUsed(e.target.value)}
+                                        placeholder="0.00"
+                                        className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                                    />
+                                </div>
                             </div>
                         </div>
 

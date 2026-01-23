@@ -51,7 +51,9 @@ export async function addGameToInventory(formData: FormData) {
             playtime: formData.get('playtime') ? parseInt(formData.get('playtime') as string) : null,
             strategy_score: formData.get('strategy_score') ? parseFloat(formData.get('strategy_score') as string) : null,
             luck_score: formData.get('luck_score') ? parseFloat(formData.get('luck_score') as string) : null,
-            category: formData.get('category') as string || null
+            category: formData.get('category') as string || null,
+            price_new: formData.get('price_new') ? parseFloat(formData.get('price_new') as string) : null,
+            price_used: formData.get('price_used') ? parseFloat(formData.get('price_used') as string) : null
         })
         .select()
         .single()

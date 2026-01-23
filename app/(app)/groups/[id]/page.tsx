@@ -182,17 +182,18 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                             )}
 
                             {/* Edit Group Button - ONLY Founder or SuperAdmin */}
-                            {(isSuperAdmin || (user && group.created_by === user.id)) ? (
-                                <div className="flex gap-2 flex-1 sm:flex-initial justify-end">
-                                    <EditGroupDialog group={group} />
-                                    {isMember && (user && group.created_by !== user.id) && (
-                                        <GroupLeaveButton groupId={id} />
-                                    )}
-                                </div>
-                            ) : (
+                            {(isSuperAdmin || (user && group.created_by === user.id)) && (
+                                <EditGroupDialog group={group} />
+                            )}
+
+                            {/* Membership Management - Join or Leave */}
+                            {user && (
                                 <div className="flex-1 sm:flex-initial flex justify-end">
                                     {isMember ? (
-                                        <GroupLeaveButton groupId={id} />
+                                        // Only show Leave button if not the founder OR if SuperAdmin (who can leave anything)
+                                        (isSuperAdmin || group.created_by !== user.id) && (
+                                            <GroupLeaveButton groupId={id} />
+                                        )
                                     ) : (
                                         <GroupJoinButton groupId={id} />
                                     )}

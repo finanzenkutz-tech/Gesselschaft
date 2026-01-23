@@ -41,6 +41,10 @@ export default async function InventoryPage() {
     const totalPlayers = Object.keys(userGameCounts).length
     const isTopCollector = myRank <= 3 && myCount > 0
 
+    // Calculate collection values
+    const totalValueNew = games?.reduce((sum, g) => sum + (Number(g.price_new) || 0), 0) || 0
+    const totalValueUsed = games?.reduce((sum, g) => sum + (Number(g.price_used) || 0), 0) || 0
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -77,6 +81,20 @@ export default async function InventoryPage() {
                                 </p>
                             </>
                         )}
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-4 md:gap-8 border-l border-slate-200 pl-4 md:pl-8 ml-auto">
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gesamtwert (Neu)</span>
+                            <span className="text-xl font-black text-primary">
+                                {totalValueNew.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            </span>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sammlerwert (Gebraucht)</span>
+                            <span className="text-xl font-black text-emerald-500">
+                                {totalValueUsed.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            </span>
+                        </div>
                     </div>
                 </div>
             )}
@@ -159,6 +177,21 @@ export default async function InventoryPage() {
                                                 <span className="truncate max-w-[150px]">{game.category}</span>
                                             </div>
                                         )}
+
+                                        <div className="flex items-center gap-4 mt-1 border-t border-slate-50 pt-1 w-full">
+                                            {game.price_new > 0 && (
+                                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                    <span className="text-slate-300">Neu:</span>
+                                                    <span className="text-primary">{Number(game.price_new).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+                                                </div>
+                                            )}
+                                            {game.price_used > 0 && (
+                                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                    <span className="text-slate-300">Gebraucht:</span>
+                                                    <span className="text-emerald-500">{Number(game.price_used).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">

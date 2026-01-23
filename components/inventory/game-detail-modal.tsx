@@ -117,6 +117,36 @@ export function GameDetailModal({
                                 />
                             </div>
 
+                            {/* Finanzen Section */}
+                            {(game.price_new > 0 || game.price_used > 0) && (
+                                <div className="space-y-3">
+                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                                            <span className="text-[10px] font-black text-emerald-600">€</span>
+                                        </div>
+                                        Finanzielles
+                                    </h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {game.price_new > 0 && (
+                                            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                                                <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Neupreis</p>
+                                                <p className="font-extrabold text-blue-700 text-lg">
+                                                    {Number(game.price_new).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {game.price_used > 0 && (
+                                            <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                                                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Gebrauchtwert</p>
+                                                <p className="font-extrabold text-emerald-700 text-lg">
+                                                    {Number(game.price_used).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Actions / Edit */}
                             <div className="space-y-4 pt-4 border-t border-slate-100">
                                 <div className="flex items-center justify-between bg-slate-50 p-4 rounded-xl">
