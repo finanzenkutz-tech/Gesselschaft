@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { Dice5, Trash2, ExternalLink, Box, Trophy, Lock, Globe, Users, Star } from 'lucide-react'
+import { Dice5, Trash2, ExternalLink, Box, Trophy, Lock, Globe, Users, Star, Clock, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { removeGameFromInventory } from '@/app/inventory/actions'
 import { AddGameForm } from '@/components/inventory/add-game-form'
@@ -10,16 +10,18 @@ export default async function InventoryPage() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
+    if (!user) return null
+
     const { data: games } = await supabase
         .from('inventory')
         .select('*, groups(name)')
-        .eq('owner_id', user?.id)
+        .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
 
     const { data: myGroups } = await supabase
         .from('group_members')
         .select('groups(id, name)')
-        .eq('user_id', user?.id)
+        .eq('user_id', user.id)
 
     const groups = myGroups?.map((mg: any) => mg.groups).filter(Boolean) || []
 
@@ -34,7 +36,7 @@ export default async function InventoryPage() {
     }, {}) || {}
 
     const sortedCounts = Object.values(userGameCounts).sort((a, b) => b - a)
-    const myCount = user ? (userGameCounts[user.id] || 0) : 0
+    const myCount = (userGameCounts[user.id] || 0)
     const myRank = sortedCounts.indexOf(myCount) + 1
     const totalPlayers = Object.keys(userGameCounts).length
     const isTopCollector = myRank <= 3 && myCount > 0
@@ -116,18 +118,48 @@ export default async function InventoryPage() {
                                         {game.visibility === 'profile' && <Globe className="w-3 h-3 text-green-500" />}
                                         {game.visibility === 'groups' && <Users className="w-3 h-3 text-blue-500" />}
                                         <span className="text-xs text-slate-400 font-medium">
-                                            {game.groups ? `Sichtbar in ${game.groups.name}` :
-                                                game.visibility === 'profile' ? 'Öffentlich' :
-                                                    game.visibility === 'groups' ? 'Gruppen' :
-                                                        game.visibility === 'buddies' ? 'Buddies' : 'Privat'}
+                                            {(() => {
+                                                if (game.groups) {
+                                                    const groupName = Array.isArray(game.groups) ? game.groups[0]?.name : game.groups.name;
+                                                    return `Sichtbar in ${groupName || 'Gruppe'}`;
+                                                }
+                                                if (game.visibility === 'profile') return 'Öffentlich';
+                                                if (game.visibility === 'groups') return 'Gruppen';
+                                                if (game.visibility === 'buddies') return 'Buddies';
+                                                return 'Privat';
+                                            })()}
                                         </span>
                                     </div>
-                                    {game.complexity && (
-                                        <div className="flex items-center gap-1 mt-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                                            <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
-                                            <span>Komplexität: {game.complexity.toFixed(1)}/5</span>
-                                        </div>
-                                    )}
+                                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                                        {typeof game.complexity === 'number' && (
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
+                                                <span>{Number(game.complexity).toFixed(1)}/5</span>
+                                            </div>
+                                        )}
+                                        {(game.min_players || game.max_players) && (
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                <Users className="w-2.5 h-2.5 text-blue-400" />
+                                                <span>
+                                                    {game.min_players === game.max_players
+                                                        ? `${game.min_players}`
+                                                        : `${game.min_players}-${game.max_players}`} Spieler
+                                                </span>
+                                            </div>
+                                        )}
+                                        {game.playtime && (
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                <Clock className="w-2.5 h-2.5 text-green-400" />
+                                                <span>{game.playtime} Min</span>
+                                            </div>
+                                        )}
+                                        {game.category && (
+                                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-tighter w-full mt-0.5">
+                                                <Layers className="w-2.5 h-2.5 text-purple-400" />
+                                                <span className="truncate max-w-[150px]">{game.category}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="flex gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {game.bgg_link && (

@@ -9,12 +9,13 @@ import { getMessages } from '@/app/events/chat-actions'
 import { GameTrackingWidget } from '@/components/events/game-tracking-widget'
 import { getEventSessions } from '@/app/events/session-actions'
 import { EventContributionsWidget } from '@/components/events/event-contributions-widget'
-import { deleteAnyEvent } from '@/app/admin/actions'
+import { deleteAnyEvent } from '@/app/(app)/admin/actions'
 import { RSVPButtons } from '@/components/events/rsvp-buttons'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { GameSuggestions } from '@/components/events/game-suggestions'
 import { CalendarExport } from '@/components/events/calendar-export'
 import { SessionReportForm } from '@/components/events/session-report-form'
+import { EventComments } from '@/components/events/event-comments'
 
 export default async function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -66,6 +67,13 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
         .from('inventory')
         .select('*, owner:profiles(full_name)')
         .eq('group_id', event.group_id)
+
+    // Fetch Event Comments
+    const { data: comments } = await supabase
+        .from('event_comments')
+        .select('*, profiles(full_name, avatar_url)')
+        .eq('event_id', id)
+        .order('created_at', { ascending: true })
 
     const formatDate = (date: string) => {
         return new Date(date).toLocaleDateString('de-DE', {
@@ -189,6 +197,14 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                                 <div className="text-slate-600 leading-relaxed font-medium">
                                     {event.description || 'Keine Beschreibung vorhanden.'}
                                 </div>
+                            </section>
+
+                            <section className="sky-card p-8">
+                                <EventComments
+                                    eventId={id}
+                                    initialComments={comments || []}
+                                    currentUserId={user?.id || ''}
+                                />
                             </section>
                         </div>
 

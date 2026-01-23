@@ -18,6 +18,8 @@ interface Listing {
     images: string[] | null
     status: 'active' | 'reserved' | 'sold'
     created_at: string
+    is_for_rent?: boolean
+    rental_period_days?: number | null
 }
 
 import { FavoriteButton } from '@/components/marketplace/favorite-button'
@@ -124,13 +126,19 @@ export function ListingCard({ listing, isFavorite = false, isOwner = false }: Li
                         {(listing.listing_type === 'sell' || listing.listing_type === 'both') && (
                             <Badge variant="secondary" className="bg-white/90 text-green-700 shadow-sm backdrop-blur-sm h-8 px-3">
                                 <ShoppingBag className="w-3 h-3 mr-1" />
-                                {listing.price ? `${listing.price.toFixed(2)} €` : 'Verkauf'}
+                                {listing.is_for_rent ? `${listing.price?.toFixed(2)} € (Miete)` : (listing.price ? `${listing.price.toFixed(2)} €` : 'Verkauf')}
                             </Badge>
                         )}
                         {(listing.listing_type === 'trade' || listing.listing_type === 'both') && (
                             <Badge variant="secondary" className="bg-white/90 text-blue-700 shadow-sm backdrop-blur-sm h-8 px-3">
                                 <Repeat className="w-3 h-3 mr-1" />
                                 Tausch
+                            </Badge>
+                        )}
+                        {listing.is_for_rent && (
+                            <Badge variant="secondary" className="bg-orange-500 text-white shadow-sm h-8 px-3">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Verleih
                             </Badge>
                         )}
                     </div>

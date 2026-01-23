@@ -2,13 +2,16 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MapPin, Calendar, User, ShoppingBag, Repeat, ArrowLeft, Send, Trash2, CheckCircle, AlertCircle, Edit } from 'lucide-react'
+import { MapPin, Calendar, User, ShoppingBag, Repeat, ArrowLeft, Send, Trash2, CheckCircle, AlertCircle, Edit, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { deleteListing, markAsSold } from '@/app/marketplace/actions'
 import { ContactSellerButton } from '@/components/marketplace/contact-seller-button'
 import { FavoriteButton } from '@/components/marketplace/favorite-button'
 import { ReportDialog } from '@/components/marketplace/report-dialog'
 import { RateSellerDialog } from '@/components/marketplace/rate-seller-dialog'
+import { OfferDialog } from '@/components/marketplace/offer-dialog'
+import { OffersReceived } from '@/components/marketplace/offers-received'
+import { markAsReserved } from '@/app/marketplace/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +43,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             .single()
         if (fav) isFavorite = true
     }
+
+    // Fetch offers
+    const { data: offers } = await supabase
+        .from('marketplace_offers')
+        .select('*, buyer:profiles(full_name)')
+        .eq('listing_id', id)
+        .order('created_at', { ascending: false })
+
+    const activeOffer = offers?.find(o => o.buyer_id === user?.id && o.status === 'pending')
 
     return (
         <div className="max-w-4xl mx-auto py-8 animate-in fade-in duration-500">
@@ -105,6 +117,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                                     <Repeat className="w-3 h-3 mr-1" /> Tausch
                                 </Badge>
                             ) : null}
+                            {listing.is_for_rent ? (
+                                <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-200">
+                                    <Calendar className="w-3 h-3 mr-1" /> Verleih
+                                    {listing.rental_period_days ? ` (${listing.rental_period_days} Tage)` : ''}
+                                </Badge>
+                            ) : null}
                             <Badge variant="outline" className="text-slate-500 border-slate-300">
                                 {listing.condition === 'new' ? 'Neu & OVP' :
                                     listing.condition === 'like_new' ? 'Wie neu' :
@@ -161,12 +179,27 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         </div>
 
                         {!isOwner && listing.seller?.email && (
-                            <ContactSellerButton
-                                listingId={listing.id}
-                                sellerId={listing.seller_id}
-                                sellerName={listing.seller.full_name || 'dem Verkäufer'}
-                                isOwner={isOwner}
-                            />
+                            <div className="space-y-3">
+                                <ContactSellerButton
+                                    listingId={listing.id}
+                                    sellerId={listing.seller_id}
+                                    sellerName={listing.seller.full_name || 'dem Verkäufer'}
+                                    isOwner={isOwner}
+                                />
+                                {listing.listing_type !== 'trade' && listing.status === 'active' && !activeOffer && (
+                                    <OfferDialog
+                                        listingId={listing.id}
+                                        listingTitle={listing.title}
+                                        currentPrice={listing.price}
+                                        isForRent={listing.is_for_rent}
+                                    />
+                                )}
+                                {activeOffer && (
+                                    <div className="text-center p-3 bg-amber-50 rounded-lg text-amber-700 text-sm border border-amber-100">
+                                        Dein Preisvorschlag von {activeOffer.amount.toFixed(2)} € ist ausstehend.
+                                    </div>
+                                )}
+                            </div>
                         )}
                         {!isOwner && !listing.seller?.email && (
                             <div className="text-center p-3 bg-slate-50 rounded-lg text-slate-500 text-sm">
@@ -174,11 +207,18 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                             </div>
                         )}
                         {!isOwner && (
-                            <div className="mt-4 pt-4 border-t border-slate-100">
+                            <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-4">
                                 <ReportDialog listingId={listing.id} />
                             </div>
                         )}
                     </div>
+
+                    {/* Offers Received (for Seller) */}
+                    {isOwner && offers && offers.length > 0 && (
+                        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <OffersReceived offers={offers} isOwner={isOwner} />
+                        </div>
+                    )}
 
                     {/* Owner Actions */}
                     {isOwner && (
@@ -195,8 +235,24 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                                     </Link>
                                 </Button>
                                 {listing.status === 'active' && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <form className="w-full" action={async () => { 'use server'; await markAsReserved(listing.id) }}>
+                                            <Button variant="outline" className="w-full justify-start border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100">
+                                                <Clock className="w-4 h-4 mr-2" />
+                                                Reservieren
+                                            </Button>
+                                        </form>
+                                        <form className="w-full" action={async () => { 'use server'; await markAsSold(listing.id) }}>
+                                            <Button variant="outline" className="w-full justify-start text-green-700 bg-green-100 hover:bg-green-200 border-green-200">
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                Verkauft
+                                            </Button>
+                                        </form>
+                                    </div>
+                                )}
+                                {listing.status === 'reserved' && (
                                     <form action={async () => { 'use server'; await markAsSold(listing.id) }}>
-                                        <Button variant="secondary" className="w-full justify-start text-green-700 bg-green-100 hover:bg-green-200 border border-green-200">
+                                        <Button variant="outline" className="w-full justify-start text-green-700 bg-green-100 hover:bg-green-200 border-green-200">
                                             <CheckCircle className="w-4 h-4 mr-2" />
                                             Als verkauft markieren
                                         </Button>
@@ -205,7 +261,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                                 <form action={async () => { 'use server'; await deleteListing(listing.id) }}>
                                     <Button variant="secondary" className="w-full justify-start text-red-600 bg-red-50 hover:bg-red-100 border border-red-200">
                                         <Trash2 className="w-4 h-4 mr-2" />
-                                        Anzeige löschen
+                                        Löschen
                                     </Button>
                                 </form>
                             </div>

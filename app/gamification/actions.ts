@@ -161,3 +161,40 @@ export async function checkPunctuality(userId: string, eventId: string, eventSta
 
     return { success: true, isPunctual }
 }
+/**
+ * Add XP to a user profile
+ */
+export async function addXP(userId: string, amount: number, reason?: string) {
+    const supabase = await createClient()
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('points')
+        .eq('id', userId)
+        .single()
+
+    if (profile) {
+        const newPoints = (profile.points || 0) + amount
+        await supabase
+            .from('profiles')
+            .update({ points: newPoints })
+            .eq('id', userId)
+
+        // Optional: Create notification for XP gain if amount is significant
+        if (amount >= 50 && reason) {
+            await supabase
+                .from('notifications')
+                .insert({
+                    user_id: userId,
+                    type: 'xp_gained',
+                    title: `+${amount} XP verdient! ✨`,
+                    message: reason,
+                    link: '/level'
+                })
+        }
+    }
+
+    revalidatePath('/level')
+    revalidatePath('/profile')
+    return { success: true }
+}

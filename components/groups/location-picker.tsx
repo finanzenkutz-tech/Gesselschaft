@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { MapPin, Save, Loader2 } from 'lucide-react'
+import { MapPin, Save, Loader2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { updateGroupLocation } from '@/app/groups/challenge-actions'
 import { toast } from 'sonner'
@@ -169,11 +169,88 @@ export function LocationPicker({
         setIsSaving(false)
     }
 
+    const [searchQuery, setSearchQuery] = useState('')
+    const [isSearching, setIsSearching] = useState(false)
+
+    const handleSearch = async (e?: React.FormEvent) => {
+        e?.preventDefault()
+        if (!searchQuery.trim()) return
+
+        setIsSearching(true)
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`, {
+                headers: {
+                    'User-Agent': 'BoardGameHub/1.0'
+                }
+            })
+            const data = await response.json()
+            if (data && data.length > 0) {
+                const lat = parseFloat(data[0].lat)
+                const lon = parseFloat(data[0].lon)
+                const newPos: [number, number] = [lat, lon]
+
+                setPosition(newPos)
+
+                // Update Name if empty
+                if (!locationName) {
+                    const name = data[0].name || data[0].display_name.split(',')[0]
+                    setLocationName(name)
+                }
+
+                if (mapInstanceRef.current) {
+                    mapInstanceRef.current.flyTo(newPos, 13)
+                    if (markerRef.current) {
+                        markerRef.current.setLatLng(newPos)
+                    } else {
+                        // Re-create marker if needed
+                        const L = (await import('leaflet')).default
+                        const icon = L.divIcon({
+                            className: 'custom-pin',
+                            html: `<div style="font-size: 24px;">📍</div>`,
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 24]
+                        })
+                        markerRef.current = L.marker(newPos, { icon }).addTo(mapInstanceRef.current)
+                    }
+                }
+
+                if (onChange) {
+                    // If we found a name, maybe pass it? 
+                    // onChange(lat, lon, locationName || ...) 
+                    // For now just update lat/lon
+                    onChange(lat, lon)
+                }
+            } else {
+                toast.error('Ort nicht gefunden')
+            }
+        } catch (error) {
+            console.error('Search failed:', error)
+            toast.error('Suche fehlgeschlagen')
+        } finally {
+            setIsSearching(false)
+        }
+    }
+
     return (
         <div className="space-y-4">
+            {showNameInput && (
+                <form onSubmit={handleSearch} className="flex gap-2">
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Stadt oder Ort suchen..."
+                        className="flex-1 p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white transition-colors"
+                    />
+                    <Button type="submit" variant="secondary" disabled={isSearching} className="h-auto py-2">
+                        {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    </Button>
+                </form>
+            )}
+
             <div className="space-y-2">
                 <p className="text-sm text-slate-500">
-                    Klicke auf die Karte, um den Standort zu wählen.
+                    Oder klicke auf die Karte, um den Standort zu wählen.
                 </p>
                 <div
                     ref={mapRef}

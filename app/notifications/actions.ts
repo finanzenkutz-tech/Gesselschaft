@@ -41,28 +41,42 @@ export async function markAllAsRead() {
 export async function createNotification(userId: string, type: string, title: string, message?: string, link?: string) {
     const supabase = await createClient()
 
-    // 1. Create In-App Notification
-    await supabase
-        .from('notifications')
-        .insert({
-            user_id: userId,
-            type,
-            title,
-            message,
-            link
-        })
+    // Fetch user preferences
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('pref_in_app_notifications, pref_push_notifications')
+        .eq('id', userId)
+        .single()
 
-    // 2. Try to send Push Notification (fire and forget)
-    try {
-        const { sendPushToUser } = await import('@/app/push/actions')
-        await sendPushToUser(userId, {
-            title,
-            body: message || 'Neue Benachrichtigung',
-            url: link || '/',
-            tag: type
-        })
-    } catch (e) {
-        // Ignore push errors to not block the main flow
-        console.error('Failed to trigger push notification:', e)
+    const shouldSendInApp = profile?.pref_in_app_notifications ?? true
+    const shouldSendPush = profile?.pref_push_notifications ?? true
+
+    // 1. Create In-App Notification if enabled
+    if (shouldSendInApp) {
+        await supabase
+            .from('notifications')
+            .insert({
+                user_id: userId,
+                type,
+                title,
+                message,
+                link
+            })
+    }
+
+    // 2. Try to send Push Notification if enabled (fire and forget)
+    if (shouldSendPush) {
+        try {
+            const { sendPushToUser } = await import('@/app/push/actions')
+            await sendPushToUser(userId, {
+                title,
+                body: message || 'Neue Benachrichtigung',
+                url: link || '/',
+                tag: type
+            })
+        } catch (e) {
+            // Ignore push errors to not block the main flow
+            console.error('Failed to trigger push notification:', e)
+        }
     }
 }

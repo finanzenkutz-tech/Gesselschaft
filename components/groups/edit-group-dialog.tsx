@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Settings, Users, Plus, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Settings, Users, Plus, X, Dice5, MapPin } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -15,23 +15,64 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { updateGroup } from '@/app/groups/actions'
 import { useRouter } from 'next/navigation'
+import { LocationPicker } from '@/components/groups/location-picker'
 
 type Group = {
     id: string
     name: string
     description: string | null
+    emoji: string | null
+    latitude?: number
+    longitude?: number
+    location_name?: string
+    is_location_public?: boolean
 }
 
 export function EditGroupDialog({ group }: { group: Group }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [selectedEmoji, setSelectedEmoji] = useState(group.emoji || '🎲')
+
+    // Location State
+    const [location, setLocation] = useState<{ lat: number, lng: number } | null>(
+        group.latitude && group.longitude ? { lat: group.latitude, lng: group.longitude } : null
+    )
+    const [locationName, setLocationName] = useState(group.location_name || '')
+    const [isPublic, setIsPublic] = useState(group.is_location_public || false)
+
     const router = useRouter()
+
+    // Sync state when group prop changes (e.g. after refresh)
+    useEffect(() => {
+        setSelectedEmoji(group.emoji || '🎲')
+        if (group.latitude && group.longitude) {
+            setLocation({ lat: group.latitude, lng: group.longitude })
+        } else {
+            setLocation(null)
+        }
+        setLocationName(group.location_name || '')
+        setIsPublic(group.is_location_public || false)
+    }, [group])
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
         setError(null)
         formData.append('id', group.id)
+        formData.append('emoji', selectedEmoji)
+
+        if (location) {
+            formData.append('latitude', location.lat.toString())
+            formData.append('longitude', location.lng.toString())
+            formData.append('location_name', locationName || '') // Ensure name is sent
+        } else {
+            // Explicitly send empty to clear
+            formData.append('latitude', '')
+            formData.append('longitude', '')
+            formData.append('location_name', '')
+        }
+
+        formData.append('is_location_public', isPublic.toString())
 
         try {
             const result = await updateGroup(formData)
@@ -42,7 +83,8 @@ export function EditGroupDialog({ group }: { group: Group }) {
                 setError(result.error || 'Fehler beim Aktualisieren')
             }
         } catch (e) {
-            setError('Netzwerkfehler')
+            console.error(e)
+            setError('Netzwerkfehler: Bitte prüfe deine Verbindung.')
         } finally {
             setLoading(false)
         }
@@ -56,73 +98,130 @@ export function EditGroupDialog({ group }: { group: Group }) {
                     <span className="ml-2 hidden sm:inline">Gruppe bearbeiten</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
-                <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-white">
+            <DialogContent className="sm:max-w-2xl rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+                <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-white shrink-0">
                     <DialogTitle className="text-2xl font-extrabold flex items-center gap-3">
                         <Settings className="w-8 h-8" /> Gruppe bearbeiten
                     </DialogTitle>
                     <DialogDescription className="text-blue-100 mt-2 opacity-90">
-                        Passe den Namen und die Beschreibung deiner Gruppe an.
+                        Passe den Namen, Standort und die Beschreibung deiner Gruppe an.
                     </DialogDescription>
                 </div>
 
-                <form action={handleSubmit} className="p-8 space-y-6">
-                    {error && (
-                        <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 animate-in fade-in slide-in-from-top-1">
-                            ⚠️ {error}
-                        </div>
-                    )}
+                <div className="overflow-y-auto p-8">
+                    <form action={handleSubmit} className="space-y-6">
+                        {error && (
+                            <div className="p-4 rounded-2xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 animate-in fade-in slide-in-from-top-1">
+                                ⚠️ {error}
+                            </div>
+                        )}
 
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                                <Users className="w-4 h-4 text-primary" /> Gruppenname
-                            </label>
-                            <Input
-                                name="name"
-                                defaultValue={group.name}
-                                placeholder="z.B. Die Würfel-Räuber"
-                                required
-                                className="rounded-xl bg-slate-50 border-slate-100 h-12 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                                <Plus className="w-4 h-4 text-secondary" /> Beschreibung
-                            </label>
-                            <Textarea
-                                name="description"
-                                defaultValue={group.description || ''}
-                                placeholder="Was zeichnet eure Gruppe aus?"
-                                className="rounded-xl bg-slate-50 border-slate-100 min-h-[120px] focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => setOpen(false)}
-                            className="flex-1 rounded-xl h-12 font-bold text-slate-500"
-                        >
-                            Abbrechen
-                        </Button>
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-[2] bg-primary hover:bg-blue-600 text-white rounded-xl h-12 font-bold shadow-lg shadow-blue-200 transition-all"
-                        >
-                            {loading ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    <span>Speichere...</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                        <Users className="w-4 h-4 text-primary" /> Gruppenname
+                                    </label>
+                                    <Input
+                                        name="name"
+                                        defaultValue={group.name}
+                                        placeholder="z.B. Die Würfel-Räuber"
+                                        required
+                                        className="rounded-xl bg-slate-50 border-slate-100 h-12 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                                    />
                                 </div>
-                            ) : 'Änderungen speichern'}
-                        </Button>
-                    </div>
-                </form>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                        <Plus className="w-4 h-4 text-secondary" /> Beschreibung
+                                    </label>
+                                    <Textarea
+                                        name="description"
+                                        defaultValue={group.description || ''}
+                                        placeholder="Was zeichnet eure Gruppe aus?"
+                                        className="rounded-xl bg-slate-50 border-slate-100 min-h-[120px] focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                        <Dice5 className="w-4 h-4 text-primary" /> Gruppen-Emoji
+                                    </label>
+                                    <div className="grid grid-cols-7 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                        {['🎲', '🃏', '🏰', '⚔️', '🗺️', '🧩', '♟️', '🎩', '💰', '🏠', '🐉', '🧟', '🚀', '🎭', '⏳', '🏆', '🔥', '🪵', '🌾', '🐑', '🧱'].map(emoji => (
+                                            <button
+                                                key={emoji}
+                                                type="button"
+                                                onClick={() => setSelectedEmoji(emoji)}
+                                                className={`w-10 h-10 flex items-center justify-center text-xl rounded-xl transition-all ${selectedEmoji === emoji ? 'bg-primary text-white shadow-md scale-110' : 'bg-white hover:bg-white/80 text-slate-600'}`}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                        <MapPin className="w-4 h-4 text-red-500" /> Standort / Stadt
+                                    </label>
+                                    <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                                        <LocationPicker
+                                            value={location ? [location.lat, location.lng] : null}
+                                            initialLat={group.latitude}
+                                            initialLng={group.longitude}
+                                            initialName={group.location_name}
+                                            initialPublic={group.is_location_public}
+                                            onChange={(lat, lng, name) => {
+                                                setLocation({ lat, lng })
+                                                if (name) setLocationName(name)
+                                            }}
+                                            showSaveButton={false}
+                                            height="h-[300px]"
+                                        />
+                                    </div>
+                                    <div className="flex items-center gap-2 px-1">
+                                        <input
+                                            type="checkbox"
+                                            id="isPublic"
+                                            checked={isPublic}
+                                            onChange={(e) => setIsPublic(e.target.checked)}
+                                            className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+                                        />
+                                        <label htmlFor="isPublic" className="text-sm text-slate-600 cursor-pointer">
+                                            Standort öffentlich auf der Karte anzeigen
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 pt-4 border-t border-slate-100">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                onClick={() => setOpen(false)}
+                                className="flex-1 rounded-xl h-12 font-bold text-slate-500"
+                            >
+                                Abbrechen
+                            </Button>
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="flex-[2] bg-primary hover:bg-blue-600 text-white rounded-xl h-12 font-bold shadow-lg shadow-blue-200 transition-all"
+                            >
+                                {loading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Speichere...</span>
+                                    </div>
+                                ) : 'Änderungen speichern'}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
             </DialogContent>
         </Dialog>
     )

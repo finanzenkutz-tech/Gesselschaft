@@ -58,7 +58,7 @@ export function GroupPlacesWidget({
     }
 
     return (
-        <section className="sky-card p-8 space-y-6">
+        <section className="sky-card p-4 md:p-8 space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
                     <MapPin className="w-6 h-6 text-red-500" />
@@ -74,6 +74,11 @@ export function GroupPlacesWidget({
                 <div className="text-center py-12 bg-slate-50 rounded-[2rem] border border-dashed border-slate-200">
                     <MapPin className="w-12 h-12 text-slate-300 mx-auto mb-4 opacity-50" />
                     <p className="text-slate-400 font-medium">Noch keine Orte für diese Gruppe hinterlegt.</p>
+                    {isMember && (
+                        <div className="mt-4">
+                            <AddPlaceDialog groupId={groupId} />
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

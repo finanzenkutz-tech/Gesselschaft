@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { User, MapPin, Dice5, Tags, Star } from 'lucide-react'
+import { User, MapPin, Dice5, Tags, Star, Bell } from 'lucide-react'
 import { updateProfile } from '@/app/profile/actions'
 import { toast } from 'sonner'
 
@@ -29,6 +29,9 @@ interface PersonalDetailsFormProps {
     initialFavoriteGames?: string
     initialPlayStyleTags?: string[]
     initialShowReputation?: boolean
+    prefEmail?: boolean
+    prefPush?: boolean
+    prefInApp?: boolean
 }
 
 export function PersonalDetailsForm({
@@ -36,10 +39,16 @@ export function PersonalDetailsForm({
     initialLocation = '',
     initialFavoriteGames = '',
     initialPlayStyleTags = [],
-    initialShowReputation = false
+    initialShowReputation = false,
+    prefEmail = true,
+    prefPush = true,
+    prefInApp = true
 }: PersonalDetailsFormProps) {
     const [selectedTags, setSelectedTags] = useState<string[]>(initialPlayStyleTags || [])
     const [showReputation, setShowReputation] = useState(initialShowReputation)
+    const [prefEmailState, setPrefEmailState] = useState(prefEmail)
+    const [prefPushState, setPrefPushState] = useState(prefPush)
+    const [prefInAppState, setPrefInAppState] = useState(prefInApp)
     const [isSaving, setIsSaving] = useState(false)
 
     const toggleTag = (tag: string) => {
@@ -59,6 +68,15 @@ export function PersonalDetailsForm({
             if (showReputation) {
                 formData.append('show_reputation', 'on')
             }
+
+            formData.append('pref_email_notifications_present', 'true')
+            if (prefEmailState) formData.append('pref_email_notifications', 'on')
+
+            formData.append('pref_push_notifications_present', 'true')
+            if (prefPushState) formData.append('pref_push_notifications', 'on')
+
+            formData.append('pref_in_app_notifications_present', 'true')
+            if (prefInAppState) formData.append('pref_in_app_notifications', 'on')
 
             // We can also just send the boolean value if we change the action to accept it directly,
             // but sticking to FormData/checkbox style for consistency with server action.
@@ -165,6 +183,28 @@ export function PersonalDetailsForm({
                         checked={showReputation}
                         onCheckedChange={setShowReputation}
                     />
+                </div>
+
+                {/* Notification Settings Matrix-ish */}
+                <div className="space-y-4">
+                    <Label className="flex items-center gap-2 text-slate-700">
+                        <Bell className="w-4 h-4 text-primary" />
+                        Benachrichtigungs-Kanäle
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
+                            <span className="text-sm font-bold text-slate-600">E-Mail</span>
+                            <Switch checked={prefEmailState} onCheckedChange={setPrefEmailState} />
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
+                            <span className="text-sm font-bold text-slate-600">Push</span>
+                            <Switch checked={prefPushState} onCheckedChange={setPrefPushState} />
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
+                            <span className="text-sm font-bold text-slate-600">In-App</span>
+                            <Switch checked={prefInAppState} onCheckedChange={setPrefInAppState} />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex justify-end pt-4">

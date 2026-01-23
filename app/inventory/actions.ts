@@ -1,4 +1,5 @@
 'use server'
+import { SPIELELISTE } from '@/lib/spieleliste'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
@@ -44,7 +45,13 @@ export async function addGameToInventory(formData: FormData) {
             visibility: visibility,
             image_url: imageUrl,
             is_unplayed: formData.get('is_unplayed') === 'true',
-            complexity: formData.get('complexity') ? parseFloat(formData.get('complexity') as string) : null
+            complexity: formData.get('complexity') ? parseFloat(formData.get('complexity') as string) : null,
+            min_players: formData.get('min_players') ? parseInt(formData.get('min_players') as string) : null,
+            max_players: formData.get('max_players') ? parseInt(formData.get('max_players') as string) : null,
+            playtime: formData.get('playtime') ? parseInt(formData.get('playtime') as string) : null,
+            strategy_score: formData.get('strategy_score') ? parseFloat(formData.get('strategy_score') as string) : null,
+            luck_score: formData.get('luck_score') ? parseFloat(formData.get('luck_score') as string) : null,
+            category: formData.get('category') as string || null
         })
         .select()
         .single()
@@ -52,6 +59,31 @@ export async function addGameToInventory(formData: FormData) {
     if (error) {
         console.error('Error adding game:', error)
         return { success: false, error: error.message }
+    }
+
+    // Auto-sync to known_games if it has a BGG ID
+    const bggId = bggLink ? bggLink.split('/').pop() : null
+    if (bggId && !isNaN(parseInt(bggId))) {
+        // Check if already in known_games
+        const { data: existing } = await supabase
+            .from('known_games')
+            .select('id')
+            .eq('bgg_id', bggId)
+            .single()
+
+        if (!existing) {
+            // Add to known_games
+            await supabase.from('known_games').insert({
+                bgg_id: bggId,
+                name: name,
+                image_url: imageUrl,
+                complexity: formData.get('complexity') ? parseFloat(formData.get('complexity') as string) : null,
+                min_players: formData.get('min_players') ? parseInt(formData.get('min_players') as string) : null,
+                max_players: formData.get('max_players') ? parseInt(formData.get('max_players') as string) : null,
+                playtime_max: formData.get('playtime') ? parseInt(formData.get('playtime') as string) : null,
+                category: formData.get('category') as string || null
+            })
+        }
     }
 
     revalidatePath('/inventory')
@@ -96,4 +128,39 @@ export async function updateGame(gameId: string, updates: any) {
 
     revalidatePath('/inventory')
     return { success: true }
+}
+
+
+export async function searchKnownGames(query: string) {
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('known_games')
+        .select('*')
+        .ilike('name', `%${query}%`)
+        .limit(10)
+    return data || []
+}
+
+export async function getKnownGameDetails(id: string) {
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('known_games')
+        .select('*')
+        .eq('id', id)
+        .single()
+    return data
+}
+
+export async function searchSpielerliste(query: string) {
+    if (!query || query.length < 2) return []
+    const lowerQuery = query.toLowerCase()
+    return SPIELELISTE.filter(g =>
+        g.title.toLowerCase().includes(lowerQuery)
+    ).map(g => ({
+        id: `local-${g.rank}`,
+        name: g.title,
+        yearpublished: g.year.toString(),
+        source: 'list',
+        original: g
+    }))
 }

@@ -15,10 +15,14 @@ import {
 } from '@/components/ui/dialog'
 import { addGameToInventory } from '@/app/inventory/actions'
 import { searchBGG, getBGGGameDetails, BGGSearchResult } from '@/app/inventory/bgg-actions'
+import { searchKnownGames } from '@/app/inventory/actions'
+import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 import { useDebounce } from '@/lib/hooks/use-debounce'
 import { useEffect } from 'react'
+import { searchSpielerliste } from '@/app/inventory/actions'
+import type { GameEntry } from '@/lib/spieleliste'
 
 type Group = { id: string; name: string }
 
@@ -29,7 +33,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
 
     // BGG Search State
     const [searchQuery, setSearchQuery] = useState('')
-    const [searchResults, setSearchResults] = useState<BGGSearchResult[]>([])
+    const [searchResults, setSearchResults] = useState<(BGGSearchResult & { source?: string; original?: any })[]>([])
     const [searching, setSearching] = useState(false)
     const [selectedBggId, setSelectedBggId] = useState<string | null>(null)
 
@@ -39,6 +43,13 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     const [imageUrl, setImageUrl] = useState('')
     const [isUnplayed, setIsUnplayed] = useState(false)
     const [complexity, setComplexity] = useState(3)
+    // New Metadata State
+    const [minPlayers, setMinPlayers] = useState<number | null>(null)
+    const [maxPlayers, setMaxPlayers] = useState<number | null>(null)
+    const [playtime, setPlaytime] = useState<number | null>(null)
+    const [strategy, setStrategy] = useState<number | null>(null)
+    const [luck, setLuck] = useState<number | null>(null)
+    const [category, setCategory] = useState<string | null>(null)
 
     const router = useRouter()
 
@@ -54,22 +65,107 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
 
     async function handleSearch(query: string) {
         setSearching(true)
-        const results = await searchBGG(query)
-        setSearchResults(results)
+
+        // 1. Search Local SPIELELISTE (Top 200) - now on server
+        const listMatches = await searchSpielerliste(query)
+
+        // 2. Search Known Games (Database)
+        const localResults = await searchKnownGames(query)
+        const mappedLocal = localResults.map((g: any) => ({
+            id: g.bgg_id,
+            name: g.name,
+            yearpublished: g.year_published,
+            source: 'known',
+            original: g
+        }))
+
+        // 3. Search BGG (Fallback/Complementary)
+        // Merge results, prioritizing list and database
+        let finalResults: any[] = [...listMatches, ...mappedLocal]
+
+        if (localResults.length < 5) {
+            try {
+                const bggResults = await searchBGG(query)
+                // Filter duplicates
+                const localIds = new Set(mappedLocal.map((x: any) => x.id))
+                const listIds = new Set(listMatches.map((x: any) => x.id))
+                const newBgg = bggResults.filter(x => !localIds.has(x.id) && !listIds.has(x.id)).map(x => ({ ...x, source: 'bgg' }))
+                finalResults = [...finalResults, ...newBgg]
+            } catch (err) {
+                console.warn('BGG Search failed, showing local only')
+            }
+        }
+
+        setSearchResults(finalResults as any)
         setSearching(false)
     }
 
-    async function handleSelectGame(game: BGGSearchResult) {
+    async function handleSelectGame(game: any) {
         setSelectedBggId(game.id)
         setGameName(game.name)
         setBggLink(`https://boardgamegeek.com/boardgame/${game.id}`)
 
-        // Fetch full details to get the image
         setSearching(true)
-        const details = await getBGGGameDetails(game.id)
-        if (details?.image || details?.thumbnail) {
-            setImageUrl(details.image || details.thumbnail || '')
+
+        if (game.source === 'list' && game.original) {
+            // Use local list data
+            const entry = game.original as GameEntry
+            setComplexity(entry.complexity || 3)
+            setCategory(entry.category || null)
+
+            // Parse players (e.g., "2–4" or "2")
+            const playerParts = entry.players.split(/[–-]/)
+            if (playerParts.length === 2) {
+                setMinPlayers(parseInt(playerParts[0]))
+                setMaxPlayers(parseInt(playerParts[1]))
+            } else {
+                setMinPlayers(parseInt(playerParts[0]))
+                setMaxPlayers(parseInt(playerParts[0]))
+            }
+
+            // Parse playtime (e.g., "60–120" or "60")
+            const timeParts = entry.duration.split(/[–-]/)
+            if (timeParts.length === 2) {
+                setPlaytime(parseInt(timeParts[1]))
+            } else {
+                setPlaytime(parseInt(timeParts[0]))
+            }
+
+            setBggLink('') // Clear link as we don't have it in the list
+            setImageUrl('')
+            setStrategy(null)
+            setLuck(null)
+
+        } else if (game.source === 'known' && game.original) {
+            // Use local database details
+            const details = game.original
+            setImageUrl(details.image_url || '')
+            setComplexity(details.complexity || 3)
+            setMinPlayers(details.min_players || null)
+            setMaxPlayers(details.max_players || null)
+            setPlaytime(details.playtime_max || null)
+            setStrategy(details.strategy_score || null)
+            setLuck(details.luck_score || null)
+            setCategory(details.category || null)
+            setBggLink(`https://boardgamegeek.com/boardgame/${game.id}`)
+        } else {
+            // Fetch from BGG
+            const details = await getBGGGameDetails(game.id)
+            if (details) {
+                if (details.image || details.thumbnail) {
+                    setImageUrl(details.image || details.thumbnail || '')
+                }
+                if (details.complexity) setComplexity(details.complexity)
+                // if (details.rating) setStrategy(details.rating)
+                // details.complexity is 'weight'.
+                setMinPlayers(details.minplayers || null)
+                setMaxPlayers(details.maxplayers || null)
+                setPlaytime(details.playingtime || null)
+                setCategory(details.categories?.[0] || null)
+                setBggLink(`https://boardgamegeek.com/boardgame/${game.id}`)
+            }
         }
+
         setSearching(false)
         setSearchResults([])
     }
@@ -82,8 +178,14 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         if (gameName) formData.set('name', gameName)
         if (bggLink) formData.set('bgg_link', bggLink)
         if (imageUrl) formData.set('image_url_remote', imageUrl) // New field for remote images
+        if (category) formData.set('category', category)
         formData.set('is_unplayed', isUnplayed.toString())
         formData.set('complexity', complexity.toString())
+        if (minPlayers) formData.set('min_players', minPlayers.toString())
+        if (maxPlayers) formData.set('max_players', maxPlayers.toString())
+        if (playtime) formData.set('playtime', playtime.toString())
+        if (strategy) formData.set('strategy_score', strategy.toString())
+        if (luck) formData.set('luck_score', luck.toString())
 
         const result = await addGameToInventory(formData)
 
@@ -131,6 +233,11 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         setSelectedBggId(null)
         setIsUnplayed(false)
         setComplexity(3)
+        setMinPlayers(null)
+        setMaxPlayers(null)
+        setPlaytime(null)
+        setStrategy(null)
+        setLuck(null)
     }
 
     return (
@@ -153,7 +260,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                 <div className="p-8 space-y-6">
                     {/* BGG Search Section */}
                     <div className="space-y-3">
-                        <label className="text-sm font-bold text-slate-700 ml-1">BoardGameGeek Suche</label>
+                        <label className="text-sm font-bold text-slate-700 ml-1">Spiel finden</label>
                         <div className="flex gap-2">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -226,19 +333,23 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                 />
                             </div>
 
-                            {/* BGG Link */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                                    <LinkIcon className="w-4 h-4" /> BGG Link
-                                </label>
-                                <Input
-                                    name="bgg_link"
-                                    value={bggLink}
-                                    onChange={(e) => setBggLink(e.target.value)}
-                                    placeholder="https://boardgamegeek.com/..."
-                                    className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                            {/* Pile of Shame Toggle (Moved Here) */}
+                            <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl border border-red-100">
+                                <div className="space-y-0.5">
+                                    <label className="text-sm font-bold text-red-900">Noch ungespielt? (Pile of Shame)</label>
+                                    <p className="text-xs text-red-600">Markiere dies, wenn es noch auf den Tisch kommen muss.</p>
+                                </div>
+                                <Switch
+                                    name="is_unplayed"
+                                    checked={isUnplayed}
+                                    onCheckedChange={setIsUnplayed}
+                                    className="data-[state=checked]:bg-red-500"
                                 />
                             </div>
+
+                            {/* Hidden Inputs for BGG Data */}
+                            <input type="hidden" name="bgg_link" value={bggLink} />
+                            {/* ... other hidden fields if needed, but handled by state binding in handleSubmit essentially */}
 
                             {/* Image Preview / URL */}
                             {imageUrl && (
@@ -315,19 +426,6 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                 <p className="text-[10px] text-slate-400 ml-1">
                                     1 = Sehr einfach (z.B. Uno), 5 = Sehr komplex (z.B. Gaia Project)
                                 </p>
-                            </div>
-
-                            {/* Pile of Shame Toggle */}
-                            <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl border border-red-100">
-                                <div className="space-y-0.5">
-                                    <label className="text-sm font-bold text-red-900">Noch ungespielt? (Pile of Shame)</label>
-                                    <p className="text-xs text-red-600">Markiere dies, wenn es noch auf den Tisch kommen muss.</p>
-                                </div>
-                                <Switch
-                                    checked={isUnplayed}
-                                    onCheckedChange={setIsUnplayed}
-                                    className="data-[state=checked]:bg-red-500"
-                                />
                             </div>
                         </div>
 

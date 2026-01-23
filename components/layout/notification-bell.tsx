@@ -13,9 +13,14 @@ import { markAsRead, markAllAsRead, getNotifications } from '@/app/notifications
 import Link from 'next/link'
 
 export function NotificationBell({ userId }: { userId?: string }) {
+    const [mounted, setMounted] = useState(false)
     const [notifications, setNotifications] = useState<any[]>([])
     const [unreadCount, setUnreadCount] = useState(0)
     const supabase = createClient()
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     useEffect(() => {
         if (!userId) return
@@ -62,6 +67,8 @@ export function NotificationBell({ userId }: { userId?: string }) {
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
         setUnreadCount(0)
     }
+
+    if (!mounted) return null
 
     return (
         <Popover>

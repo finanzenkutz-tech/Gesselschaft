@@ -66,6 +66,17 @@ export async function updateProfile(formData: FormData) {
         updateData.show_reputation = showReputation
     }
 
+    // Notification prefs
+    if (formData.has('pref_email_notifications_present')) {
+        updateData.pref_email_notifications = formData.get('pref_email_notifications') === 'on'
+    }
+    if (formData.has('pref_push_notifications_present')) {
+        updateData.pref_push_notifications = formData.get('pref_push_notifications') === 'on'
+    }
+    if (formData.has('pref_in_app_notifications_present')) {
+        updateData.pref_in_app_notifications = formData.get('pref_in_app_notifications') === 'on'
+    }
+
 
     if (avatarUrl) updateData.avatar_url = avatarUrl
 

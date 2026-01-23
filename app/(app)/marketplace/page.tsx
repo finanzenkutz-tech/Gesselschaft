@@ -63,8 +63,9 @@ export default async function MarketplacePage({
         query = query.in('listing_type', ['sell', 'both'])
     } else if (type === 'trade') {
         query = query.in('listing_type', ['trade', 'both'])
+    } else if (type === 'rent') {
+        query = query.eq('is_for_rent', true)
     }
-
     // Category filter
     if (category !== 'all') {
         query = query.eq('category', category)

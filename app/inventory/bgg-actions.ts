@@ -23,6 +23,9 @@ export type BGGGameDetails = {
     maxplayers?: number
     playingtime?: number
     yearpublished?: string
+    complexity?: number
+    rating?: number
+    categories?: string[]
 }
 
 /**
@@ -98,7 +101,7 @@ export async function searchBGG(query: string): Promise<BGGSearchResult[]> {
  */
 export async function getBGGGameDetails(id: string): Promise<BGGGameDetails | null> {
     try {
-        const response = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${id}`, {
+        const response = await fetch(`https://boardgamegeek.com/xmlapi2/thing?id=${id}&stats=1`, {
             headers: {
                 'User-Agent': 'BoardGameHub/1.0 (contact@example.com)'
             }
@@ -112,6 +115,15 @@ export async function getBGGGameDetails(id: string): Promise<BGGGameDetails | nu
         // Find the primary name
         const nameObj = item.name.find((n: any) => n.$.type === 'primary') || item.name[0]
 
+        // Parse stats
+        const stats = item.statistics?.[0]?.ratings?.[0]
+        const complexity = stats?.averageweight?.[0]?.$.value
+
+        // Parse categories
+        const categories = item.link
+            ?.filter((l: any) => l.$.type === 'boardgamecategory')
+            ?.map((l: any) => l.$.value) || []
+
         return {
             id: item.$.id,
             name: nameObj.$.value,
@@ -121,7 +133,10 @@ export async function getBGGGameDetails(id: string): Promise<BGGGameDetails | nu
             minplayers: item.minplayers ? parseInt(item.minplayers[0].$.value) : undefined,
             maxplayers: item.maxplayers ? parseInt(item.maxplayers[0].$.value) : undefined,
             playingtime: item.playingtime ? parseInt(item.playingtime[0].$.value) : undefined,
-            yearpublished: item.yearpublished ? item.yearpublished[0].$.value : undefined
+            yearpublished: item.yearpublished ? item.yearpublished[0].$.value : undefined,
+            complexity: complexity ? parseFloat(complexity) : undefined,
+            rating: stats?.average?.[0]?.$.value ? parseFloat(stats.average[0].$.value) : undefined,
+            categories
         }
     } catch (error) {
         console.error('BGG Details fetch failed:', error)

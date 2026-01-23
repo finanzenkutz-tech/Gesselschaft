@@ -33,7 +33,45 @@ export async function createFeatureRequest(formData: FormData) {
 
     // Add creator's vote to a votes tracking (we'll handle this with a simple increment for now)
     revalidatePath('/features')
-    return { success: true, data }
+
+    // GAMIFICATION: Award XP and Badges
+    const { addXP, awardBadge } = await import('@/app/gamification/actions')
+
+    // Award XP
+    await addXP(user.id, 50, 'Idee eingereicht')
+
+    // Check count of feature requests
+    const { count } = await supabase
+        .from('feature_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('created_by', user.id)
+
+    const ideaBadges = []
+
+    if (count) {
+        if (count >= 1) {
+            const result = await awardBadge(user.id, 'Idea Starter')
+            if (result.success) ideaBadges.push('Idea Starter')
+        }
+        if (count >= 3) {
+            const result = await awardBadge(user.id, 'Idea Machine')
+            if (result.success) ideaBadges.push('Idea Machine')
+        }
+        if (count >= 10) {
+            const result = await awardBadge(user.id, 'Innovator')
+            if (result.success) ideaBadges.push('Innovator')
+        }
+    }
+
+    return {
+        success: true,
+        data,
+        gamification: {
+            xpEarned: 50,
+            badgesEarned: ideaBadges,
+            ideasCount: count || 1
+        }
+    }
 }
 
 export async function voteForFeature(featureId: string) {
@@ -45,10 +83,16 @@ export async function voteForFeature(featureId: string) {
     const { error } = await supabase.rpc('increment_feature_votes', { feature_id: featureId })
 
     if (error) {
-        // Fallback: direct update if RPC doesn't exist
+        // Fallback: direct update (not atomic but functional)
+        const { data: current } = await supabase
+            .from('feature_requests')
+            .select('votes')
+            .eq('id', featureId)
+            .single()
+
         const { error: updateError } = await supabase
             .from('feature_requests')
-            .update({ votes: supabase.rpc('increment', { x: 1 }) })
+            .update({ votes: (current?.votes || 0) + 1 })
             .eq('id', featureId)
 
         if (updateError) {
@@ -79,6 +123,31 @@ export async function markFeatureAsCompleted(featureId: string) {
 
     if (error) {
         console.error('Error marking feature as completed:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/features')
+    return { success: true }
+}
+
+export async function deleteFeatureRequest(featureId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    // Check Super Admin
+    const { data: profile } = await supabase.from('profiles').select('system_role').eq('id', user.id).single()
+    if (profile?.system_role !== 'super_admin') {
+        return { success: false, error: 'Keine Berechtigung' }
+    }
+
+    const { error } = await supabase
+        .from('feature_requests')
+        .delete()
+        .eq('id', featureId)
+
+    if (error) {
+        console.error('Error deleting feature request:', error)
         return { success: false, error: error.message }
     }
 

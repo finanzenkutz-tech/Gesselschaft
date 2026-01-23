@@ -13,11 +13,11 @@ export default async function AdminUsersPage() {
     // Verify admin role
     const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('system_role')
         .eq('id', user.id)
         .single()
 
-    if (profile?.role !== 'admin') {
+    if (profile?.system_role !== 'super_admin' && profile?.system_role !== 'moderator') {
         redirect('/')
     }
 
@@ -69,9 +69,10 @@ export default async function AdminUsersPage() {
                                         </div>
                                     </td>
                                     <td className="p-4 text-sm font-medium text-slate-600">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${u.system_role === 'super_admin' ? 'bg-amber-100 text-amber-700' :
+                                            u.system_role === 'moderator' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
                                             }`}>
-                                            {u.role === 'admin' ? '👑 Admin' : 'Player'}
+                                            {u.system_role === 'super_admin' ? '👑 Admin' : u.system_role === 'moderator' ? '🛡️ Moderator' : 'Player'}
                                         </span>
                                     </td>
                                     <td className="p-4 text-sm text-slate-400">

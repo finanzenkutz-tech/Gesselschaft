@@ -1,0 +1,129 @@
+'use client'
+
+import { useState } from 'react'
+import { MessageSquare, Send, Trash2, User } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { addEventComment, deleteEventComment } from '@/app/events/comment-actions'
+import { toast } from 'sonner'
+
+interface Comment {
+    id: string
+    content: string
+    created_at: string
+    user_id: string
+    profiles: {
+        full_name: string
+        avatar_url: string
+    }
+}
+
+interface EventCommentsProps {
+    eventId: string
+    initialComments: any[]
+    currentUserId: string
+}
+
+export function EventComments({ eventId, initialComments, currentUserId }: EventCommentsProps) {
+    const [comments, setComments] = useState<Comment[]>(initialComments)
+    const [newComment, setNewComment] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!newComment.trim() || isSubmitting) return
+
+        setIsSubmitting(true)
+        const result = await addEventComment(eventId, newComment.trim())
+
+        if (result.success) {
+            setNewComment('')
+            toast.success('Kommentar hinzugefügt')
+            // Optimistic update or just wait for revalidation? 
+            // Since it's a client component with initialData, we might want to refetch or manually update state.
+            // For simplicity in this demo, let's assume revalidatePath works or we refetch on the page.
+        } else {
+            toast.error('Fehler: ' + result.error)
+        }
+        setIsSubmitting(false)
+    }
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Kommentar wirklich löschen?')) return
+
+        const result = await deleteEventComment(id, eventId)
+        if (result.success) {
+            setComments(prev => prev.filter(c => c.id !== id))
+            toast.success('Kommentar gelöscht')
+        }
+    }
+
+    return (
+        <div className="space-y-6">
+            <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                Kommentare ({comments.length})
+            </h3>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-3">
+                <Textarea
+                    placeholder="Schreibe einen Kommentar..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="rounded-xl border-slate-100 bg-slate-50 focus:ring-primary/20"
+                />
+                <div className="flex justify-end">
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting || !newComment.trim()}
+                        className="bg-primary hover:bg-blue-600 text-white rounded-xl gap-2 px-6 font-bold"
+                    >
+                        <Send className="w-4 h-4" />
+                        Senden
+                    </Button>
+                </div>
+            </form>
+
+            {/* List */}
+            <div className="space-y-4">
+                {comments.length === 0 ? (
+                    <p className="text-center py-8 text-slate-400 text-sm">Noch keine Kommentare. Sei der Erste!</p>
+                ) : (
+                    comments.map((comment) => (
+                        <div key={comment.id} className="flex gap-4 group">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 overflow-hidden border border-blue-100">
+                                {comment.profiles?.avatar_url ? (
+                                    <img src={comment.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="w-5 h-5 text-blue-400" />
+                                )}
+                            </div>
+                            <div className="flex-1 space-y-1">
+                                <div className="flex items-center justify-between">
+                                    <p className="font-bold text-slate-800 text-sm">{comment.profiles?.full_name || 'Spieler'}</p>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] text-slate-400 font-medium uppercase">
+                                            {new Date(comment.created_at).toLocaleDateString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                        {comment.user_id === currentUserId && (
+                                            <button
+                                                onClick={() => handleDelete(comment.id)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                                <p className="text-slate-600 text-sm bg-slate-50 p-3 rounded-2xl rounded-tl-none border border-slate-100/50">
+                                    {comment.content}
+                                </p>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    )
+}

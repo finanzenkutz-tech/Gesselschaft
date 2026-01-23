@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import { Loader2, Image as ImageIcon, X, Store, Gift, Repeat, Euro, Save } from 'lucide-react'
+import { Loader2, Image as ImageIcon, X, Store, Gift, Repeat, Euro, Save, Calendar } from 'lucide-react'
 import { createListing, updateListing } from '@/app/marketplace/actions'
 import confetti from 'canvas-confetti'
 
@@ -182,28 +182,46 @@ export function ListingForm({ inventory, initialData }: ListingFormProps) {
                                 <SelectItem value="both">
                                     <div className="flex items-center gap-2"><Store className="w-4 h-4 text-purple-500" /> Beides</div>
                                 </SelectItem>
+                                <SelectItem value="rent">
+                                    <div className="flex items-center gap-2"><Calendar className="w-4 h-4 text-orange-500" /> Verleihen</div>
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 </div>
 
-                {(listingType === 'sell' || listingType === 'both') && (
-                    <div className="space-y-2 animate-in slide-in-from-top-2">
-                        <Label htmlFor="price" className="text-base font-bold">Preis (€)</Label>
-                        <div className="relative">
-                            <Input
-                                id="price"
-                                name="price"
-                                type="number"
-                                step="0.50"
-                                min="0"
-                                placeholder="0.00"
-                                required={listingType === 'sell'}
-                                defaultValue={initialData?.price || ''}
-                                className="pl-8 font-mono"
-                            />
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">€</div>
+                {(listingType === 'sell' || listingType === 'both' || listingType === 'rent') && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="price" className="text-base font-bold">{listingType === 'rent' ? 'Leihgebühr (€)' : 'Preis (€)'}</Label>
+                            <div className="relative">
+                                <Input
+                                    id="price"
+                                    name="price"
+                                    type="number"
+                                    step="0.50"
+                                    min="0"
+                                    placeholder="0.00"
+                                    required={listingType === 'sell' || listingType === 'rent'}
+                                    defaultValue={initialData?.price || ''}
+                                    className="pl-8 font-mono"
+                                />
+                                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">€</div>
+                            </div>
                         </div>
+
+                        {listingType === 'rent' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="rental_period_days" className="text-base font-bold">Standard Leihdauer (Tage)</Label>
+                                <Input
+                                    id="rental_period_days"
+                                    name="rental_period_days"
+                                    type="number"
+                                    placeholder="z.B. 7"
+                                    defaultValue={(initialData as any)?.rental_period_days || ''}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
 

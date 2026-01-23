@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { createNotification } from '@/app/notifications/actions'
 
 export async function createListing(formData: FormData) {
     const supabase = await createClient()
@@ -75,7 +76,9 @@ export async function createListing(formData: FormData) {
             min_age: minAge,
             complexity,
             lat,
-            lng
+            lng,
+            is_for_rent: listingType === 'rent',
+            rental_period_days: formData.get('rental_period_days') ? parseInt(formData.get('rental_period_days') as string) : null
         })
         .select()
         .single()
@@ -146,9 +149,10 @@ export async function updateListing(listingId: string, formData: FormData) {
         min_age: formData.get('min_age') ? parseInt(formData.get('min_age') as string) : null,
         complexity: formData.get('complexity') ? parseFloat(formData.get('complexity') as string) : null,
         lat: formData.get('lat') ? parseFloat(formData.get('lat') as string) : null,
-        lng: formData.get('lng') ? parseFloat(formData.get('lng') as string) : null
+        lng: formData.get('lng') ? parseFloat(formData.get('lng') as string) : null,
+        is_for_rent: formData.get('listing_type') === 'rent',
+        rental_period_days: formData.get('rental_period_days') ? parseInt(formData.get('rental_period_days') as string) : null
     }
-
     if (formData.has('price')) {
         updates.price = formData.get('price') ? parseFloat(formData.get('price') as string) : null
     }
@@ -351,5 +355,113 @@ export async function createReview(reviewedUserId: string, rating: number, comme
     }
 
     revalidatePath(`/marketplace`)
+    return { success: true }
+}
+
+export async function createOffer(listingId: string, amount: number, message: string, isRental: boolean = false, returnDate: string | null = null) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const { error } = await supabase
+        .from('marketplace_offers')
+        .insert({
+            listing_id: listingId,
+            buyer_id: user.id,
+            amount,
+            message,
+            status: 'pending',
+            is_rental_request: isRental,
+            return_date: returnDate
+        })
+    if (error) {
+        console.error('Error creating offer:', error)
+        return { success: false, error: 'Fehler beim Senden des Angebots.' }
+    }
+
+    revalidatePath(`/marketplace/${listingId}`)
+
+    // Notify seller
+    const { data: listing } = await supabase
+        .from('marketplace_listings')
+        .select('seller_id, title')
+        .eq('id', listingId)
+        .single()
+
+    if (listing) {
+        await createNotification(
+            listing.seller_id,
+            'marketplace_offer',
+            'Neues Angebot erhalten',
+            `Du hast ein Angebot für "${listing.title}" erhalten.`,
+            `/marketplace/${listingId}`
+        )
+    }
+
+    return { success: true }
+}
+
+export async function updateOfferStatus(offerId: string, status: 'accepted' | 'rejected' | 'cancelled') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const { error } = await supabase
+        .from('marketplace_offers')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', offerId)
+
+    if (error) {
+        console.error('Error updating offer:', error)
+        return { success: false, error: 'Fehler beim Aktualisieren des Angebots.' }
+    }
+
+    revalidatePath('/marketplace')
+
+    // Notify buyer
+    const { data: offer } = await supabase
+        .from('marketplace_offers')
+        .select('buyer_id, listing_id, marketplace_listings(title)')
+        .eq('id', offerId)
+        .single()
+
+    if (offer) {
+        const title = (offer.marketplace_listings as any)?.title || 'dein Angebot'
+        const msg = status === 'accepted' ? 'angenommen' : status === 'rejected' ? 'abgelehnt' : 'storniert'
+
+        await createNotification(
+            offer.buyer_id,
+            'marketplace_offer_update',
+            `Angebot ${msg}`,
+            `Dein Angebot für "${title}" wurde ${msg}.`,
+            `/marketplace/${offer.listing_id}`
+        )
+    }
+
+    return { success: true }
+}
+
+export async function saveSearch(query: string, filters: any, label: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    const { error } = await supabase
+        .from('marketplace_saved_searches')
+        .insert({
+            user_id: user.id,
+            query,
+            filters,
+            label
+        })
+
+    if (error) {
+        console.error('Error saving search:', error)
+        return { success: false, error: 'Fehler beim Speichern der Suche.' }
+    }
+
     return { success: true }
 }

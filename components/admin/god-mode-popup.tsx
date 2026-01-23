@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Shield, Zap, Users, LayoutGrid, Dice5, Check } from 'lucide-react'
-import { confirmGodMode } from '@/app/admin/actions'
+import { confirmGodMode } from '@/app/(app)/admin/actions'
 import { toast } from 'sonner'
 
 interface GodModePopupProps {
@@ -33,7 +33,7 @@ export function GodModePopup({ profile }: GodModePopupProps) {
         const result = await confirmGodMode()
         if (result.success) {
             setOpen(false)
-            toast.success('Gott-Modus bestätigt!')
+            toast.success('God Modus bestätigt!')
         } else {
             toast.error('Fehler: ' + result.error)
         }
@@ -54,7 +54,7 @@ export function GodModePopup({ profile }: GodModePopupProps) {
                 <div className="p-8 space-y-6">
                     <DialogHeader className="text-center">
                         <DialogTitle className="text-3xl font-black text-slate-800 tracking-tight">
-                            GOTT-MODUS AKTIVIERT ⚡
+                            GOD MODUS AKTIVIERT ⚡
                         </DialogTitle>
                         <DialogDescription className="text-slate-500 font-medium text-lg pt-2 leading-relaxed">
                             Du wurdest zum **Super Admin** ernannt! Damit hast du absolute Macht über das gesamte BoardGameHub System.
@@ -103,7 +103,7 @@ export function GodModePopup({ profile }: GodModePopupProps) {
                                 <span className="animate-spin w-6 h-6 border-2 border-white/30 border-t-white rounded-full" />
                             ) : (
                                 <span className="flex items-center gap-2">
-                                    VERSTANDEN, ICH BIN EIN GOTT! <Check className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                                    VERSTANDEN, GOD MODUS AKTIVIERT! <Check className="w-6 h-6 group-hover:rotate-12 transition-transform" />
                                 </span>
                             )}
                         </Button>

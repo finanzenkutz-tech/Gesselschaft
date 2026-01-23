@@ -140,6 +140,32 @@ export const BADGES: Record<string, Badge> = {
         color: 'bg-violet-100 text-violet-600',
         requirement: 'Füge 5 Buddies hinzu'
     },
+
+    // Idea badges
+    idea_starter: {
+        id: 'Idea Starter',
+        name: 'Ideen-Starter',
+        description: 'Hat die erste Idee eingereicht',
+        icon: '💡',
+        color: 'bg-blue-100 text-blue-600',
+        requirement: 'Reiche deine erste Idee ein'
+    },
+    idea_machine: {
+        id: 'Idea Machine',
+        name: 'Ideen-Maschine',
+        description: 'Hat 3 Ideen eingereicht',
+        icon: '⚡',
+        color: 'bg-amber-100 text-amber-600',
+        requirement: 'Reiche 3 Ideen ein'
+    },
+    innovator: {
+        id: 'Innovator',
+        name: 'Innovator',
+        description: 'Hat 10 Ideen eingereicht',
+        icon: '🚀',
+        color: 'bg-purple-100 text-purple-600',
+        requirement: 'Reiche 10 Ideen ein'
+    },
 }
 
 const ranks = [

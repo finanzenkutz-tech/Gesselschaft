@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { createNotification } from '@/app/notifications/actions'
 
 export async function createPoll(formData: FormData) {
     const supabase = await createClient()
@@ -43,6 +44,25 @@ export async function createPoll(formData: FormData) {
     if (optionsError) {
         console.error('Error creating poll options:', optionsError)
         return { success: false, error: optionsError.message }
+    }
+
+    // Notify group members
+    const { data: members } = await supabase
+        .from('group_members')
+        .select('user_id')
+        .eq('group_id', groupId)
+
+    if (members) {
+        for (const member of members) {
+            if (member.user_id === user.id) continue;
+            await createNotification(
+                member.user_id,
+                'poll_created',
+                'Neue Umfrage in der Gruppe',
+                `Eine neue Umfrage "${title}" wurde erstellt.`,
+                `/groups/${groupId}`
+            )
+        }
     }
 
     revalidatePath(`/groups/${groupId}`)

@@ -78,38 +78,54 @@ export function BadgeGrid({ earnedBadges }: { earnedBadges: string[] }) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {allBadges.map((badge) => {
                 const isEarned = earnedBadges.includes(badge.id)
+                // Highlight specific milestone badges
+                const isMilestone = ['Idea Machine', 'Innovator'].includes(badge.id)
+
                 return (
                     <div
                         key={badge.id}
                         className={cn(
-                            "p-4 rounded-2xl border-2 transition-all",
+                            "p-4 rounded-2xl border-2 transition-all relative overflow-hidden group",
                             isEarned
-                                ? "bg-white border-primary/20 shadow-lg"
-                                : "bg-slate-50 border-slate-100 opacity-50 grayscale"
+                                ? "bg-white border-primary/20 shadow-lg hover:shadow-xl hover:scale-[1.02]"
+                                : "bg-slate-50 border-slate-100 opacity-50 grayscale",
+                            isMilestone && isEarned ? "col-span-2 row-span-2 bg-gradient-to-br from-white to-amber-50/50 border-amber-200" : ""
                         )}
                     >
-                        <div className="flex items-center gap-3 mb-3">
+                        {/* Shine effect for milestones */}
+                        {isMilestone && isEarned && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-shimmer" />
+                        )}
+
+                        <div className={cn("flex items-center gap-3 mb-3", isMilestone ? "flex-col items-start" : "")}>
                             <div
                                 className={cn(
-                                    "w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm",
-                                    isEarned ? badge.color : "bg-slate-200 text-slate-400"
+                                    "rounded-xl flex items-center justify-center shadow-sm",
+                                    isEarned ? badge.color : "bg-slate-200 text-slate-400",
+                                    isMilestone ? "w-16 h-16 text-4xl mb-2" : "w-12 h-12 text-2xl"
                                 )}
                             >
                                 {badge.icon}
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className={cn(
-                                    "font-bold text-sm truncate",
-                                    isEarned ? "text-slate-800" : "text-slate-400"
+                                    "font-bold truncate",
+                                    isEarned ? "text-slate-800" : "text-slate-400",
+                                    isMilestone ? "text-lg" : "text-sm"
                                 )}>
                                     {badge.name}
                                 </p>
                                 {isEarned && (
-                                    <span className="text-[10px] font-bold text-green-500 uppercase">Freigeschaltet</span>
+                                    <span className={cn(
+                                        "font-bold uppercase",
+                                        isMilestone ? "text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full" : "text-[10px] text-green-500"
+                                    )}>
+                                        Freigeschaltet
+                                    </span>
                                 )}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-500 line-clamp-2">
+                        <p className={cn("text-slate-500", isMilestone ? "text-sm" : "text-xs line-clamp-2")}>
                             {isEarned ? badge.description : badge.requirement}
                         </p>
                     </div>

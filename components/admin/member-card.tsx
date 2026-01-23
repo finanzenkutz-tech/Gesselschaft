@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { Users, Shield, Trophy, Edit2, Trash2, Check, X, Mail, Key, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { deleteUser, updateUserProfile, sendPasswordReset } from '@/app/admin/actions'
+import { deleteUser, updateUserProfile, sendPasswordReset } from '@/app/(app)/admin/actions'
 import { getLevelInfo } from '@/lib/utils/gamification'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 
 interface MemberCardProps {
@@ -14,6 +15,7 @@ interface MemberCardProps {
 }
 
 export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
+    const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
     const [selectedRole, setSelectedRole] = useState(profile.system_role || 'user')
@@ -42,6 +44,7 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
         const result = await deleteUser(profile.id)
         if (result.success) {
             toast.success('Nutzer gelöscht!')
+            router.refresh()
         } else {
             toast.error('Fehler: ' + result.error)
         }
@@ -88,7 +91,7 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
             )}
 
             {/* Edit/Delete Actions */}
-            <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+            <div className="absolute top-4 right-4 flex gap-1 z-20 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-md border border-slate-100">
                 {!isEditing ? (
                     <>
                         <Button
@@ -174,6 +177,8 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
                         className="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20"
                     >
                         <option value="user">Spieler</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin">Admin</option>
                         <option value="super_admin">Super Admin</option>
                     </select>
                 ) : (
@@ -192,36 +197,41 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
             </div>
 
             {/* Password Section */}
-            <div className="flex items-center gap-2 text-sm">
-                <button
-                    onClick={() => setShowPasswordHint(!showPasswordHint)}
-                    className="flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors text-xs"
+            <div className="flex items-center justify-between gap-2 p-3 bg-slate-50/50 rounded-xl border border-slate-100/50 mt-1">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center">
+                        <Key className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <span className="font-mono text-xs text-slate-400">••••••••</span>
+                </div>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 px-3 text-[10px] font-black uppercase tracking-widest text-amber-600 border-amber-100 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 transition-all shadow-sm"
+                    onClick={handlePasswordReset}
+                    disabled={loading || isCurrentUser}
+                    title="Passwort-Reset Link senden"
                 >
-                    <Key className="w-3 h-3" />
-                    <span className="font-mono">••••••••</span>
-                </button>
+                    <Mail className="w-3 h-3 mr-1.5" />
+                    Reset
+                </Button>
             </div>
 
-            {showPasswordHint && (
-                <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 text-xs space-y-2 animate-in fade-in slide-in-from-top-2">
-                    <p className="text-amber-700 font-medium">
-                        ⚠️ Passwörter sind sicher verschlüsselt und können nicht eingesehen werden.
-                    </p>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-xs h-8 border-amber-200 text-amber-600 hover:bg-amber-100"
-                        onClick={handlePasswordReset}
-                        disabled={loading}
-                    >
-                        <Mail className="w-3 h-3 mr-1" />
-                        Passwort-Reset Link senden
-                    </Button>
-                </div>
-            )}
+            {/* Admin Actions Section */}
+            <div className="mt-auto pt-4 border-t border-slate-50 space-y-3">
+                <Button
+                    variant="ghost"
+                    className="w-full text-red-500 hover:bg-red-50 hover:text-red-600 font-bold text-xs h-9"
+                    onClick={handleDelete}
+                    disabled={loading || isCurrentUser}
+                >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Mitglied löschen
+                </Button>
 
-            {/* Level Info */}
-            <div className="mt-auto pt-4 border-t border-slate-50">
+                <div className="h-px bg-slate-50 w-full" />
+
+                {/* Level Info */}
                 <div className="flex items-center justify-between text-sm">
                     <div className="flex flex-col">
                         <span className="text-slate-400 text-xs font-bold uppercase">Level {levelInfo.level}</span>

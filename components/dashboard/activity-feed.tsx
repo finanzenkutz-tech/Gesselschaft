@@ -36,7 +36,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
     }
 
     return (
-        <div className="sky-card p-6 h-full">
+        <div className="sky-card p-6 h-auto">
             <h3 className="font-bold text-xl text-slate-800 mb-4 flex items-center gap-2">
                 <div className="w-2 h-6 bg-orange-400 rounded-full" />
                 Neuigkeiten

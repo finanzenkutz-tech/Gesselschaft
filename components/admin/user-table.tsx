@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { User, Mail, Shield, Trash2, Edit2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { updateUserProfile, deleteUser } from '@/app/admin/actions'
+import { updateUserProfile, deleteUser } from '@/app/(app)/admin/actions'
 import { useRouter } from 'next/navigation'
 
 export function AdminUserTable({ users }: { users: any[] }) {

@@ -77,9 +77,6 @@ export async function deleteUser(userId: string) {
 
     const supabase = await createClient()
 
-    // Note: Deleting from profiles is easy, but deleting from auth.users 
-    // requires service_role. For now we handle the profile and data.
-    // If service role is available, we can also delete the auth user.
     const { error } = await supabase
         .from('profiles')
         .delete()
@@ -88,6 +85,7 @@ export async function deleteUser(userId: string) {
     if (error) return { success: false, error: error.message }
 
     revalidatePath('/admin')
+    revalidatePath('/members')
     return { success: true }
 }
 
@@ -103,6 +101,7 @@ export async function updateUserProfile(userId: string, data: any) {
     if (error) return { success: false, error: error.message }
 
     revalidatePath('/admin')
+    revalidatePath('/members')
     return { success: true }
 }
 
@@ -135,5 +134,57 @@ export async function deleteAnyEvent(eventId: string) {
 
     revalidatePath('/admin')
     revalidatePath('/events')
+    return { success: true }
+}
+
+export async function getAdminStats() {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+
+    const { count: userCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+
+    const { count: groupCount } = await supabase
+        .from('groups')
+        .select('*', { count: 'exact', head: true })
+
+    const { count: eventCount } = await supabase
+        .from('events')
+        .select('*', { count: 'exact', head: true })
+
+    const { count: listingCount } = await supabase
+        .from('marketplace_listings')
+        .select('*', { count: 'exact', head: true })
+
+    const { data: recentReports } = await supabase
+        .from('marketplace_reports')
+        .select('*, marketplace_listings(title)')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+    return {
+        users: userCount || 0,
+        groups: groupCount || 0,
+        events: eventCount || 0,
+        listings: listingCount || 0,
+        recentReports: recentReports || []
+    }
+}
+export async function updateReportStatus(reportId: string, status: 'resolved' | 'dismissed') {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('marketplace_reports')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', reportId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/admin')
+    revalidatePath('/admin/reports')
     return { success: true }
 }

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Users } from 'lucide-react'
+import { Plus, Users, Dice5 } from 'lucide-react'
 import { createGroup } from '@/app/groups/actions'
 import confetti from 'canvas-confetti'
 import { useRouter } from 'next/navigation'
@@ -20,11 +20,13 @@ export function CreateGroupDialog() {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [selectedEmoji, setSelectedEmoji] = useState('🎲')
     const router = useRouter()
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
         setError(null)
+        formData.append('emoji', selectedEmoji)
 
         try {
             const result = await createGroup(formData) as any
@@ -98,6 +100,23 @@ export function CreateGroupDialog() {
                                 placeholder="Was spielt ihr am liebsten?"
                                 className="rounded-xl bg-slate-50 border-slate-100 min-h-[100px]"
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                <Dice5 className="w-4 h-4 text-primary" /> Gruppen-Emoji
+                            </label>
+                            <div className="grid grid-cols-7 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                {['🎲', '🃏', '🏰', '⚔️', '🗺️', '🧩', '♟️', '🎩', '💰', '🏠', '🐉', '🧟', '🚀', '🎭', '⏳', '🏆', '🔥', '🪵', '🌾', '🐑', '🧱'].map(emoji => (
+                                    <button
+                                        key={emoji}
+                                        type="button"
+                                        onClick={() => setSelectedEmoji(emoji)}
+                                        className={`w-10 h-10 flex items-center justify-center text-xl rounded-xl transition-all ${selectedEmoji === emoji ? 'bg-primary text-white shadow-md scale-110' : 'bg-white hover:bg-white/80 text-slate-600'}`}
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 

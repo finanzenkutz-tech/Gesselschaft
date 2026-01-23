@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut, Trophy, MessageCircle, Shield, Smartphone, Tablet, Monitor, Globe, Store, History as HistoryIcon } from 'lucide-react'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
+import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut, Trophy, MessageCircle, Shield, Smartphone, Tablet, Monitor, Globe, Store, History as HistoryIcon, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { User as SupabaseUser } from '@supabase/supabase-js'
@@ -15,6 +15,7 @@ import { getLevelInfo } from '@/lib/utils/gamification'
 import { GodModePopup } from '@/components/admin/god-mode-popup'
 import { updateLastSeen } from '@/app/profile/actions'
 import { RewardEffects } from '@/components/gamification/reward-effects'
+import Cookies from 'js-cookie'
 
 const menuNavigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -32,14 +33,19 @@ const menuNavigation = [
 
 const adminNavigation = [
     { name: 'Dashboard', href: '/admin', icon: Shield },
+    { name: 'Meldungen', href: '/admin/reports', icon: AlertTriangle },
 ]
 
 export function Shell({ children, user, profile }: { children: React.ReactNode, user: SupabaseUser, profile: any }) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
+    const router = useRouter()
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
-    const [godMode, setGodMode] = useState(true)
+    const [godMode, setGodMode] = useState(() => {
+        // Initialize from cookie on client side
+        return Cookies.get('godMode') !== 'false'
+    })
     const supabase = createClient()
 
     // Check if we are inside the preview iframe
@@ -70,6 +76,12 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
     const isRealSuperAdmin = profile?.system_role === 'super_admin'
     // Effective Super Admin for UI (respects God Mode toggles)
     const isSuperAdmin = isRealSuperAdmin && godMode
+
+    // Sync godMode with cookie
+    useEffect(() => {
+        Cookies.set('godMode', godMode.toString(), { expires: 7 })
+        router.refresh()
+    }, [godMode, router])
 
     const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
     const levelInfo = getLevelInfo(profile?.points || 0)
@@ -188,7 +200,7 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                             Game Hub
                             {isSuperAdmin && (
                                 <span className="absolute -right-3 -top-2 bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-black border-2 border-white shadow-sm">
-                                    ADMIN
+                                    GOD
                                 </span>
                             )}
                         </Link>
@@ -229,43 +241,6 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                             </div>
 
 
-                            {isSuperAdmin && (
-                                <div className="space-y-1">
-                                    <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Admin-Bereich</p>
-                                    <Link
-                                        href="/members"
-                                        onClick={() => setSidebarOpen(false)}
-                                        className={cn(
-                                            "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group font-bold",
-                                            pathname === '/members'
-                                                ? "bg-amber-100 text-amber-700 shadow-sm"
-                                                : "text-slate-500 hover:bg-amber-50 hover:text-amber-600"
-                                        )}
-                                    >
-                                        <Users className={cn("w-5 h-5 transition-colors", pathname === '/members' ? "text-amber-700" : "group-hover:text-amber-600")} />
-                                        <span className="flex-1">Mitglieder</span>
-                                    </Link>
-                                    {adminNavigation.map((item) => {
-                                        const isActive = pathname === item.href
-                                        return (
-                                            <Link
-                                                key={item.name}
-                                                href={item.href}
-                                                onClick={() => setSidebarOpen(false)}
-                                                className={cn(
-                                                    "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group font-bold",
-                                                    isActive
-                                                        ? "bg-slate-800 text-white shadow-lg"
-                                                        : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                                                )}
-                                            >
-                                                <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-white" : "group-hover:text-slate-800")} />
-                                                {item.name}
-                                            </Link>
-                                        )
-                                    })}
-                                </div>
-                            )}
                         </nav>
 
                         {/* Admin Section (Only visible if actual super_admin) */}
@@ -273,7 +248,7 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                             <div className="space-y-4">
                                 <div className="px-4">
                                     <div className="flex items-center justify-between mb-2">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Admin-Bereich</p>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">God Modus Sektion</p>
 
                                         {/* God Mode Toggle */}
                                         <button
@@ -284,9 +259,9 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                                                     ? "bg-red-500 text-white border-red-500 shadow-sm shadow-red-200"
                                                     : "bg-slate-100 text-slate-400 border-slate-200"
                                             )}
-                                            title="Toggle God Mode (Admin Rights)"
+                                            title="God Modus umschalten"
                                         >
-                                            {godMode ? 'GOD MODE ON' : 'GOD MODE OFF'}
+                                            {godMode ? 'God Modus' : 'Admin Modus'}
                                         </button>
                                     </div>
 

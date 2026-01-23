@@ -5,6 +5,7 @@ import { Calendar, Users, Dice5, ArrowRight, Lightbulb, Clock, MapPin } from 'lu
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { EventCalendar } from '@/components/events/event-calendar'
+import { cookies } from 'next/headers'
 import { OnlineUsersWidget } from '@/components/social/online-users-widget'
 import { LeaderboardCard } from '@/components/social/leaderboard-card'
 import { getLeaderboard } from '@/app/events/session-actions'
@@ -35,7 +36,7 @@ export default async function DashboardPage() {
     ] = await Promise.all([
         supabase
             .from('profiles')
-            .select('has_seen_onboarding, full_name')
+            .select('has_seen_onboarding, full_name, system_role')
             .eq('id', user.id)
             .single(),
         supabase
@@ -100,6 +101,9 @@ export default async function DashboardPage() {
     ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 10)
 
+    const cookieStore = await cookies()
+    const godMode = cookieStore.get('godMode')?.value === 'true'
+
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             {/* Header & Quick Actions */}
@@ -122,24 +126,26 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column (2/3) */}
                 <div className="lg:col-span-2 space-y-8">
-                    {/* Ideen Einreichen Card */}
-                    <Link href="/features" className="block">
-                        <div className="rounded-3xl bg-gradient-to-r from-yellow-400 to-orange-500 p-6 text-white shadow-xl shadow-orange-200 relative overflow-hidden group hover:shadow-2xl transition-all">
-                            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
-                                <Lightbulb className="w-24 h-24" />
-                            </div>
-                            <div className="relative z-10 flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
-                                    <Lightbulb className="w-6 h-6" />
+                    {/* Ideen Einreichen Card - Only for Super Admins in God Mode */}
+                    {profile?.system_role === 'super_admin' && godMode && (
+                        <Link href="/features" className="block">
+                            <div className="rounded-3xl bg-gradient-to-r from-yellow-400 to-orange-500 p-6 text-white shadow-xl shadow-orange-200 relative overflow-hidden group hover:shadow-2xl transition-all">
+                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-500">
+                                    <Lightbulb className="w-24 h-24" />
                                 </div>
-                                <div>
-                                    <h3 className="text-xl font-extrabold">Hast du eine Idee?</h3>
-                                    <p className="text-yellow-50 opacity-90">Schlage neue Funktionen vor!</p>
+                                <div className="relative z-10 flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
+                                        <Lightbulb className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-extrabold">Hast du eine Idee?</h3>
+                                        <p className="text-yellow-50 opacity-90">Schlage neue Funktionen vor!</p>
+                                    </div>
+                                    <ArrowRight className="w-6 h-6 ml-auto" />
                                 </div>
-                                <ArrowRight className="w-6 h-6 ml-auto" />
                             </div>
-                        </div>
-                    </Link>
+                        </Link>
+                    )}
 
                     {groupCount === 0 && (
                         <div className="rounded-3xl bg-[#1c7ad6] p-8 text-white shadow-xl shadow-blue-200 relative overflow-hidden group">

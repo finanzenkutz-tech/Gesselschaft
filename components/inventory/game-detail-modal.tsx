@@ -100,7 +100,7 @@ export function GameDetailModal({
                                     <Gauge className="w-5 h-5 text-purple-500 mx-auto mb-2" />
                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Gewicht</p>
                                     <p className="font-extrabold text-slate-700">
-                                        {game.complexity ? game.complexity.toFixed(1) : details?.averageweight ? parseFloat(details.averageweight).toFixed(1) : '?'}/5
+                                        {game.complexity ? Number(game.complexity).toFixed(1) : details?.averageweight ? parseFloat(details.averageweight).toFixed(1) : '?'}/5
                                     </p>
                                 </div>
                             </div>

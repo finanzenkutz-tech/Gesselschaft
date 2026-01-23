@@ -34,7 +34,7 @@ export default async function MembersPage() {
                         <Users className="w-8 h-8 text-primary" />
                         Alle Mitglieder
                         <span className="bg-amber-100 text-amber-600 text-xs px-2 py-1 rounded-full font-black uppercase tracking-wider">
-                            Super Admin View
+                            God Modus Ansicht
                         </span>
                     </h1>
                     <p className="text-slate-500 text-lg mt-1">

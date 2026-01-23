@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import { Search, Filter, MapPin, X } from 'lucide-react'
+import { Search, Filter, MapPin, X, Bell } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { useDebounce } from '@/lib/hooks/use-debounce'
+import { saveSearch } from '@/app/marketplace/actions'
+import { toast } from 'sonner'
 
 export function MarketplaceFilters() {
     const router = useRouter()
@@ -69,6 +71,26 @@ export function MarketplaceFilters() {
         setLng(null)
     }
 
+    const handleSaveSearch = async () => {
+        const filters = {
+            type,
+            category,
+            condition,
+            lat,
+            lng,
+            radius
+        }
+
+        const label = search ? `Suche: ${search}` : 'Aktive Filter'
+
+        const res = await saveSearch(search, filters, label)
+        if (res.success) {
+            toast.success('Suche erfolgreich gespeichert! Wir benachrichtigen dich bei neuen Treffern.')
+        } else {
+            toast.error(res.error || 'Fehler beim Speichern')
+        }
+    }
+
     return (
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 space-y-4">
             <div className="flex flex-col md:flex-row gap-4">
@@ -89,6 +111,7 @@ export function MarketplaceFilters() {
                         <SelectItem value="all">Alle Typen</SelectItem>
                         <SelectItem value="sell">Verkauf</SelectItem>
                         <SelectItem value="trade">Tausch</SelectItem>
+                        <SelectItem value="rent">Verleih</SelectItem>
                     </SelectContent>
                 </Select>
                 <Select value={condition} onValueChange={setCondition}>
@@ -127,6 +150,10 @@ export function MarketplaceFilters() {
                         </div>
                     )}
                 </div>
+                <Button variant="ghost" size="sm" onClick={handleSaveSearch} className="gap-2 text-slate-500 hover:text-primary">
+                    <Bell className="w-4 h-4" />
+                    Suche speichern
+                </Button>
             </div>
         </div>
     )

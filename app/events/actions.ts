@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { addXP } from '@/app/gamification/actions'
+import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function createEvent(formData: FormData) {
     const supabase = await createClient()
@@ -102,6 +104,9 @@ export async function createEvent(formData: FormData) {
             }
         }
     }
+
+    // Award XP for creating an event
+    await addXP(user.id, XP_REWARDS.event_created, `Du hast ein neues Event "${title}" erstellt!`)
 
     revalidatePath('/events')
     revalidatePath(`/groups/${groupId}`)
