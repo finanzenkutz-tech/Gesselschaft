@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { MessageSquare, Send, Trash2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { addEventComment, deleteEventComment } from '@/app/events/comment-actions'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 interface Comment {
     id: string
@@ -29,6 +30,53 @@ export function EventComments({ eventId, initialComments, currentUserId }: Event
     const [newComment, setNewComment] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    useEffect(() => {
+        const supabase = createClient()
+        const channel = supabase
+            .channel(`event-comments-${eventId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'event_comments',
+                    filter: `event_id=eq.${eventId}`
+                },
+                async (payload) => {
+                    // Fetch full profile for the new comment
+                    const { data: newCommentData } = await supabase
+                        .from('event_comments')
+                        .select('*, profiles(full_name, avatar_url)')
+                        .eq('id', payload.new.id)
+                        .single()
+
+                    if (newCommentData) {
+                        setComments(prev => {
+                            if (prev.find(c => c.id === newCommentData.id)) return prev
+                            return [...prev, newCommentData]
+                        })
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'DELETE',
+                    schema: 'public',
+                    table: 'event_comments',
+                    filter: `event_id=eq.${eventId}`
+                },
+                (payload) => {
+                    setComments(prev => prev.filter(c => c.id !== payload.old.id))
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [eventId])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!newComment.trim() || isSubmitting) return
@@ -39,9 +87,6 @@ export function EventComments({ eventId, initialComments, currentUserId }: Event
         if (result.success) {
             setNewComment('')
             toast.success('Kommentar hinzugefügt')
-            // Optimistic update or just wait for revalidation? 
-            // Since it's a client component with initialData, we might want to refetch or manually update state.
-            // For simplicity in this demo, let's assume revalidatePath works or we refetch on the page.
         } else {
             toast.error('Fehler: ' + result.error)
         }
@@ -110,6 +155,7 @@ export function EventComments({ eventId, initialComments, currentUserId }: Event
                                             <button
                                                 onClick={() => handleDelete(comment.id)}
                                                 className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500"
+                                                title="Kommentar löschen"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>

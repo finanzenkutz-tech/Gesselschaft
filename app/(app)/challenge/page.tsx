@@ -190,11 +190,44 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
                                             )}
                                         </div>
                                     </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
-                                        {challenge.status === 'pending' ? 'Ausstehend' :
-                                            challenge.status === 'accepted' ? 'Angenommen' :
-                                                challenge.status === 'declined' ? 'Abgelehnt' : 'Abgeschlossen'}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
+                                            {challenge.status === 'pending' ? 'Ausstehend' :
+                                                challenge.status === 'accepted' ? 'Angenommen' :
+                                                    challenge.status === 'declined' ? 'Abgelehnt' : 'Abgeschlossen'}
+                                        </span>
+
+                                        {challenge.status === 'accepted' && (
+                                            <div className="flex gap-1">
+                                                <form action={async () => {
+                                                    'use server'
+                                                    const { completeChallenge } = await import('@/app/challenge/actions')
+                                                    await completeChallenge(challenge.id, challenge.challenger_id)
+                                                    revalidatePath('/challenge')
+                                                }}>
+                                                    <Button size="sm" variant="ghost" className="h-7 text-[10px] font-black hover:bg-green-50 hover:text-green-600" title="Herausforderer hat gewonnen">
+                                                        🏆 {challenge.challenger?.full_name?.split(' ')[0]}
+                                                    </Button>
+                                                </form>
+                                                <form action={async () => {
+                                                    'use server'
+                                                    const { completeChallenge } = await import('@/app/challenge/actions')
+                                                    await completeChallenge(challenge.id, challenge.challenged_id)
+                                                    revalidatePath('/challenge')
+                                                }}>
+                                                    <Button size="sm" variant="ghost" className="h-7 text-[10px] font-black hover:bg-blue-50 hover:text-blue-600" title="Herausgeforderter hat gewonnen">
+                                                        🏆 {challenge.challenged?.full_name?.split(' ')[0]}
+                                                    </Button>
+                                                </form>
+                                            </div>
+                                        )}
+                                        {challenge.status === 'completed' && challenge.winner_id && (
+                                            <div className="flex items-center gap-1 text-[10px] font-black text-amber-500 uppercase">
+                                                <Trophy className="w-3 h-3" />
+                                                Sieger: {challenge.winner_id === challenge.challenger_id ? challenge.challenger?.full_name?.split(' ')[0] : challenge.challenged?.full_name?.split(' ')[0]}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )
                         })}

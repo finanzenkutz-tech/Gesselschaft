@@ -410,6 +410,18 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                 </select>
                             </div>
 
+                            {/* Category Rating */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 ml-1">Kategorie</label>
+                                <Input
+                                    name="category"
+                                    value={category || ''}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    placeholder="z.B. Strategie, Familienspiel, Party..."
+                                    className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                                />
+                            </div>
+
                             {/* Complexity Rating */}
                             <div className="space-y-3">
                                 <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">

@@ -65,9 +65,19 @@ export function GameDetailModal({
                                 </div>
                                 <div className="text-white">
                                     <h2 className="text-3xl font-extrabold leading-tight">{game.name}</h2>
-                                    <p className="text-blue-200 font-bold mt-1">
-                                        {details?.yearpublished || 'Erscheinungsjahr unbekannt'}
-                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <p className="text-blue-200 font-bold">
+                                            {details?.yearpublished || 'Erscheinungsjahr unbekannt'}
+                                        </p>
+                                        {game.category && (
+                                            <>
+                                                <span className="text-blue-400/50">•</span>
+                                                <span className="text-blue-100/80 font-bold text-xs uppercase tracking-widest bg-white/10 px-2 py-0.5 rounded-md">
+                                                    {game.category}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
