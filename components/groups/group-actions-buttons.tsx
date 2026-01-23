@@ -25,9 +25,9 @@ export function GroupJoinButton({ groupId }: { groupId: string }) {
                 setStatus('error')
                 setErrorMessage(result.error || 'Fehler beim Beitritt')
             }
-        } catch (err) {
+        } catch (err: any) {
             setStatus('error')
-            setErrorMessage('Netzwerkfehler')
+            setErrorMessage(err.message || 'Verbindungsfehler')
         }
     }
 

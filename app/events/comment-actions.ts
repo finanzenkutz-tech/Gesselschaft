@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { createNotification } from '@/app/notifications/actions'
 
 export async function addEventComment(eventId: string, content: string) {
     const supabase = await createClient()
@@ -20,6 +21,33 @@ export async function addEventComment(eventId: string, content: string) {
     if (error) {
         console.error('Error adding comment:', error)
         return { success: false, error: error.message }
+    }
+
+    // Notify event creator (background task)
+    try {
+        const { data: event } = await supabase
+            .from('events')
+            .select('user_id, title')
+            .eq('id', eventId)
+            .single()
+
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single()
+
+        if (event && event.user_id !== user.id) {
+            await createNotification(
+                event.user_id,
+                'event_comment',
+                'Neuer Kommentar',
+                `${profile?.full_name || 'Jemand'} hat dein Event "${event.title}" kommentiert.`,
+                `/events/${eventId}`
+            )
+        }
+    } catch (notifyError) {
+        console.error('Error notifying creator:', notifyError)
     }
 
     revalidatePath(`/events/${eventId}`)
