@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { Dice5, Calendar, Users, Settings, UserPlus, LogOut, Plus, MapPin, History, Swords } from 'lucide-react'
+import { Dice5, Calendar, Users, Settings, UserPlus, LogOut, Plus, MapPin, History, Swords, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { joinGroup, leaveGroup } from '@/app/groups/member-actions'
 import { getChallengesForGroup } from '@/app/groups/challenge-actions'
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/accordion"
 
 export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params
+
     try {
         console.log('[GroupPage] Starting render for ID:', id)
         const supabase = await createClient()
