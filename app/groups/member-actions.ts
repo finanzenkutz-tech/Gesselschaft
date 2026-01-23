@@ -84,12 +84,12 @@ export async function joinGroup(groupId: string) {
                                 `
                             })
                         ),
-                        ...members.map((m: any) =>
+                        ...(members || []).map((m: any) =>
                             createNotification(
                                 m.user_id,
                                 'group_join',
                                 'Neues Gruppenmitglied',
-                                `${profile.full_name || 'Jemand'} ist ${group.name} beigetrehten.`,
+                                `${profile.full_name || 'Jemand'} ist der Gruppe ${group.name} beigetreten.`,
                                 `/groups/${groupId}`
                             )
                         )
