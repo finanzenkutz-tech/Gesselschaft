@@ -506,9 +506,11 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                     <Link href="/">
                         <Button className="rounded-xl">Zum Dashboard</Button>
                     </Link>
-                    <Button variant="outline" className="rounded-xl" onClick={() => window.location.reload()}>
-                        Erneut versuchen
-                    </Button>
+                    <Link href="">
+                        <Button variant="outline" className="rounded-xl">
+                            Erneut versuchen
+                        </Button>
+                    </Link>
                 </div>
             </div>
         )
