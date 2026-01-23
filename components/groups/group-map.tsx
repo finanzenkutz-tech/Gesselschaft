@@ -12,6 +12,7 @@ interface Group {
     latitude: number
     longitude: number
     location_name?: string
+    zip_code?: string
     group_members?: { count: number }[]
 }
 
@@ -169,12 +170,13 @@ export function GroupMap({
                                 {selectedGroup.location_name && (
                                     <p className="text-xs text-slate-400 flex items-center gap-1">
                                         <MapPin className="w-3 h-3" />
-                                        {selectedGroup.location_name}
+                                        {selectedGroup.zip_code ? `${selectedGroup.zip_code} ${selectedGroup.location_name}` : selectedGroup.location_name}
                                     </p>
                                 )}
                             </div>
                             <button
                                 onClick={() => setSelectedGroup(null)}
+                                title="Schließen"
                                 className="p-1 hover:bg-slate-100 rounded-full transition-colors"
                             >
                                 <X className="w-4 h-4 text-slate-400" />

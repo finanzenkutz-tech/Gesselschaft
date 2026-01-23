@@ -132,6 +132,42 @@ export async function updateGame(gameId: string, updates: any) {
     return { success: true }
 }
 
+export async function transferGame(gameId: string, targetUserId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    // Update owner of the game
+    const { error } = await supabase
+        .from('inventory')
+        .update({ owner_id: targetUserId })
+        .eq('id', gameId)
+        .eq('owner_id', user.id)
+
+    if (error) {
+        console.error('Error transferring game:', error)
+        return { success: false, error: error.message }
+    }
+
+    // Create a notification for the recipient
+    const { createNotification } = await import('@/app/notifications/actions')
+    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+    const { data: game } = await supabase.from('inventory').select('name').eq('id', gameId).single()
+
+    if (game && profile) {
+        await createNotification(
+            targetUserId,
+            'game_transfer',
+            'Spiel übertragen bekommen! 🎲',
+            `${profile.full_name} hat dir das Spiel "${game.name}" übertragen.`,
+            '/inventory'
+        )
+    }
+
+    revalidatePath('/inventory')
+    return { success: true }
+}
+
 
 export async function searchKnownGames(query: string) {
     const supabase = await createClient()

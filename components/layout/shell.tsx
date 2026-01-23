@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
-import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, Swords, Bell, LogOut, Trophy, MessageCircle, Shield, Smartphone, Tablet, Monitor, Globe, Store, History as HistoryIcon, AlertTriangle } from 'lucide-react'
+import { Home, Users, Calendar, Settings, Menu, X, Dice5, Sparkles, Box, User, UserPlus, Swords, Bell, LogOut, Trophy, MessageCircle, Shield, Smartphone, Tablet, Monitor, Globe, Store, History as HistoryIcon, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { User as SupabaseUser } from '@supabase/supabase-js'
@@ -16,6 +16,15 @@ import { GodModePopup } from '@/components/admin/god-mode-popup'
 import { updateLastSeen } from '@/app/profile/actions'
 import { RewardEffects } from '@/components/gamification/reward-effects'
 import Cookies from 'js-cookie'
+import { FriendsSidebar } from '@/components/layout/friends-sidebar'
+import { UserSearch } from '@/components/social/user-search'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
 
 const menuNavigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -240,7 +249,27 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                                 })}
                             </div>
 
+                            {/* Social / Buddies Section */}
+                            <div className="space-y-4 px-2">
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" className="w-full bg-slate-50 border-dashed border-2 border-slate-200 text-slate-400 hover:text-primary hover:border-primary rounded-2xl h-12 transition-all font-bold">
+                                            <UserPlus className="w-4 h-4 mr-2" /> Buddies finden
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="rounded-[2.5rem] border-none shadow-2xl p-8 bg-white max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                                <Users className="w-6 h-6 text-primary" />
+                                                Buddies finden
+                                            </DialogTitle>
+                                        </DialogHeader>
+                                        <UserSearch />
+                                    </DialogContent>
+                                </Dialog>
 
+                                <FriendsSidebar currentUserId={user.id} />
+                            </div>
                         </nav>
 
                         {/* Admin Section (Only visible if actual super_admin) */}

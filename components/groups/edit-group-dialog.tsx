@@ -26,6 +26,7 @@ type Group = {
     longitude?: number
     location_name?: string
     is_location_public?: boolean
+    zip_code?: string
 }
 
 export function EditGroupDialog({ group }: { group: Group }) {
@@ -163,36 +164,30 @@ export function EditGroupDialog({ group }: { group: Group }) {
                             </div>
 
                             <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 text-red-500" /> Standort / Stadt
-                                    </label>
-                                    <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
-                                        <LocationPicker
-                                            value={location ? [location.lat, location.lng] : null}
-                                            initialLat={group.latitude}
-                                            initialLng={group.longitude}
-                                            initialName={group.location_name}
-                                            initialPublic={group.is_location_public}
-                                            onChange={(lat, lng, name) => {
-                                                setLocation({ lat, lng })
-                                                if (name) setLocationName(name)
-                                            }}
-                                            showSaveButton={false}
-                                            height="h-[300px]"
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                            <MapPin className="w-4 h-4 text-primary" /> PLZ *
+                                        </label>
+                                        <Input
+                                            name="zip_code"
+                                            defaultValue={group.zip_code || ''}
+                                            placeholder="z.B. 10115"
+                                            required
+                                            className="rounded-xl bg-slate-50 border-slate-100 h-12 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
                                         />
                                     </div>
-                                    <div className="flex items-center gap-2 px-1">
-                                        <input
-                                            type="checkbox"
-                                            id="isPublic"
-                                            checked={isPublic}
-                                            onChange={(e) => setIsPublic(e.target.checked)}
-                                            className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-                                        />
-                                        <label htmlFor="isPublic" className="text-sm text-slate-600 cursor-pointer">
-                                            Standort öffentlich auf der Karte anzeigen
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                            <MapPin className="w-4 h-4 text-blue-400" /> Ort (Anzeige)
                                         </label>
+                                        <Input
+                                            name="location_name"
+                                            value={locationName}
+                                            onChange={(e) => setLocationName(e.target.value)}
+                                            placeholder="z.B. Berlin"
+                                            className="rounded-xl bg-slate-50 border-slate-100 h-12 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                                        />
                                     </div>
                                 </div>
                             </div>

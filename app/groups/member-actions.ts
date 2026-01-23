@@ -13,7 +13,7 @@ export async function joinGroup(groupId: string) {
     // Check if already a member
     const { data: existing } = await supabase
         .from('group_members')
-        .select('id')
+        .select('user_id')
         .eq('group_id', groupId)
         .eq('user_id', user.id)
         .single()

@@ -84,15 +84,26 @@ export function CreateGroupDialog() {
                                 className="rounded-xl bg-slate-50 border-slate-100 h-12"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-slate-700 ml-1">PLZ / Ort (optional)</label>
-                            <Input
-                                name="location"
-                                placeholder="z.B. 10115 Berlin"
-                                className="rounded-xl bg-slate-50 border-slate-100 h-12"
-                            />
-                            <p className="text-xs text-slate-400 ml-1">Wird verwendet, um deine Gruppe auf der Karte anzuzeigen.</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 ml-1">PLZ *</label>
+                                <Input
+                                    name="zip_code"
+                                    placeholder="z.B. 10115"
+                                    required
+                                    className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 ml-1">Ort (Anzeige)</label>
+                                <Input
+                                    name="location"
+                                    placeholder="z.B. Berlin"
+                                    className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                                />
+                            </div>
                         </div>
+                        <p className="text-xs text-slate-400 ml-1">Die PLZ wird verwendet, um deine Gruppe auf der Karte anzuzeigen.</p>
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-slate-700 ml-1">Beschreibung</label>
                             <Textarea

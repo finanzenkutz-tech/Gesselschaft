@@ -31,6 +31,7 @@ type Place = {
 }
 
 import { EditPlaceDialog } from './edit-place-dialog'
+import { PlaceRating } from './place-rating'
 
 export function GroupPlacesWidget({
     groupId,
@@ -136,6 +137,9 @@ export function GroupPlacesWidget({
                                             <span className="font-medium">{place.services}</span>
                                         </div>
                                     )}
+
+                                    {/* Rating System */}
+                                    <PlaceRating placeId={place.id} currentUserId={currentUserId} />
                                 </div>
 
                                 {(isAdmin || place.created_by === currentUserId) && (
@@ -143,6 +147,7 @@ export function GroupPlacesWidget({
                                         <EditPlaceDialog place={place} groupId={groupId} />
                                         <button
                                             onClick={() => handleDelete(place.id)}
+                                            title="Ort löschen"
                                             className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all"
                                         >
                                             <Trash2 className="w-4 h-4" />

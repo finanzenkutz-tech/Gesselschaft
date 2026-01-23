@@ -5,6 +5,7 @@ import { removeGameFromInventory } from '@/app/inventory/actions'
 import { AddGameForm } from '@/components/inventory/add-game-form'
 import { GameDetailModal } from '@/components/inventory/game-detail-modal'
 import { BGGSyncButton } from '@/components/inventory/bgg-sync-button'
+import { GameTransferDialog } from '@/components/inventory/game-transfer-dialog'
 
 export default async function InventoryPage() {
     const supabase = await createClient()
@@ -202,6 +203,7 @@ export default async function InventoryPage() {
                                             </Button>
                                         </a>
                                     )}
+                                    <GameTransferDialog game={game} currentUserId={user.id} />
                                     <form action={async () => { 'use server'; await removeGameFromInventory(game.id) }}>
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-500">
                                             <Trash2 className="h-4 w-4" />
