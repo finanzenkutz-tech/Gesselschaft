@@ -91,6 +91,11 @@ export function GroupGamesCard({ games }: { games: any[] }) {
                                                 <span className="text-[10px] text-slate-400 font-medium truncate">
                                                     von {game.profiles?.full_name?.split(' ')[0]}
                                                 </span>
+                                                {game.notes && (
+                                                    <span className="flex items-center gap-1 text-[9px] text-amber-500 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md" title={game.notes}>
+                                                        Kommentar
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

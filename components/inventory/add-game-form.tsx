@@ -56,6 +56,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     const [category, setCategory] = useState<string | null>(null)
     const [priceNew, setPriceNew] = useState<string>('')
     const [priceUsed, setPriceUsed] = useState<string>('')
+    const [notes, setNotes] = useState('')
 
     const router = useRouter()
 
@@ -201,6 +202,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         if (luck) formData.set('luck_score', luck.toString())
         if (priceNew) formData.set('price_new', priceNew)
         if (priceUsed) formData.set('price_used', priceUsed)
+        if (notes) formData.set('notes', notes)
         if (selectedSource) formData.set('source', selectedSource)
 
         const result = await addGameToInventory(formData)
@@ -255,6 +257,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         setLuck(null)
         setPriceNew('')
         setPriceUsed('')
+        setNotes('')
     }
 
     return (
@@ -483,6 +486,18 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
                                         className="rounded-xl bg-slate-50 border-slate-100 h-12"
                                     />
                                 </div>
+                            </div>
+
+                            {/* Notes Field */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-slate-700 ml-1">Persönliche Notizen / Kommentar</label>
+                                <textarea
+                                    name="notes"
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    placeholder="Besonderheiten, Zustand, oder wie es in deine Sammlung kam..."
+                                    className="w-full min-h-[100px] p-4 rounded-xl bg-slate-50 border border-slate-100 focus:bg-white text-sm outline-none resize-none transition-all focus:ring-2 focus:ring-primary/20"
+                                />
                             </div>
                         </div>
 

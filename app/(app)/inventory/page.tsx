@@ -279,6 +279,12 @@ export default async function InventoryPage() {
                                             )}
                                         </div>
                                     </div>
+                                    {game.notes && (
+                                        <div className="mt-3 p-2 bg-amber-50/50 rounded-lg border border-amber-100/50 text-[10px] text-slate-500 italic line-clamp-1 flex items-center gap-1.5">
+                                            <FileText className="w-3 h-3 text-amber-500 shrink-0" />
+                                            {game.notes}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {game.bgg_link && (
@@ -306,8 +312,9 @@ export default async function InventoryPage() {
                         </div>
                     ))}
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     )
 }
 

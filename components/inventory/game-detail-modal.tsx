@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Info, Users, Clock, Star, ExternalLink, Loader2, Archive, CheckCircle2, Gauge, BookOpen, PlayCircle, Edit2, FileText } from 'lucide-react'
 import { getBGGGameDetails } from '@/app/(app)/inventory/bgg-actions'
 import { updateGame } from '@/app/(app)/inventory/actions'
+import { cn } from '@/lib/utils'
 
 export function GameDetailModal({
     game
@@ -26,13 +27,23 @@ export function GameDetailModal({
     // Quickfinder State
     const [rulesUrl, setRulesUrl] = useState(game.rules_url || '')
     const [videoUrl, setVideoUrl] = useState(game.video_url || '')
+    const [notes, setNotes] = useState(game.notes || '')
     const [isEditingLinks, setIsEditingLinks] = useState(false)
+    const [isEditingNotes, setIsEditingNotes] = useState(false)
 
     const saveLinks = async () => {
         setLoading(true)
         await updateGame(game.id, { rules_url: rulesUrl, video_url: videoUrl })
         setLoading(false)
         setIsEditingLinks(false)
+        window.location.reload()
+    }
+
+    const saveNotes = async () => {
+        setLoading(true)
+        await updateGame(game.id, { notes: notes })
+        setLoading(false)
+        setIsEditingNotes(false)
         window.location.reload()
     }
 
@@ -260,6 +271,57 @@ export function GameDetailModal({
                                     </div>
                                 </div>
                             )}
+
+                            {/* Notes Section */}
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-amber-500" />
+                                        Persönlicher Kommentar
+                                    </h3>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsEditingNotes(!isEditingNotes)}
+                                        className="text-slate-400 hover:text-amber-600 hover:bg-amber-50"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+
+                                {isEditingNotes ? (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <textarea
+                                            value={notes}
+                                            onChange={e => setNotes(e.target.value)}
+                                            placeholder="Besonderheiten, Zustand, oder wie es in deine Sammlung kam..."
+                                            className="w-full min-h-[120px] p-4 rounded-2xl bg-slate-50 border border-slate-200 focus:bg-white text-sm outline-none resize-none transition-all focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500/30"
+                                        />
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="sm" onClick={() => setIsEditingNotes(false)}>Abbrechen</Button>
+                                            <Button size="sm" onClick={saveNotes} className="bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200">
+                                                Speichern
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className={cn(
+                                        "p-6 rounded-2xl border transition-all relative overflow-hidden",
+                                        game.notes
+                                            ? "bg-amber-50/30 border-amber-100 text-slate-700"
+                                            : "bg-slate-50 border-dashed border-slate-200 text-slate-400 italic"
+                                    )}>
+                                        {game.notes ? (
+                                            <p className="text-sm leading-relaxed relative z-10">{game.notes}</p>
+                                        ) : (
+                                            <p className="text-sm relative z-10 flex items-center gap-2">
+                                                <Edit2 className="w-3.5 h-3.5 opacity-50" /> Keine Notizen hinterlegt.
+                                            </p>
+                                        )}
+                                        <FileText className="absolute -right-4 -bottom-4 w-24 h-24 text-amber-500/5 rotate-12" />
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Actions / Edit */}
                             <div className="space-y-4 pt-4 border-t border-slate-100">
