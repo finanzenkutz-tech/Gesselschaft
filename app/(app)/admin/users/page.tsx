@@ -6,6 +6,7 @@ import { de } from 'date-fns/locale'
 
 import { cookies } from 'next/headers'
 import { AdminUserTable } from '@/components/admin/user-table'
+import { CreateUserDialog } from '@/components/admin/create-user-dialog'
 
 export default async function AdminUsersPage() {
     const supabase = await createClient()
@@ -34,12 +35,15 @@ export default async function AdminUsersPage() {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            <header>
-                <h1 className="text-3xl font-extrabold text-slate-800 flex items-center gap-3">
-                    <Shield className="w-8 h-8 text-primary" />
-                    Mitgliederverwaltung
-                </h1>
-                <p className="text-slate-500 text-lg mt-1">Hier siehst du alle registrierten Nutzer der Plattform.</p>
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-extrabold text-slate-800 flex items-center gap-3">
+                        <Shield className="w-8 h-8 text-primary" />
+                        Mitgliederverwaltung
+                    </h1>
+                    <p className="text-slate-500 text-lg mt-1">Hier siehst du alle registrierten Nutzer der Plattform.</p>
+                </div>
+                {godMode && <CreateUserDialog />}
             </header>
 
             <div className="sky-card overflow-hidden p-6">

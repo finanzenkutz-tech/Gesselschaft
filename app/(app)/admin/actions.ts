@@ -188,3 +188,32 @@ export async function updateReportStatus(reportId: string, status: 'resolved' | 
     revalidatePath('/admin/reports')
     return { success: true }
 }
+export async function createUserAdmin(email: string, password: string, profileData: any) {
+    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const adminSupabase = createAdminClient()
+
+    // 1. Create Auth User
+    const { data: authData, error: authError } = await adminSupabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true
+    })
+
+    if (authError) return { success: false, error: authError.message }
+
+    // 2. Update Profile with extra data
+    const { error: profileError } = await adminSupabase
+        .from('profiles')
+        .update({
+            ...profileData,
+            email: email // Ensure email is set
+        })
+        .eq('id', authData.user.id)
+
+    if (profileError) return { success: false, error: profileError.message }
+
+    revalidatePath('/admin/users')
+    return { success: true }
+}

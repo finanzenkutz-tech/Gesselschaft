@@ -11,7 +11,7 @@ export async function getGroupMessages(groupId: string) {
         .from('group_messages')
         .select(`
             *,
-            profiles:profiles!group_messages_user_id_fkey(full_name, avatar_url)
+            profiles:user_id(full_name, avatar_url)
         `)
         .eq('group_id', groupId)
         .order('created_at', { ascending: true }) // Oldest first for chat log
@@ -40,7 +40,7 @@ export async function sendGroupMessage(groupId: string, content: string) {
         })
         .select(`
             *,
-            profiles:profiles!group_messages_user_id_fkey(full_name, avatar_url)
+            profiles:user_id(full_name, avatar_url)
         `)
         .single()
 
@@ -76,14 +76,14 @@ export async function getUserGroups() {
 // Direct Message Types and Functions
 export type DirectMessage = {
     id: string
+    chat_id: string
     sender_id: string
-    receiver_id: string
     content: string
     created_at: string
-    read_at: string | null
+    is_read: boolean
 }
 
-export async function sendMessage(partnerId: string, content: string) {
+export async function sendMessage(chatId: string, content: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Not authenticated' }
@@ -93,8 +93,8 @@ export async function sendMessage(partnerId: string, content: string) {
     const { error } = await supabase
         .from('direct_messages')
         .insert({
+            chat_id: chatId,
             sender_id: user.id,
-            receiver_id: partnerId,
             content: content
         })
 
@@ -106,7 +106,7 @@ export async function sendMessage(partnerId: string, content: string) {
     return { success: true }
 }
 
-export async function getMessages(partnerId: string): Promise<DirectMessage[]> {
+export async function getMessages(chatId: string): Promise<DirectMessage[]> {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return []
@@ -114,7 +114,7 @@ export async function getMessages(partnerId: string): Promise<DirectMessage[]> {
     const { data, error } = await supabase
         .from('direct_messages')
         .select('*')
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`)
+        .eq('chat_id', chatId)
         .order('created_at', { ascending: true })
 
     if (error) {
@@ -145,11 +145,11 @@ export async function getChatPartner(partnerId: string) {
 export async function getConversations() {
     const rawChats = await getMyDirectChats()
 
+    // Enrich with last message if needed
     return rawChats.map((c: any) => ({
-        partnerId: c.profiles?.id || c.chat_id,
-        lastMessage: '...',
-        lastMessageAt: new Date().toISOString(),
-        unread: false,
-        partner: c.profiles
+        chatId: c.chat_id,
+        partner: c.profiles,
+        lastMessage: '...', // Placeholder or fetch latest
+        lastMessageAt: c.profiles?.last_seen
     }))
 }

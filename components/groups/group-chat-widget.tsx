@@ -33,10 +33,15 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
     useEffect(() => {
         const loadMessages = async () => {
             setLoading(true)
-            const msgs = await getGroupMessages(groupId)
-            setMessages(msgs || [])
-            setLoading(false)
-            scrollToBottom()
+            try {
+                const msgs = await getGroupMessages(groupId)
+                setMessages(msgs || [])
+            } catch (err) {
+                console.error('Error in GroupChatWidget:', err)
+            } finally {
+                setLoading(false)
+                scrollToBottom()
+            }
         }
         loadMessages()
 
