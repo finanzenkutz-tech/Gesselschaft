@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
         .eq('id', user.id)
         .single()
 
-    if (profile?.system_role !== 'super_admin') {
+    if (profile?.system_role !== 'super_admin' && profile?.system_role !== 'admin') {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
                 <ShieldAlert className="w-16 h-16 text-red-500 animate-pulse" />

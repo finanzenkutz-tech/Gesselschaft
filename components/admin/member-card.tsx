@@ -136,6 +136,12 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
                         Spieler
                     </span>
                 )}
+                {profile.is_teacher && (
+                    <span className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
+                        <Users className="w-3 h-3" />
+                        Lehrer
+                    </span>
+                )}
             </div>
 
             {/* Password Section */}

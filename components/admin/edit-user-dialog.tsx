@@ -31,6 +31,7 @@ export function EditUserDialog({ user }: { user: any }) {
         pref_email_notifications: user.pref_email_notifications ?? true,
         pref_push_notifications: user.pref_push_notifications ?? true,
         pref_in_app_notifications: user.pref_in_app_notifications ?? true,
+        is_teacher: user.is_teacher ?? false,
     })
     const router = useRouter()
 
@@ -166,6 +167,14 @@ export function EditUserDialog({ user }: { user: any }) {
                                     id="show_reputation_admin"
                                     checked={formData.show_reputation}
                                     onCheckedChange={(checked) => setFormData({ ...formData, show_reputation: checked })}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="is_teacher_admin" className="cursor-pointer font-bold text-indigo-600">Als Lehrer markieren</Label>
+                                <Switch
+                                    id="is_teacher_admin"
+                                    checked={formData.is_teacher}
+                                    onCheckedChange={(checked) => setFormData({ ...formData, is_teacher: checked })}
                                 />
                             </div>
                         </div>

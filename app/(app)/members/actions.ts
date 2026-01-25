@@ -9,6 +9,7 @@ export async function createMember(formData: {
     email: string
     fullName: string
     password?: string
+    isTeacher?: boolean
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -24,7 +25,7 @@ export async function createMember(formData: {
         .eq('id', user.id)
         .single()
 
-    if (currentUserProfile?.system_role !== 'super_admin') {
+    if (currentUserProfile?.system_role !== 'super_admin' && currentUserProfile?.system_role !== 'admin') {
         return { success: false, error: 'Keine Berechtigung' }
     }
 
@@ -45,6 +46,14 @@ export async function createMember(formData: {
     if (error) {
         console.error('Error creating user:', error)
         return { success: false, error: error.message }
+    }
+
+    // 3. Update Profile with is_teacher if needed
+    if (formData.isTeacher) {
+        await adminClient
+            .from('profiles')
+            .update({ is_teacher: true })
+            .eq('id', data.user.id)
     }
 
     revalidatePath('/members')

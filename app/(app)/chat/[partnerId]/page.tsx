@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getMyDirectChats } from '../direct-actions'
+import { getMyDirectChats, getOrCreateDirectChat } from '../direct-actions'
 import { ConversationList } from '@/components/chat/conversation-list'
 import { ChatWindow } from '@/components/chat/chat-window'
 
@@ -15,12 +15,20 @@ export default async function ChatConversationPage({
 
     if (!user) redirect('/login')
 
+    // 1. Get or Create the Chat Room
+    const chatResult = await getOrCreateDirectChat(partnerId)
+    if (!chatResult.success || !chatResult.chatId) {
+        console.error('Failed to get/create chat:', chatResult.error)
+        // Optionally redirect or show error
+    }
+
     const rawChats = await getMyDirectChats()
 
     // Transform to the expected format
     const conversations = rawChats.map((c: any) => ({
         partnerId: c.profiles?.id || c.chat_id,
-        lastMessage: '', // Would need a separate query for last message
+        chatId: c.chat_id,
+        lastMessage: '',
         lastMessageAt: new Date().toISOString(),
         unread: false,
         partner: Array.isArray(c.profiles) ? c.profiles[0] : c.profiles
@@ -45,6 +53,7 @@ export default async function ChatConversationPage({
                 {/* Chat Window */}
                 <div className="lg:col-span-2 sky-card p-0 overflow-hidden h-full">
                     <ChatWindow
+                        chatId={chatResult.chatId || ''}
                         partnerId={partnerId}
                         currentUserId={user.id}
                     />

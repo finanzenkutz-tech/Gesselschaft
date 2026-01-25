@@ -20,7 +20,7 @@ export async function confirmGodMode() {
 }
 
 export async function sendPasswordReset(email: string) {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
 
@@ -32,7 +32,7 @@ export async function sendPasswordReset(email: string) {
     return { success: true }
 }
 
-async function checkSuperAdmin() {
+async function checkAdmin() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return false
@@ -43,11 +43,11 @@ async function checkSuperAdmin() {
         .eq('id', user.id)
         .single()
 
-    return profile?.system_role === 'super_admin'
+    return profile?.system_role === 'super_admin' || profile?.system_role === 'admin'
 }
 
 export async function getAllUsers() {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
     const { data, error } = await supabase
@@ -60,7 +60,7 @@ export async function getAllUsers() {
 }
 
 export async function getAllGroups() {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
     const { data, error } = await supabase
@@ -73,7 +73,7 @@ export async function getAllGroups() {
 }
 
 export async function deleteUser(userId: string) {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
 
@@ -90,7 +90,7 @@ export async function deleteUser(userId: string) {
 }
 
 export async function updateUserProfile(userId: string, data: any) {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
     const { createAdminClient } = await import('@/lib/supabase/admin')
@@ -123,7 +123,7 @@ export async function updateUserProfile(userId: string, data: any) {
 }
 
 export async function deleteAnyGroup(groupId: string) {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
     const { error } = await supabase
@@ -139,7 +139,7 @@ export async function deleteAnyGroup(groupId: string) {
 }
 
 export async function deleteAnyEvent(eventId: string) {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
     const { error } = await supabase
@@ -155,7 +155,7 @@ export async function deleteAnyEvent(eventId: string) {
 }
 
 export async function getAdminStats() {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
 
@@ -191,7 +191,7 @@ export async function getAdminStats() {
     }
 }
 export async function updateReportStatus(reportId: string, status: 'resolved' | 'dismissed') {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
     const { error } = await supabase
@@ -206,7 +206,7 @@ export async function updateReportStatus(reportId: string, status: 'resolved' | 
     return { success: true }
 }
 export async function createUserAdmin(email: string, password: string, profileData: any) {
-    if (!await checkSuperAdmin()) throw new Error('Unauthorized')
+    if (!await checkAdmin()) throw new Error('Unauthorized')
 
     const { createAdminClient } = await import('@/lib/supabase/admin')
     const adminSupabase = createAdminClient()

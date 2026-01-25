@@ -23,7 +23,8 @@ export function CreateMemberDialog() {
     const [formData, setFormData] = useState({
         email: '',
         fullName: '',
-        password: ''
+        password: '',
+        isTeacher: false
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -39,7 +40,7 @@ export function CreateMemberDialog() {
                     duration: 10000
                 })
                 setOpen(false)
-                setFormData({ email: '', fullName: '', password: '' })
+                setFormData({ email: '', fullName: '', password: '', isTeacher: false })
             } else {
                 toast.error('Fehler beim Erstellen', {
                     description: result.error
@@ -115,6 +116,18 @@ export function CreateMemberDialog() {
                                     onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
                                 />
                             </div>
+                        </div>
+                        <div className="flex items-center space-x-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <input
+                                type="checkbox"
+                                id="isTeacher"
+                                className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                checked={formData.isTeacher}
+                                onChange={(e) => setFormData(p => ({ ...p, isTeacher: e.target.checked }))}
+                            />
+                            <label htmlFor="isTeacher" className="text-sm font-bold text-slate-700 cursor-pointer">
+                                Als Lehrer markieren
+                            </label>
                         </div>
                     </div>
 

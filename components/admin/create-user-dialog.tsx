@@ -29,6 +29,7 @@ export function CreateUserDialog() {
         pref_email_notifications: true,
         pref_push_notifications: true,
         pref_in_app_notifications: true,
+        is_teacher: false,
     })
     const router = useRouter()
 
@@ -158,6 +159,14 @@ export function CreateUserDialog() {
                                     id="show_reputation_create"
                                     checked={formData.show_reputation}
                                     onCheckedChange={(checked) => setFormData({ ...formData, show_reputation: checked })}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="is_teacher_create" className="cursor-pointer font-bold text-indigo-600">Als Lehrer markieren</Label>
+                                <Switch
+                                    id="is_teacher_create"
+                                    checked={formData.is_teacher}
+                                    onCheckedChange={(checked) => setFormData({ ...formData, is_teacher: checked })}
                                 />
                             </div>
                         </div>

@@ -166,9 +166,11 @@ export async function getConversations() {
 
     // Enrich with last message if needed
     return rawChats.map((c: any) => ({
+        partnerId: c.profiles?.id,
         chatId: c.chat_id,
         partner: c.profiles,
         lastMessage: '...', // Placeholder or fetch latest
-        lastMessageAt: c.profiles?.last_seen
+        lastMessageAt: c.profiles?.last_seen || new Date().toISOString(),
+        unread: false
     }))
 }

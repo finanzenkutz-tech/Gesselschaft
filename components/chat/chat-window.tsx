@@ -17,7 +17,15 @@ type ChatPartner = {
     last_seen: string | null
 }
 
-export function ChatWindow({ partnerId, currentUserId }: { partnerId: string, currentUserId: string }) {
+export function ChatWindow({
+    chatId,
+    partnerId,
+    currentUserId
+}: {
+    chatId: string,
+    partnerId: string,
+    currentUserId: string
+}) {
     const [messages, setMessages] = useState<DirectMessage[]>([])
     const [newMessage, setNewMessage] = useState('')
     const [sending, setSending] = useState(false)
@@ -27,32 +35,40 @@ export function ChatWindow({ partnerId, currentUserId }: { partnerId: string, cu
 
     // Load initial messages and partner info
     useEffect(() => {
+        if (!chatId && !partnerId) return
+
         const loadData = async () => {
             const [msgs, partnerData] = await Promise.all([
-                getMessages(partnerId),
+                chatId ? getMessages(chatId) : [],
                 getChatPartner(partnerId)
             ])
             setMessages(msgs)
             setPartner(partnerData)
         }
         loadData()
-    }, [partnerId])
+    }, [chatId, partnerId])
 
     // Subscribe to new messages in realtime
     useEffect(() => {
+        if (!chatId) return
+
         const channel = supabase
-            .channel('direct-messages')
+            .channel(`chat:${chatId}`)
             .on(
                 'postgres_changes',
                 {
                     event: 'INSERT',
                     schema: 'public',
                     table: 'direct_messages',
-                    filter: `or(and(sender_id.eq.${partnerId},receiver_id.eq.${currentUserId}),and(sender_id.eq.${currentUserId},receiver_id.eq.${partnerId}))`
+                    filter: `chat_id=eq.${chatId}`
                 },
                 (payload) => {
                     const newMsg = payload.new as DirectMessage
-                    setMessages(prev => [...prev, newMsg])
+                    setMessages(prev => {
+                        // Avoid duplicates if already added optimistically
+                        if (prev.find(m => m.id === newMsg.id)) return prev
+                        return [...prev, newMsg]
+                    })
                 }
             )
             .subscribe()
@@ -60,7 +76,7 @@ export function ChatWindow({ partnerId, currentUserId }: { partnerId: string, cu
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [partnerId, currentUserId, supabase])
+    }, [chatId, supabase])
 
     // Scroll to bottom on new messages
     useEffect(() => {
@@ -69,12 +85,14 @@ export function ChatWindow({ partnerId, currentUserId }: { partnerId: string, cu
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!newMessage.trim() || sending) return
+        if (!newMessage.trim() || sending || !chatId) return
 
         setSending(true)
-        const result = await sendMessage(partnerId, newMessage)
+        const result = await sendMessage(chatId, newMessage)
         if (result.success) {
             setNewMessage('')
+            // The message will be added via Realtime, but for better UX 
+            // we could add it optimistically here if needed.
         }
         setSending(false)
     }
@@ -134,8 +152,8 @@ export function ChatWindow({ partnerId, currentUserId }: { partnerId: string, cu
                             >
                                 <div
                                     className={`max-w-[75%] px-4 py-3 rounded-2xl shadow-sm ${isOwn
-                                            ? 'bg-primary text-white rounded-br-md'
-                                            : 'bg-white text-slate-800 rounded-bl-md border border-slate-100'
+                                        ? 'bg-primary text-white rounded-br-md'
+                                        : 'bg-white text-slate-800 rounded-bl-md border border-slate-100'
                                         }`}
                                 >
                                     <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
