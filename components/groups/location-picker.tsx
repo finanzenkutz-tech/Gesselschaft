@@ -16,6 +16,8 @@ interface LocationPickerProps {
     // For Controlled mode (Form Input)
     value?: [number, number] | null
     onChange?: (lat: number, lng: number, name?: string) => void
+    onNameChange?: (name: string) => void // New prop for name sync
+    onPublicChange?: (isPublic: boolean) => void // New prop for public status sync
 
     // Common
     initialLat?: number
@@ -42,7 +44,9 @@ export function LocationPicker({
     height = "h-64",
     showSaveButton = true,
     showPublicSwitch = true,
-    showNameInput = true
+    showNameInput = true,
+    onNameChange,
+    onPublicChange
 }: LocationPickerProps) {
     const [position, setPosition] = useState<[number, number] | null>(
         value || (initialLat && initialLng ? [initialLat, initialLng] : null)
@@ -68,12 +72,17 @@ export function LocationPicker({
     useEffect(() => {
         // Dynamic import Leaflet
         const initMap = async () => {
-            if (!mapRef.current || mapInstanceRef.current) return
+            if (mapInstanceRef.current) return // Already initialized
+            if (!mapRef.current) return
 
             const L = (await import('leaflet')).default
 
             const center: [number, number] = position || [51.1657, 10.4515]
             const zoom = position ? 13 : 6
+
+            // Check if map container is already initialized (Leaflet internal check)
+            // @ts-ignore
+            if (mapRef.current._leaflet_id) return // Double safety
 
             const map = L.map(mapRef.current, {
                 center,
@@ -122,6 +131,7 @@ export function LocationPicker({
 
                     if (bestName) {
                         setLocationName(bestName)
+                        onNameChange?.(bestName) // Propagate
                     }
 
                     if (onChange) {
@@ -141,6 +151,8 @@ export function LocationPicker({
         initMap()
 
         return () => {
+            // Cleanup happens only on unmount
+            // We can optionally keep it alive or destroy it
             if (mapInstanceRef.current) {
                 mapInstanceRef.current.remove()
                 mapInstanceRef.current = null
@@ -172,8 +184,19 @@ export function LocationPicker({
     const [searchQuery, setSearchQuery] = useState('')
     const [isSearching, setIsSearching] = useState(false)
 
-    const handleSearch = async (e?: React.FormEvent) => {
-        e?.preventDefault()
+    const handleSearchClick = (e: any) => {
+        e.preventDefault()
+        handleSearch()
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            handleSearch()
+        }
+    }
+
+    const handleSearch = async () => {
         if (!searchQuery.trim()) return
 
         setIsSearching(true)
@@ -191,10 +214,10 @@ export function LocationPicker({
 
                 setPosition(newPos)
 
-                // Update Name if empty
                 if (!locationName) {
                     const name = data[0].name || data[0].display_name.split(',')[0]
                     setLocationName(name)
+                    onNameChange?.(name) // Propagate
                 }
 
                 if (mapInstanceRef.current) {
@@ -215,9 +238,6 @@ export function LocationPicker({
                 }
 
                 if (onChange) {
-                    // If we found a name, maybe pass it? 
-                    // onChange(lat, lon, locationName || ...) 
-                    // For now just update lat/lon
                     onChange(lat, lon)
                 }
             } else {
@@ -234,18 +254,19 @@ export function LocationPicker({
     return (
         <div className="space-y-4">
             {showNameInput && (
-                <form onSubmit={handleSearch} className="flex gap-2">
+                <div className="flex gap-2">
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         placeholder="Stadt oder Ort suchen..."
                         className="flex-1 p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white transition-colors"
                     />
-                    <Button type="submit" variant="secondary" disabled={isSearching} className="h-auto py-2">
+                    <Button onClick={handleSearchClick} variant="secondary" disabled={isSearching} className="h-auto py-2">
                         {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                     </Button>
-                </form>
+                </div>
             )}
 
             <div className="space-y-2">
@@ -267,6 +288,7 @@ export function LocationPicker({
                             value={locationName}
                             onChange={(e) => {
                                 setLocationName(e.target.value)
+                                onNameChange?.(e.target.value) // Propagate
                                 if (onChange && position) {
                                     onChange(position[0], position[1], e.target.value)
                                 }
@@ -287,7 +309,10 @@ export function LocationPicker({
                         </div>
                         <Switch
                             checked={isPublic}
-                            onCheckedChange={setIsPublic}
+                            onCheckedChange={(val) => {
+                                setIsPublic(val)
+                                onPublicChange?.(val) // Propagate
+                            }}
                         />
                     </div>
                 )}

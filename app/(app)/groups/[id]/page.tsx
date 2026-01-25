@@ -1,30 +1,31 @@
 import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
-import { Dice5, Calendar, Users, Settings, UserPlus, LogOut, Plus, MapPin, History, Swords, X } from 'lucide-react'
+import { Dice5, Calendar, Users, Settings, MapPin, History, Swords, X, Coins, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { joinGroup, leaveGroup } from '@/app/groups/member-actions'
 import { getChallengesForGroup } from '@/app/groups/challenge-actions'
-import { revalidatePath } from 'next/cache'
 import { GroupPlacesWidget } from '@/components/groups/group-places-widget'
 import { CreateEventDialog } from '@/components/events/create-event-dialog'
 import { GroupJoinButton, GroupLeaveButton } from '@/components/groups/group-actions-buttons'
-import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
 import { EditGroupDialog } from '@/components/groups/edit-group-dialog'
 import { ChallengeList } from '@/components/groups/challenge-list'
-import { LocationPicker } from '@/components/groups/location-picker'
 import { PollWidget } from '@/components/groups/poll-widget'
 import { CreatePollForm } from '@/components/groups/create-poll-form'
 import { getPollsForGroup } from '@/app/groups/poll-actions'
 import { GroupGamesCard } from '@/components/groups/group-games-card'
 import { NextEventCountdown } from '@/components/groups/next-event-countdown'
-import { ViewPlaceMapDialog } from '@/components/groups/view-place-map-dialog'
+import { RecentGamesList } from '@/components/groups/recent-games-list'
+import { LogGameDialog } from '@/components/groups/log-game-dialog'
+import { GroupLeaderboard } from '@/components/groups/group-leaderboard'
+import { MemberComparisonDialog } from '@/components/groups/member-comparison-dialog'
+import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion"
+import { getGroupWishlist } from '@/app/groups/wishlist-actions'
+import { getGroupGoals } from '@/app/groups/goal-actions'
+import { GroupWishlist } from '@/components/groups/group-wishlist'
+import { GroupGoals } from '@/components/groups/group-goals'
+import { GroupReviewsWidget } from '@/components/groups/group-reviews-widget'
+import { PreparationButton } from '@/components/groups/preparation-button'
+import { GameSessionDetailDialog } from '@/components/groups/game-session-detail-dialog'
+import { GroupRecommendations } from '@/components/groups/group-recommendations'
 
 export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -33,37 +34,27 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
         console.log('[GroupPage] Starting render for ID:', id)
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
-        console.log('[GroupPage] Current User:', user?.id)
 
-        console.log('[GroupPage] Fetching Profile...')
         const { data: profile } = await supabase
             .from('profiles')
             .select('system_role')
             .eq('id', user?.id)
             .single()
-        console.log('[GroupPage] Profile fetched.')
 
         const isSuperAdmin = profile?.system_role === 'super_admin'
 
-        console.log('[GroupPage] Fetching Group...')
         const { data: group, error: groupError } = await supabase
             .from('groups')
             .select('*')
             .eq('id', id)
             .single()
-        console.log('[GroupPage] Group fetched.', group?.name)
 
         if (groupError || !group) {
-            console.error('Group fetch error:', groupError)
             return (
                 <div className="sky-card p-12 text-center space-y-4">
                     <Users className="w-16 h-16 text-slate-200 mx-auto" />
                     <h1 className="text-2xl font-bold text-slate-800">Gruppe nicht gefunden</h1>
                     <p className="text-slate-500">Diese Gruppe existiert nicht oder du hast keinen Zugriff darauf.</p>
-                    <div className="bg-slate-50 p-4 rounded-xl text-xs text-slate-400 font-mono text-left max-w-sm mx-auto overflow-auto">
-                        ID: {id}<br />
-                        Error: {groupError?.message || 'Unknown'}
-                    </div>
                     <Link href="/groups">
                         <Button variant="outline" className="rounded-xl">Zurück zur Übersicht</Button>
                     </Link>
@@ -71,64 +62,86 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
             )
         }
 
-        console.log('[GroupPage] Fetching Members...')
-        const { data: members, error: membersError } = await supabase
+        const { data: members } = await supabase
             .from('group_members')
             .select('*, profiles(*)')
             .eq('group_id', id)
 
-        if (membersError) throw new Error('Mitglieder-Fehler: ' + membersError.message)
-        console.log('[GroupPage] Members fetched:', members?.length)
-
         const groupMembers = members || []
 
-        console.log('[GroupPage] Fetching Places...')
         const { data: places } = await supabase
             .from('group_places')
             .select('*')
             .eq('group_id', id)
             .order('created_at', { ascending: false })
-        console.log('[GroupPage] Places fetched.')
 
-        console.log('[GroupPage] Fetching Events...')
         const { data: allEvents, error: eventsError } = await supabase
             .from('events')
             .select('*, event_attendees(user_id, status)')
             .eq('group_id', id)
             .order('start_time', { ascending: true })
         if (eventsError) throw new Error('Event-Fehler: ' + eventsError.message)
-        console.log('[GroupPage] Events fetched.')
 
         const now = new Date().toISOString()
         const upcomingEvents = allEvents?.filter(e => e.start_time >= now) || []
-        const pastEvents = allEvents?.filter(e => e.start_time < now).reverse().slice(0, 5) || []
+        const pastEventsRaw = allEvents?.filter(e => e.start_time < now) || []
 
         const isMember = groupMembers.some((m: any) => m.user_id === user?.id)
         const isAdmin = groupMembers.some((m: any) => m.user_id === user?.id && m.role === 'admin')
 
         let challenges: { incoming: any[], outgoing: any[] } = { incoming: [], outgoing: [] }
         if (isMember) {
-            console.log('[GroupPage] Fetching Challenges...')
             challenges = await getChallengesForGroup(id)
-            console.log('[GroupPage] Challenges fetched.')
         }
 
-        console.log('[GroupPage] Fetching Polls...')
         const polls = await getPollsForGroup(id)
-        console.log('[GroupPage] Polls fetched.')
 
-        console.log('[GroupPage] Fetching Group Games...')
-        const { getGroupGames } = await import('@/app/groups/game-actions')
+        const { getGroupGames, getGroupRecentGames, getGroupLeaderboard } = await import('@/app/groups/game-actions')
+        const { getSmartRecommendations } = await import('@/app/groups/recommendation-actions')
+
         const groupGames = await getGroupGames(id)
-        console.log('[GroupPage] Group Games fetched.')
+        const collectionValue = groupGames.reduce((sum: number, game: any) => {
+            const price = parseFloat(game.price_new) || parseFloat(game.price_used) || 0
+            return sum + price
+        }, 0)
 
-        // Calculate next event
+        const recentGames = await getGroupRecentGames(id)
+        const leaderboardData = await getGroupLeaderboard(id)
+        const recommendations = await getSmartRecommendations(id) // New feature
+
+        const wishlist = await getGroupWishlist(id)
+        const goals = await getGroupGoals(id)
+
+        const { data: reviews } = await supabase
+            .from('game_reviews')
+            .select('*, profiles(full_name, avatar_url), game_review_votes(user_id)')
+            .eq('group_id', id)
+            .order('created_at', { ascending: false })
+
+        const { data: recentSessions } = await supabase
+            .from('game_sessions')
+            .select('id, game_name, played_at, winner_id')
+            .eq('group_id', id)
+            .order('played_at', { ascending: false })
+            .limit(10)
+
+        const combinedHistory = [
+            ...pastEventsRaw.map(e => ({ ...e, type: 'event', date: e.start_time })),
+            ...(recentSessions || []).map((s: any) => ({
+                ...s,
+                type: 'session',
+                date: s.played_at,
+                title: s.game_name,
+                id: s.id
+            }))
+        ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 10)
+
         const nextEvent = upcomingEvents[0]
 
         return (
             <div className="space-y-8 animate-in fade-in duration-500">
-                {/* ... rest of the original JSX ... */}
-                {/* Banner */}
+                {/* Banner Section */}
                 <div className="relative rounded-[2.5rem] overflow-hidden shadow-xl bg-gradient-to-r from-primary to-blue-600">
                     <div className="h-64 relative">
                         <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:64px_64px] opacity-20" />
@@ -152,133 +165,136 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                             </div>
                         </div>
                     </div>
-
-                    {/* Next Event Countdown Banner */}
                     {nextEvent && <NextEventCountdown nextEvent={nextEvent} />}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    {/* Main Content */}
-                    <div className="lg:col-span-2 space-y-6 md:space-y-8">
-                        {/* Actions Bar */}
-                        <div className="sky-card p-3 md:p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 no-scrollbar touch-pan-x">
-                                <Button variant="ghost" className="gap-2 text-slate-600 hover:text-primary hover:bg-blue-50 text-xs md:text-sm whitespace-nowrap">
-                                    <Calendar className="w-4 h-4" /> Events
-                                </Button>
-                                <Button variant="ghost" className="gap-2 text-slate-600 hover:text-primary hover:bg-blue-50 text-xs md:text-sm whitespace-nowrap">
-                                    <Users className="w-4 h-4" /> Mitglieder
-                                </Button>
-                                <Link href="/groups/map">
-                                    <Button variant="ghost" className="gap-2 text-slate-600 hover:text-primary hover:bg-blue-50 text-xs md:text-sm whitespace-nowrap">
-                                        <MapPin className="w-4 h-4" /> Karte
-                                    </Button>
-                                </Link>
-                            </div>
-                            <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap justify-between sm:justify-end">
+                {/* Main Grid: Content & Sidebar */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main Content Column (2/3) */}
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Actions Bar - Redesigned for better balance */}
+                        {/* Actions Bar - Redesigned */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/60 backdrop-blur-md p-4 rounded-[2rem] border border-white/50 shadow-sm sticky top-4 z-40 transition-all">
+                            <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto no-scrollbar">
                                 {user && (
                                     <>
-                                        <AddPlaceDialog
+                                        <LogGameDialog
                                             groupId={id}
+                                            games={groupGames}
+                                            members={groupMembers}
+                                            places={places || []}
                                             trigger={
-                                                <Button variant="outline" size="sm" className="flex-1 sm:flex-initial rounded-xl border-dashed border-2 border-slate-300 text-slate-500 hover:text-primary hover:border-primary text-xs md:text-sm">
-                                                    <MapPin className="w-3 h-3 md:w-4 md:h-4 mr-2" />
-                                                    Ort <span className="hidden xs:inline ml-1">hinzufügen</span>
+                                                <Button variant="outline" className="h-14 rounded-2xl border-2 border-slate-200 text-slate-600 font-bold hover:border-primary/50 hover:text-primary hover:bg-white shadow-sm transition-all px-6 text-base">
+                                                    <Dice5 className="w-6 h-6 mr-2" />
+                                                    Spiel nachtragen
                                                 </Button>
                                             }
                                         />
-                                        <div className="h-8 w-px bg-slate-200 mx-1 hidden sm:block" />
+                                        {isMember && (
+                                            <CreateEventDialog
+                                                groups={[group]}
+                                                defaultGroupId={id}
+                                                places={places || []}
+                                                trigger={
+                                                    <Button className="h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black shadow-lg shadow-blue-200 hover:shadow-xl hover:scale-[1.02] transition-all px-8 text-base">
+                                                        <Calendar className="w-6 h-6 mr-3" />
+                                                        Event planen
+                                                    </Button>
+                                                }
+                                            />
+                                        )}
                                     </>
                                 )}
+                            </div>
 
-                                {isMember && (
-                                    <CreateEventDialog
-                                        groups={[group]}
-                                        defaultGroupId={id}
-                                        places={places || []}
-                                    />
-                                )}
-
-                                {/* Edit Group Button - ONLY Founder or SuperAdmin */}
-                                {(isSuperAdmin || (user && group.created_by === user.id)) && (
-                                    <EditGroupDialog group={group} />
-                                )}
-
-                                {/* Membership Management - Join or Leave */}
+                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                                 {user && (
-                                    <div className="flex-1 sm:flex-initial flex justify-end">
+                                    <>
+                                        {(isSuperAdmin || group.created_by === user.id) && (
+                                            <EditGroupDialog group={group}
+                                                trigger={
+                                                    <Button variant="ghost" className="h-10 w-10 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+                                                        <Settings className="w-5 h-5" />
+                                                    </Button>
+                                                }
+                                            />
+                                        )}
                                         {isMember ? (
-                                            // Only show Leave button if not the founder OR if SuperAdmin (who can leave anything)
-                                            (isSuperAdmin || group.created_by !== user.id) && (
-                                                <GroupLeaveButton groupId={id} />
-                                            )
+                                            (isSuperAdmin || group.created_by !== user.id) && <GroupLeaveButton groupId={id} />
                                         ) : (
                                             <GroupJoinButton groupId={id} />
                                         )}
-                                    </div>
+                                    </>
                                 )}
                             </div>
                         </div>
 
-                        {/* Group Games Collection */}
-                        <div className="animate-in slide-in-from-bottom-2 fade-in duration-700">
-                            <GroupGamesCard games={groupGames} />
-                        </div>
+                        {/* Summary / Recent Games */}
+                        {isMember && recentGames && recentGames.length > 0 && (
+                            <div className="animate-in slide-in-from-bottom-2 duration-700">
+                                <RecentGamesList games={recentGames} groupId={id} members={groupMembers} places={places || []} allGames={groupGames} />
+                            </div>
+                        )}
 
-                        {/* Events Preview */}
+                        {/* Recommendations / Pile of Shame - New Feature */}
+                        {isMember && (
+                            <div className="animate-in slide-in-from-bottom-2 duration-700 delay-200">
+                                <GroupRecommendations recommendations={recommendations} />
+                            </div>
+                        )}
+
+                        {/* Events Section */}
                         <div className="space-y-4">
-                            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                <Calendar className="w-6 h-6 text-primary" />
-                                Kommende Events
-                            </h2>
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                    <Calendar className="w-6 h-6 text-primary" />
+                                    Anstehende Events
+                                </h2>
+
+                                {isMember && <CreateEventDialog groups={[group]} defaultGroupId={id} places={places || []}
+                                    trigger={
+                                        <Link href="/calendar">
+                                            <Button variant="link" className="text-primary font-bold">Zum Kalender</Button>
+                                        </Link>
+                                    }
+                                />}
+                            </div>
                             {upcomingEvents.length === 0 ? (
-                                <div className="sky-card p-12 text-center text-slate-400 border-dashed border-2">
+                                <div className="sky-card p-12 text-center text-slate-400 border-dashed border-2 bg-slate-50/50">
                                     <Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                    <p>Noch keine Events geplant.</p>
-                                    {isMember && (
-                                        <div className="mt-4">
-                                            <CreateEventDialog groups={[group]} defaultGroupId={id} places={places || []} />
-                                        </div>
-                                    )}
+                                    <p className="font-bold">Keine anstehenden Abenteuer geplant.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {upcomingEvents.map(event => (
                                         <Link key={event.id} href={`/events/${event.id}`}>
-                                            <div className="sky-card p-6 hover:shadow-lg transition-shadow border-l-4 border-l-primary group">
+                                            <div className="sky-card p-6 h-full hover:shadow-2xl hover:-translate-y-1 transition-all border-l-4 border-l-primary group bg-white/50 backdrop-blur-sm">
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <h3 className="font-bold text-slate-800 truncate group-hover:text-primary transition-colors">{event.title}</h3>
+                                                    <h3 className="font-black text-slate-800 truncate group-hover:text-primary transition-colors text-lg tracking-tight">{event.title}</h3>
                                                     {event.start_time.startsWith(now.split('T')[0]) && (
-                                                        <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide">Heute</span>
+                                                        <span className="bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest shadow-lg shadow-green-200">Heute</span>
                                                     )}
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                                                        <Calendar className="w-3 h-3 text-primary" />
-                                                        {new Date(event.start_time).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                                    </div>
-                                                    {event.location && (
-                                                        <div className="flex items-center gap-2 text-xs text-slate-400">
-                                                            <MapPin className="w-3 h-3" />
-                                                            <span className="truncate">{event.location}</span>
-                                                        </div>
-                                                    )}
+                                                <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                                    <Calendar className="w-3 h-3 text-primary" />
+                                                    {new Date(event.start_time).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                                 </div>
-                                                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-50">
-                                                    <div className="flex -space-x-1.5">
-                                                        {event.event_attendees?.filter((a: any) => a.status === 'going').slice(0, 3).map((a: any, idx: number) => (
-                                                            <div key={idx} className="w-6 h-6 rounded-full bg-green-100 border-2 border-white text-[8px] flex items-center justify-center font-bold text-green-600">
-                                                                P{idx + 1}
+                                                <div className="flex items-center gap-2 mt-6 pt-4 border-t border-slate-100">
+                                                    <div className="flex -space-x-2">
+                                                        {event.event_attendees?.filter((a: any) => a.status === 'going').slice(0, 4).map((a: any, i: number) => (
+                                                            <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 border-2 border-white text-[10px] flex items-center justify-center font-black text-slate-500 shadow-sm">
+                                                                {a.profiles?.full_name?.[0] || '?'}
                                                             </div>
                                                         ))}
+                                                        {(event.event_attendees?.filter((a: any) => a.status === 'going').length || 0) > 4 && (
+                                                            <div className="w-8 h-8 rounded-full bg-primary text-white border-2 border-white text-[8px] flex items-center justify-center font-black shadow-sm">
+                                                                +{(event.event_attendees?.filter((a: any) => a.status === 'going').length || 0) - 4}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    {event.event_attendees?.filter((a: any) => a.status === 'going').length > 0 ? (
-                                                        <span className="text-[10px] text-slate-400 font-medium">
-                                                            {event.event_attendees.filter((a: any) => a.status === 'going').length} dabei
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] text-slate-300 italic">Noch keine Zusagen</span>
-                                                    )}
+                                                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest ml-1">
+                                                        Dabei
+                                                    </span>
                                                 </div>
                                             </div>
                                         </Link>
@@ -287,231 +303,230 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                             )}
                         </div>
 
-                        {/* Challenges Section */}
+                        {/* Challenges & Gamification */}
                         {isMember && (challenges.incoming.length > 0 || challenges.outgoing.length > 0) && (
                             <div className="space-y-4">
-                                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                    <Swords className="w-6 h-6 text-orange-500" />
-                                    Herausforderungen
+                                <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                    <Swords className="w-6 h-6 text-orange-500" /> Herausforderungen
                                 </h2>
-                                <div className="sky-card p-4 md:p-6">
-                                    <ChallengeList
-                                        incoming={challenges.incoming}
-                                        outgoing={challenges.outgoing}
-                                        isAdmin={isAdmin}
-                                        groupName={group.name}
-                                    />
+                                <div className="sky-card p-6 bg-gradient-to-br from-orange-50/50 to-white">
+                                    <ChallengeList incoming={challenges.incoming} outgoing={challenges.outgoing} isAdmin={isAdmin} groupName={group.name} />
                                 </div>
                             </div>
                         )}
 
-                        {/* Polls Section */}
+                        {/* Leaderboard */}
+                        {leaderboardData && leaderboardData.length > 0 && (
+                            <div className="animate-in slide-in-from-bottom-2 duration-700">
+                                <GroupLeaderboard data={leaderboardData} />
+                            </div>
+                        )}
+
+                        {/* Goals & Wishlist */}
+                        {isMember && (
+                            <>
+                                <div className="animate-in slide-in-from-bottom-2 fade-in duration-700 delay-300">
+                                    <GroupGoals groupId={id} goals={goals} isAdmin={isAdmin} />
+                                </div>
+                                <div className="animate-in slide-in-from-bottom-2 fade-in duration-700 delay-400">
+                                    <GroupWishlist groupId={id} wishlist={wishlist} userId={user?.id} isAdmin={isAdmin} />
+                                </div>
+                            </>
+                        )}
+
+                        {/* Places Widget */}
+                        <div className="animate-in slide-in-from-bottom-2 fade-in duration-700 delay-300">
+                            <GroupPlacesWidget groupId={id} places={places || []} isMember={isMember} isAdmin={isAdmin} currentUserId={user?.id} />
+                        </div>
+
+                        {/* Activity History */}
+                        <div className="space-y-4">
+                            <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                                <History className="w-6 h-6 text-slate-400" /> Chronik
+                            </h2>
+                            {combinedHistory.length === 0 ? (
+                                <p className="text-slate-400 text-sm italic py-8 text-center sky-card border-dashed">Noch keine vergangenen Aktivitäten.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {combinedHistory.map((item: any, idx: number) => (
+                                        <div key={`${item.type}-${item.id}-${idx}`}>
+                                            {item.type === 'event' ? (
+                                                <Link href={`/events/${item.id}`}>
+                                                    <div className="sky-card p-5 flex items-center justify-between hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all opacity-80 hover:opacity-100 group border-l-4 border-l-blue-400 bg-blue-50/30 h-full">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 shadow-inner">
+                                                                <Calendar className="w-5 h-5" />
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="font-black text-slate-700 group-hover:text-primary transition-colors text-sm tracking-tight line-clamp-1">{item.title}</h3>
+                                                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                                                                    Event • {item.date ? new Date(item.date).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' }) : 'Datum unbekannt'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ) : (
+                                                <GameSessionDetailDialog
+                                                    sessionId={item.id}
+                                                    trigger={
+                                                        <div className="sky-card p-5 flex items-center justify-between hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all group border-l-4 border-l-amber-400 bg-amber-50/30 cursor-pointer h-full">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 shadow-inner">
+                                                                    <Dice5 className="w-5 h-5" />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="font-black text-slate-700 text-sm tracking-tight line-clamp-1 group-hover:text-primary transition-colors">{item.title}</h3>
+                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                                                                        Spielrunde • {item.date ? new Date(item.date).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' }) : 'Datum unbekannt'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {item.winner_id && (
+                                                                <div className="flex items-center gap-1.5 bg-amber-500 text-white px-3 py-1 rounded-full shadow-lg shadow-amber-200 border border-amber-400 scale-90">
+                                                                    <Trophy className="w-3 h-3 fill-white" />
+                                                                    <span className="text-[8px] font-black uppercase tracking-widest">Sieg</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    }
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Sidebar Column (1/3) */}
+                    <div className="space-y-8">
+                        {/* Preparation Button ("Pausenbutton") */}
+                        <PreparationButton
+                            groupId={id}
+                            nextEvent={nextEvent}
+                            isMember={!!isMember}
+                        />
+
+                        {/* Polls Widget */}
                         {isMember && (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                        <Calendar className="w-6 h-6 text-primary" />
-                                        Termin-Findung
-                                    </h2>
+                                    <h3 className="text-xl font-black text-slate-800">Umfragen</h3>
                                     <CreatePollForm groupId={id} />
                                 </div>
-
                                 {polls.length > 0 ? (
                                     <PollWidget polls={polls} groupId={id} userId={user?.id} />
                                 ) : (
-                                    <div className="sky-card p-6 text-center text-slate-500 text-sm">
+                                    <div className="sky-card p-8 text-center text-slate-400 text-sm font-bold border-dashed border-2 bg-slate-50/30">
                                         Aktuell laufen keine Termin-Umfragen.
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Places Widget */}
-                        <GroupPlacesWidget
-                            groupId={id}
-                            places={places || []}
-                            isMember={isMember}
-                            isAdmin={isAdmin}
-                            currentUserId={user?.id}
-                        />
+                        <GroupReviewsWidget reviews={reviews || []} currentUserId={user?.id} />
 
-                        {/* History */}
-                        <div className="space-y-4">
-                            <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                                <History className="w-6 h-6 text-slate-400" />
-                                Historie
-                            </h2>
-                            {pastEvents.length === 0 ? (
-                                <p className="text-slate-400 text-sm italic py-4">Noch keine vergangenen Events.</p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {pastEvents.map(event => (
-                                        <Link key={event.id} href={`/events/${event.id}`}>
-                                            <div className="sky-card p-4 flex items-center justify-between hover:bg-slate-50 transition-colors opacity-70 hover:opacity-100">
-                                                <div>
-                                                    <h3 className="font-bold text-sm text-slate-700">{event.title}</h3>
-                                                    <p className="text-[10px] text-slate-400">
-                                                        {new Date(event.start_time).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                                    </p>
-                                                </div>
-                                                <div className="flex -space-x-2">
-                                                    {event.event_attendees?.filter((a: any) => a.status === 'going').slice(0, 3).map((a: any, idx: number) => (
-                                                        <div key={idx} className="w-6 h-6 rounded-full bg-slate-100 border border-white text-[8px] flex items-center justify-center font-bold text-slate-400" />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Sidebar info */}
-                    <div className="space-y-8">
-                        {/* Active Group Location Map (Visible to Everyone) */}
-                        <div className="sky-card p-0 overflow-hidden group">
-                            <div className="px-4 md:px-6 py-4 border-b border-slate-50">
-                                <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                                    <MapPin className="w-5 h-5 text-red-500" />
-                                    Standort
-                                </h3>
-                                {group.location_name ? (
-                                    <p className="text-sm text-slate-500 truncate">{group.location_name}</p>
-                                ) : (
-                                    <p className="text-sm text-slate-400 italic">Kein Standort festgelegt</p>
-                                )}
+                        {/* Stats Card */}
+                        <div className="sky-card p-6 bg-slate-900 text-white border-0 shadow-2xl">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Gruppen-Pulse</h3>
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                             </div>
-                            {group.location_name && group.latitude && group.longitude ? (
-                                <div className="h-48 relative bg-slate-100 flex items-center justify-center">
-                                    <div className="absolute inset-0 bg-[url('https://raw.githubusercontent.com/leaflet-extras/leaflet-providers/master/preview/OpenStreetMap.Mapnik.png')] bg-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-500" />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <ViewPlaceMapDialog
-                                            latitude={group.latitude}
-                                            longitude={group.longitude}
-                                            name={group.location_name}
-                                        />
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-3xl font-black">{collectionValue.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sammlungswert</p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+                                    <div>
+                                        <p className="text-xl font-black text-blue-400">{groupGames.length}</p>
+                                        <p className="text-[9px] text-slate-500 font-bold uppercase">Spiele</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xl font-black text-emerald-400">{groupMembers.length}</p>
+                                        <p className="text-[9px] text-slate-500 font-bold uppercase">Gefährten</p>
                                     </div>
                                 </div>
-                            ) : (
-                                <div className="h-32 bg-slate-50 flex items-center justify-center text-slate-400 text-sm">
-                                    <MapPin className="w-8 h-8 opacity-20" />
-                                </div>
-                            )}
+                            </div>
                         </div>
 
-                        {/* Admin Location Settings */}
-                        {isAdmin && (
-                            <div className="sky-card p-0 overflow-hidden">
-                                <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="location" className="border-0">
-                                        <AccordionTrigger className="px-4 md:px-6 py-4 hover:no-underline hover:bg-slate-50">
-                                            <div className="flex items-center gap-2 font-bold text-slate-800">
-                                                <Settings className="w-5 h-5 text-slate-400" />
-                                                Standort bearbeiten
-                                            </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent className="px-4 md:px-6 pb-6 pt-0">
-                                            <LocationPicker
-                                                groupId={id}
-                                                initialLat={group.latitude}
-                                                initialLng={group.longitude}
-                                                initialName={group.location_name}
-                                                initialPublic={group.is_location_public}
-                                            />
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                </Accordion>
-                            </div>
-                        )}
+                        {/* Collection Shortcut */}
+                        <div className="animate-in slide-in-from-right-2 fade-in duration-700">
+                            <GroupGamesCard games={groupGames} />
+                        </div>
 
-                        <div className="sky-card p-4 md:p-6">
-                            <h3 className="font-bold text-lg text-slate-800 mb-4 flex items-center gap-2">
-                                <Users className="w-5 h-5 text-secondary" />
-                                Mitglieder ({groupMembers.length})
+                        {/* Members Card */}
+                        <div className="sky-card p-6 bg-white shadow-sm border-slate-100">
+                            <h3 className="font-black text-xl text-slate-800 mb-6 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-secondary" /> Gefährten
                             </h3>
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {groupMembers
                                     .sort((a: any, b: any) => {
-                                        // Admins zuerst
                                         if (a.role === 'admin' && b.role !== 'admin') return -1
                                         if (a.role !== 'admin' && b.role === 'admin') return 1
                                         return 0
                                     })
                                     .map((member: any) => {
-                                        const isFounder = member.role === 'admin' && member.user_id === group.created_by
-                                        return (
-                                            <div key={member.user_id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-colors">
-                                                <div className="relative">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 overflow-hidden ${isFounder
-                                                        ? 'bg-amber-100 text-amber-600 border-amber-300'
-                                                        : member.role === 'admin'
-                                                            ? 'bg-purple-100 text-purple-600 border-purple-200'
-                                                            : 'bg-blue-100 text-blue-600 border-blue-200'
-                                                        }`}>
-                                                        {member.profiles?.avatar_url ? (
-                                                            <img src={member.profiles.avatar_url} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            member.profiles?.full_name?.[0] || '?'
-                                                        )}
-                                                    </div>
-                                                    {isFounder && <div className="absolute -top-1 -right-1 text-[10px]">👑</div>}
+                                        const isFounder = member.user_id === group.created_by
+                                        const isSelf = member.user_id === user?.id
+                                        const stats = leaderboardData.find((l: any) => l.id === member.user_id)
+
+                                        const memberElement = (
+                                            <div key={member.user_id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-xl transition-all cursor-pointer group/member">
+                                                <div className={cn(
+                                                    "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-slate-400 border border-slate-200 overflow-hidden shrink-0 shadow-sm transition-transform group-hover/member:rotate-3",
+                                                    isFounder ? 'bg-amber-100 text-amber-600 border-amber-300' :
+                                                        member.role === 'admin' ? 'bg-purple-100 text-purple-600 border-purple-200' :
+                                                            'bg-blue-100 text-blue-600 border-blue-200'
+                                                )}>
+                                                    {member.profiles?.avatar_url ? (
+                                                        <img src={member.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                                                    ) : member.profiles?.full_name?.[0] || '?'}
                                                 </div>
                                                 <div className="overflow-hidden flex-1">
-                                                    <p className="text-sm font-bold text-slate-700 truncate">
-                                                        {member.profiles?.full_name || 'User'}
-                                                    </p>
-                                                    <p className={`text-xs font-bold truncate ${isFounder
-                                                        ? 'text-amber-500'
-                                                        : member.role === 'admin'
-                                                            ? 'text-purple-500'
-                                                            : 'text-slate-400'
-                                                        }`}>
-                                                        {isFounder ? 'Gründer' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
-                                                    </p>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="text-sm font-black text-slate-700 truncate">{member.profiles?.full_name}</p>
+                                                        {stats && stats.gamesPlayed >= 10 && (stats.wins / stats.gamesPlayed) > 0.5 && (
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" title="Dominator" />
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{isFounder ? 'Gründer' : member.role}</p>
                                                 </div>
+                                                {!isSelf && (
+                                                    <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center opacity-0 group-hover/member:opacity-100 transition-all text-primary hover:bg-primary hover:text-white border border-slate-100">
+                                                        <Swords className="w-4 h-4" />
+                                                    </div>
+                                                )}
                                             </div>
                                         )
+
+                                        if (isSelf) return memberElement
+                                        return <MemberComparisonDialog key={member.user_id} groupId={id} member={member} trigger={memberElement} />
                                     })}
                             </div>
                         </div>
 
-                        <Link href="/groups">
-                            <Button variant="ghost" className="w-full text-slate-400 hover:text-primary rounded-xl text-sm font-bold py-6">
+                        <Link href="/groups" className="block mt-4">
+                            <Button variant="outline" className="w-full rounded-2xl py-6 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-primary">
                                 Zurück zur Übersicht
                             </Button>
                         </Link>
                     </div>
                 </div>
-            </div>
+            </div >
         )
     } catch (error: any) {
-        console.error('[GroupPage] Critical Render Error:', error)
+        console.error('[GroupPage] Error:', error)
         return (
             <div className="sky-card p-12 text-center space-y-4">
-                <X className="w-16 h-16 text-red-500 mx-auto" />
-                <h1 className="text-2xl font-bold text-slate-800">Ein Fehler ist aufgetreten</h1>
-                <p className="text-slate-500">Die Seite konnte nicht geladen werden.</p>
-                <div className="bg-red-50 p-6 rounded-2xl text-red-600 text-sm font-bold text-left max-w-2xl mx-auto overflow-auto border border-red-100 shadow-sm">
-                    <p className="uppercase text-[10px] tracking-widest mb-2 opacity-70">Fehlermeldung:</p>
-                    {error.message || 'Unbekannter Fehler'}
-                    {error.stack && (
-                        <details className="mt-4 opacity-50 text-[10px]">
-                            <summary>Stack Trace</summary>
-                            <pre className="mt-2 whitespace-pre-wrap">{error.stack}</pre>
-                        </details>
-                    )}
-                </div>
-                <div className="flex justify-center gap-4 mt-8">
-                    <Link href="/">
-                        <Button className="rounded-xl">Zum Dashboard</Button>
-                    </Link>
-                    <Link href="">
-                        <Button variant="outline" className="rounded-xl">
-                            Erneut versuchen
-                        </Button>
-                    </Link>
-                </div>
+                <X className="text-red-500 w-12 h-12 mx-auto" />
+                <h1 className="text-2xl font-bold">Fehler beim Laden der Gruppe</h1>
+                <p className="text-slate-500">{error?.message || 'Unbekannter Fehler'}</p>
+                <Link href="/groups">
+                    <Button variant="outline">Zurück zur Übersicht</Button>
+                </Link>
             </div>
         )
     }

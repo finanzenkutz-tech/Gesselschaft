@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Trash2, Loader2 } from 'lucide-react'
+import { ArrowRight, Trash2, Loader2, MapPin } from 'lucide-react'
 import { deleteGroup } from '@/app/groups/actions'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -56,6 +56,14 @@ export function GroupCard({ group, isMember, isSuperAdmin }: GroupCardProps) {
                                 </span>
                             )}
                         </div>
+
+                        {group.location_name && (
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-3">
+                                <MapPin className="w-3.5 h-3.5" />
+                                {group.location_name}
+                            </div>
+                        )}
+
                         <p className="text-sm text-slate-500 line-clamp-2 mb-4">{group.description || 'Keine Beschreibung'}</p>
 
                         {/* Member Avatars */}

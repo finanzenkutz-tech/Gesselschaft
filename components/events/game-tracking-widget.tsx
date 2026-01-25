@@ -29,6 +29,9 @@ type GameSession = {
             avatar_url: string | null
         }
     }[]
+    report_text?: string | null
+    report_image_url?: string | null
+    winner_id?: string | null
 }
 
 type Attendee = {
@@ -110,7 +113,7 @@ export function GameTrackingWidget({
                 <p className="text-slate-400 text-center py-8 italic">Noch keine Spiele für dieses Event getrackt.</p>
             ) : (
                 <div className="space-y-4">
-                    {sessions.map(session => (
+                    {sessions.map((session) => (
                         <div key={session.id} className="bg-purple-50/50 p-5 rounded-2xl border border-purple-100">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center overflow-hidden">
@@ -137,7 +140,7 @@ export function GameTrackingWidget({
                                     <div className="flex flex-wrap gap-2">
                                         {session.game_session_players
                                             .sort((a, b) => (a.placement || 99) - (b.placement || 99))
-                                            .map((player, idx) => (
+                                            .map((player) => (
                                                 <div key={player.user_id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-purple-100">
                                                     {player.placement === 1 && <Trophy className="w-3 h-3 text-yellow-500" />}
                                                     {player.placement === 2 && <Medal className="w-3 h-3 text-slate-400" />}
@@ -151,6 +154,21 @@ export function GameTrackingWidget({
                                                 </div>
                                             ))}
                                     </div>
+                                </div>
+                            )}
+
+                            {(session.report_text || session.report_image_url) && (
+                                <div className="mt-4 pt-4 border-t border-purple-100/50">
+                                    {session.report_text && (
+                                        <div className="p-3 bg-white rounded-xl border border-purple-100 text-sm italic text-slate-600">
+                                            "{session.report_text}"
+                                        </div>
+                                    )}
+                                    {session.report_image_url && (
+                                        <div className="mt-3 rounded-xl overflow-hidden border border-purple-100">
+                                            <img src={session.report_image_url} alt="Result" className="w-full h-auto object-cover max-h-64" />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

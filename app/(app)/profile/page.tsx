@@ -8,8 +8,9 @@ import { getBuddies, getPendingBuddyRequests } from '@/app/profile/buddy-actions
 import { getUserBadges } from '@/app/gamification/actions'
 import { BuddyWidget } from '@/components/profile/buddy-widget'
 import { DeleteAccountButton } from '@/components/profile/delete-account-button'
-import { PushNotificationManager } from '@/components/settings/push-notification-manager'
 import { PersonalDetailsForm } from '@/components/profile/personal-details-form'
+import { NotificationSettings } from '@/components/settings/notification-settings'
+import { getMutedUsers } from '@/app/settings/user-settings-actions'
 
 import {
     Tooltip,
@@ -29,13 +30,15 @@ export default async function ProfilePage() {
         .eq('id', user?.id)
         .single()
 
-    const points = profile?.points || 0
-    const levelInfo = getLevelInfo(points)
+    const xp = profile?.xp || 0
+    const levelInfo = getLevelInfo(xp)
 
     const buddies = await getBuddies()
     const pendingRequests = await getPendingBuddyRequests()
 
     const detailedBadges = await getUserBadges(user?.id || '')
+
+    const mutedUsers = await getMutedUsers()
 
     return (
         <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -97,7 +100,7 @@ export default async function ProfilePage() {
                             </div>
                             <div className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-xl font-bold border border-amber-100">
                                 <Trophy className="w-4 h-4" />
-                                <span>{points} XP</span>
+                                <span>{xp} XP</span>
                             </div>
                             <div className="flex items-center gap-2 bg-purple-50 text-purple-700 px-4 py-2 rounded-xl font-bold border border-purple-100">
                                 <Award className="w-4 h-4" />
@@ -167,6 +170,7 @@ export default async function ProfilePage() {
                 prefEmail={profile?.pref_email_notifications}
                 prefPush={profile?.pref_push_notifications}
                 prefInApp={profile?.pref_in_app_notifications}
+                initialGuestPreferences={profile?.guest_preferences as any}
             />
 
             {/* Buddy Management */}
@@ -241,16 +245,19 @@ export default async function ProfilePage() {
                 </form>
             </section>
 
-            {/* Push Notifications */}
+            {/* Kommunikation & Privatsphäre */}
             <section className="sky-card p-8 space-y-6">
                 <h3 className="font-bold text-xl text-slate-800 flex items-center gap-3">
-                    <Bell className="w-6 h-6 text-primary" />
-                    Benachrichtigungen
+                    <HistoryIcon className="w-6 h-6 text-primary" strokeWidth={3} />
+                    Kommunikation & Stummschaltung
                 </h3>
                 <p className="text-sm text-slate-500">
-                    Erhalte Push-Benachrichtigungen für neue Events, Chat-Nachrichten und mehr.
+                    Verwalte deine Benachrichtigungen und stummgeschaltete Spieler.
                 </p>
-                <PushNotificationManager />
+                <NotificationSettings
+                    initialEnabled={profile?.notifications_enabled !== false}
+                    mutedUsers={mutedUsers as any}
+                />
             </section>
 
             {/* Danger Zone */}

@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar, UserPlus, Dice5 } from "lucide-react"
 
-export type ActivityType = 'event_created' | 'group_joined' | 'game_added'
+export type ActivityType = 'event_created' | 'group_joined' | 'game_added' | 'session_logged'
 
 export interface ActivityItem {
     id: string
@@ -14,6 +14,9 @@ export interface ActivityItem {
         name: string
         avatar_url?: string
     }
+    // Optional details for sessions
+    mood?: string
+    gameImageUrl?: string
 }
 
 interface ActivityFeedProps {
@@ -68,6 +71,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                                 {activity.type === 'event_created' && <Calendar className="w-4 h-4 text-blue-500" />}
                                 {activity.type === 'group_joined' && <UserPlus className="w-4 h-4 text-emerald-500" />}
                                 {activity.type === 'game_added' && <Dice5 className="w-4 h-4 text-purple-500" />}
+                                {activity.type === 'session_logged' && <span className="text-lg">{activity.mood || '🎲'}</span>}
                             </div>
                         </div>
                     ))}

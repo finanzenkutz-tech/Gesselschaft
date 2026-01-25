@@ -13,8 +13,8 @@ export default async function LeaderboardPage() {
     // Fetch leaderboard data
     const { data: leaderboard } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, points, badges, last_seen')
-        .order('points', { ascending: false })
+        .select('id, full_name, email, avatar_url, xp, level, badges, last_seen')
+        .order('xp', { ascending: false })
         .limit(50)
 
     // Fetch win counts per user
@@ -85,7 +85,7 @@ export default async function LeaderboardPage() {
                             <p className="font-bold text-sm text-slate-800 text-center truncate w-full">
                                 {podiumEntry.full_name || podiumEntry.email?.split('@')[0]}
                             </p>
-                            <p className="text-xs text-slate-500">{podiumEntry.points || 0} Punkte</p>
+                            <p className="text-xs text-slate-500">{podiumEntry.xp || 0} XP</p>
                             <div className={cn(
                                 "w-full rounded-t-xl mt-2 flex items-end justify-center",
                                 heights[index],
@@ -136,8 +136,8 @@ export default async function LeaderboardPage() {
                                 </div>
 
                                 <div className="text-right">
-                                    <p className="text-2xl font-black text-slate-800">{entry.points || 0}</p>
-                                    <p className="text-[10px] text-slate-400 uppercase font-bold">Punkte</p>
+                                    <p className="text-2xl font-black text-slate-800">{entry.xp || 0}</p>
+                                    <p className="text-[10px] text-slate-400 uppercase font-bold">XP</p>
                                 </div>
                             </div>
                         )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Plus, Trash2, Info, Navigation, Coffee } from 'lucide-react'
+import { MapPin, Plus, Trash2, Info, Navigation, Coffee, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -12,11 +12,14 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { addGroupPlace, deleteGroupPlace } from '@/app/groups/place-actions'
+import { addGroupPlace, deleteGroupPlace, updateGroupPlace } from '@/app/groups/place-actions'
 import { useRouter } from 'next/navigation'
 import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
 import { PLACE_AMENITIES } from '@/lib/constants/amenities'
 import { ViewPlaceMapDialog } from './view-place-map-dialog'
+import { LocationPicker } from '@/components/groups/location-picker'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 type Place = {
     id: string
@@ -27,6 +30,9 @@ type Place = {
     latitude: number | null
     longitude: number | null
     amenities: string[] | null
+    image_url: string | null
+    is_private: boolean | null
+    host_info: string | null
     created_by: string
 }
 
@@ -83,16 +89,29 @@ export function GroupPlacesWidget({
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {places.map(place => (
-                        <div key={place.id} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow group relative">
-                            <div className="flex items-start justify-between">
-                                <div className="space-y-3 flex-1">
+                    {places.map((place) => (
+                        <div key={place.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group overflow-hidden">
+                            {place.image_url && (
+                                <div className="h-32 w-full relative overflow-hidden">
+                                    <img src={place.image_url} alt={place.name} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-700" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                                </div>
+                            )}
+                            <div className="p-5 flex items-start justify-between">
+                                <div className="space-y-4 flex-1 min-w-0">
                                     <div className="flex items-center justify-between mr-2">
                                         <div className="flex items-center gap-2">
                                             <div className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center">
                                                 <Navigation className="w-4 h-4" />
                                             </div>
-                                            <h3 className="font-bold text-slate-800">{place.name}</h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-slate-800">{place.name}</h3>
+                                                {place.is_private && (
+                                                    <span className="flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 text-[9px] font-black uppercase rounded-full border border-amber-200">
+                                                        <ShieldCheck className="w-3 h-3" /> Privater Host
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                         {place.latitude && place.longitude && (
                                             <ViewPlaceMapDialog
@@ -138,20 +157,35 @@ export function GroupPlacesWidget({
                                         </div>
                                     )}
 
+                                    {/* Private Host Info (visible only to members) */}
+                                    {place.is_private && isMember && place.host_info && (
+                                        <div className="p-3 bg-amber-50/50 border border-amber-100/50 rounded-xl space-y-1.5">
+                                            <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.1em]">Gastgeber-Hinweis</p>
+                                            <p className="text-xs text-slate-600 font-medium italic">"{place.host_info}"</p>
+                                        </div>
+                                    )}
+
                                     {/* Rating System */}
-                                    <PlaceRating placeId={place.id} currentUserId={currentUserId} />
+                                    <div className="flex items-center justify-between pt-2">
+                                        <PlaceRating placeId={place.id} currentUserId={currentUserId} />
+                                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg">
+                                            Beliebter Ort
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {(isAdmin || place.created_by === currentUserId) && (
                                     <div className="flex flex-col gap-1">
                                         <EditPlaceDialog place={place} groupId={groupId} />
-                                        <button
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
                                             onClick={() => handleDelete(place.id)}
                                             title="Ort löschen"
-                                            className="text-slate-300 hover:text-red-500 p-2 opacity-0 group-hover:opacity-100 transition-all"
+                                            className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
                                         >
                                             <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        </Button>
                                     </div>
                                 )}
                             </div>

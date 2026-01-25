@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { addXP } from '@/app/gamification/actions'
+import { XP_REWARDS } from '@/lib/utils/gamification'
 
 interface BGGCollectionItem {
     objectid: string
@@ -122,6 +124,13 @@ export async function syncBGGCollection(bggUsername: string) {
         .from('profiles')
         .update({ bgg_username: bggUsername })
         .eq('id', user.id)
+
+    // Award XP (10 XP per game, capped at 100 for a single import to avoid abuse?) 
+    // Roadmap says "Neue Spiele einfügen: +10 XP".
+    const xpAmount = Math.min(newGames.length * 10, 500) // Cap at 50 games per sync
+    if (xpAmount > 0) {
+        await addXP(user.id, xpAmount, `${newGames.length} Spiele importiert!`)
+    }
 
     revalidatePath('/inventory')
     return { success: true, imported: newGames.length }

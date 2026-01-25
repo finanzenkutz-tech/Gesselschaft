@@ -5,7 +5,14 @@ import { revalidatePath } from 'next/cache'
 import { addXP } from '@/app/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
 
-export async function upsertRSVP(eventId: string, status: string, guestCount: number = 0) {
+export async function upsertRSVP(
+    eventId: string,
+    status: string,
+    guestCount: number = 0,
+    expectedArrival?: string,
+    expectedDeparture?: string,
+    note?: string
+) {
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -25,7 +32,10 @@ export async function upsertRSVP(eventId: string, status: string, guestCount: nu
             event_id: eventId,
             user_id: user.id,
             status: status,
-            guest_count: guestCount
+            guest_count: guestCount,
+            expected_arrival: expectedArrival || null,
+            expected_departure: expectedDeparture || null,
+            note: note || null
         }, { onConflict: 'event_id,user_id' })
 
     if (error) {
@@ -33,11 +43,7 @@ export async function upsertRSVP(eventId: string, status: string, guestCount: nu
         return { success: false, error: error.message }
     }
 
-    // Award XP if status changed to 'going' and wasn't 'going' before
-    if (status === 'going' && existingRSVP?.status !== 'going') {
-        const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
-        await addXP(user.id, XP_REWARDS.event_attended, `Zusage für "${event?.title || 'ein Event'}" gespeichert!`)
-    }
+
 
     revalidatePath(`/events/${eventId}`)
 

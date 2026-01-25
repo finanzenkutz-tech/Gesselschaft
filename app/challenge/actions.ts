@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { addXP } from '@/app/gamification/actions'
+import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function createChallenge(formData: FormData) {
     const supabase = await createClient()
@@ -84,7 +86,8 @@ export async function completeChallenge(challengeId: string, winnerId: string) {
     }
 
     // Award points to winner
-    await supabase.rpc('increment_points', { user_id: winnerId, amount: 10 })
+    // Award points to winner
+    await addXP(winnerId, XP_REWARDS.game_won || 30, 'Du hast eine Challenge gewonnen!')
 
     revalidatePath('/challenges')
     return { success: true }

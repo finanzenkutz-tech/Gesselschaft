@@ -15,14 +15,18 @@ import {
 import { addGroupPlace } from '@/app/groups/place-actions'
 import { useRouter } from 'next/navigation'
 import { LocationPicker } from '@/components/groups/location-picker'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Camera, ShieldCheck } from 'lucide-react'
 
 import { PLACE_AMENITIES } from '@/lib/constants/amenities'
 
-export function AddPlaceDialog({ groupId, trigger }: { groupId: string, trigger?: React.ReactNode }) {
+export function AddPlaceDialog({ groupId, trigger, onSuccess }: { groupId: string, trigger?: React.ReactNode, onSuccess?: () => void }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [coordinates, setCoordinates] = useState<{ lat: number, lng: number } | null>(null)
     const [amenities, setAmenities] = useState<string[]>([])
+    const [isPrivate, setIsPrivate] = useState(false)
 
     const router = useRouter()
 
@@ -44,6 +48,7 @@ export function AddPlaceDialog({ groupId, trigger }: { groupId: string, trigger?
         }
 
         formData.append('amenities', JSON.stringify(amenities))
+        formData.append('is_private', isPrivate.toString())
 
         const result = await addGroupPlace(formData)
         setLoading(false)
@@ -52,6 +57,7 @@ export function AddPlaceDialog({ groupId, trigger }: { groupId: string, trigger?
             setCoordinates(null)
             setAmenities([])
             router.refresh()
+            onSuccess?.()
         } else {
             alert(result.error)
         }
@@ -119,6 +125,37 @@ export function AddPlaceDialog({ groupId, trigger }: { groupId: string, trigger?
                             </div>
 
                             <div className="space-y-4">
+                                <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label className="text-sm font-bold text-slate-700">Privater Gastgeber?</Label>
+                                            <p className="text-[10px] text-slate-400 font-medium">Nur für Mitglieder sichtbar</p>
+                                        </div>
+                                        <Switch
+                                            checked={isPrivate}
+                                            onCheckedChange={setIsPrivate}
+                                        />
+                                    </div>
+
+                                    {isPrivate && (
+                                        <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                            <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-wider">Infos für Gäste</label>
+                                            <textarea
+                                                name="host_info"
+                                                placeholder="z.B. 'Habe eine Katze', 'Parken im Hof möglich', 'Bitte Straßenschuhe ausziehen'"
+                                                className="w-full p-3 rounded-xl bg-white border border-slate-200 min-h-[80px] text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 shadow-sm"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
+                                        <Camera className="w-4 h-4 text-slate-400" /> Bild-URL (Optional)
+                                    </label>
+                                    <Input name="image_url" placeholder="https://..." className="rounded-xl bg-slate-50 border-slate-100 h-12" />
+                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-slate-700 ml-1">Auf der Karte markieren</label>
                                     <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">

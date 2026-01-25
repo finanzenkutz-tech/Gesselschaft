@@ -15,6 +15,8 @@ import { updateGroupPlace } from '@/app/groups/place-actions'
 import { useRouter } from 'next/navigation'
 import { LocationPicker } from '@/components/groups/location-picker'
 import { PLACE_AMENITIES } from '@/lib/constants/amenities'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 type Place = {
     id: string
@@ -25,6 +27,9 @@ type Place = {
     latitude: number | null
     longitude: number | null
     amenities: string[] | null
+    image_url: string | null
+    is_private: boolean | null
+    host_info: string | null
     created_by: string
 }
 
@@ -35,6 +40,7 @@ export function EditPlaceDialog({ place, groupId }: { place: Place, groupId: str
         place.latitude && place.longitude ? { lat: place.latitude, lng: place.longitude } : null
     )
     const [amenities, setAmenities] = useState<string[]>(place.amenities || [])
+    const [isPrivate, setIsPrivate] = useState(!!place.is_private)
 
     const router = useRouter()
 
@@ -55,6 +61,7 @@ export function EditPlaceDialog({ place, groupId }: { place: Place, groupId: str
         }
 
         formData.append('amenities', JSON.stringify(amenities))
+        formData.append('is_private', isPrivate.toString())
 
         const result = await updateGroupPlace(formData)
         setLoading(false)
@@ -69,9 +76,9 @@ export function EditPlaceDialog({ place, groupId }: { place: Place, groupId: str
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <button className="text-slate-300 hover:text-blue-500 p-2 opacity-0 group-hover:opacity-100 transition-all">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50" title="Ort bearbeiten">
                     <Pencil className="w-4 h-4" />
-                </button>
+                </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-8 text-white shrink-0">
@@ -112,8 +119,8 @@ export function EditPlaceDialog({ place, groupId }: { place: Place, groupId: str
                                                 type="button"
                                                 onClick={() => toggleAmenity(opt.id)}
                                                 className={`flex items-center gap-2 p-2 rounded-lg text-sm font-medium transition-all border ${amenities.includes(opt.id)
-                                                        ? 'bg-blue-50 border-blue-200 text-blue-600'
-                                                        : 'bg-white border-slate-100 text-slate-500 hover:bg-slate-50'
+                                                    ? 'bg-blue-50 border-blue-200 text-blue-600'
+                                                    : 'bg-white border-slate-100 text-slate-500 hover:bg-slate-50'
                                                     }`}
                                             >
                                                 <span>{opt.icon}</span>
@@ -126,6 +133,36 @@ export function EditPlaceDialog({ place, groupId }: { place: Place, groupId: str
                             </div>
 
                             <div className="space-y-4">
+                                <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <p className="text-sm font-bold text-slate-700">Privater Gastgeber?</p>
+                                            <p className="text-[10px] text-slate-400 font-medium">Nur für Mitglieder sichtbar</p>
+                                        </div>
+                                        <Switch
+                                            checked={isPrivate}
+                                            onCheckedChange={setIsPrivate}
+                                        />
+                                    </div>
+
+                                    {isPrivate && (
+                                        <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                            <label className="text-xs font-bold text-slate-500 ml-1 uppercase tracking-wider">Infos für Gäste</label>
+                                            <textarea
+                                                name="host_info"
+                                                defaultValue={place.host_info || ''}
+                                                placeholder="z.B. Haustiere, Parken..."
+                                                className="w-full p-3 rounded-xl bg-white border border-slate-200 min-h-[80px] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-700 ml-1">Bild-URL (Optional)</label>
+                                    <Input name="image_url" defaultValue={place.image_url || ''} className="rounded-xl bg-slate-50 border-slate-100 h-12" />
+                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-sm font-bold text-slate-700 ml-1">Auf der Karte</label>
                                     <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-50">

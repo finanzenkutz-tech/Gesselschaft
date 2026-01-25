@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Calendar, MapPin, FileText, Dice5, Plus, X, Repeat } from 'lucide-react'
+import { Calendar, MapPin, FileText, Dice5, Plus, X, Repeat, History } from 'lucide-react'
 import {
     Dialog,
     DialogContent,
@@ -19,7 +19,19 @@ import confetti from 'canvas-confetti'
 
 type Place = { id: string; name: string; address?: string }
 
-export function CreateEventDialog({ groups, defaultGroupId, places = [] }: { groups: any[], defaultGroupId?: string, places?: Place[] }) {
+export function CreateEventDialog({
+    groups,
+    defaultGroupId,
+    places = [],
+    variant = 'default',
+    trigger
+}: {
+    groups: any[],
+    defaultGroupId?: string,
+    places?: Place[],
+    variant?: 'default' | 'retroactive',
+    trigger?: React.ReactNode
+}) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -71,17 +83,26 @@ export function CreateEventDialog({ groups, defaultGroupId, places = [] }: { gro
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-blue-600 text-white rounded-2xl h-12 px-6 shadow-lg shadow-blue-200">
-                    <Plus className="w-5 h-5 mr-2" /> Event planen
-                </Button>
+                {trigger ? trigger : (
+                    <Button
+                        className={variant === 'retroactive'
+                            ? "bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl h-12 px-6"
+                            : "bg-primary hover:bg-blue-600 text-white rounded-2xl h-12 px-6 shadow-lg shadow-blue-200"
+                        }
+                    >
+                        {variant === 'retroactive' ? <History className="w-5 h-5 mr-2" /> : <Plus className="w-5 h-5 mr-2" />}
+                        {variant === 'retroactive' ? 'Event nachtragen' : 'Event planen'}
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white">
-                <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-white relative">
+                <div className={`p-8 text-white relative ${variant === 'retroactive' ? 'bg-gradient-to-r from-slate-700 to-slate-900' : 'bg-gradient-to-r from-primary to-blue-600'}`}>
                     <DialogTitle className="text-2xl font-extrabold flex items-center gap-3">
-                        <Calendar className="w-8 h-8" /> Event planen
+                        {variant === 'retroactive' ? <History className="w-8 h-8" /> : <Calendar className="w-8 h-8" />}
+                        {variant === 'retroactive' ? 'Event nachtragen' : 'Event planen'}
                     </DialogTitle>
-                    <DialogDescription className="text-blue-100 mt-2 opacity-90">
-                        Organisiere deinen nächsten Spieleabend in wenigen Schritten.
+                    <DialogDescription className={`${variant === 'retroactive' ? 'text-slate-300' : 'text-blue-100'} mt-2 opacity-90`}>
+                        {variant === 'retroactive' ? 'Füge ein bereits vergangenes Event hinzu.' : 'Organisiere deinen nächsten Spieleabend in wenigen Schritten.'}
                     </DialogDescription>
                 </div>
 
@@ -122,6 +143,10 @@ export function CreateEventDialog({ groups, defaultGroupId, places = [] }: { gro
                                     name="start_time"
                                     type="datetime-local"
                                     required
+                                    defaultValue={variant === 'retroactive'
+                                        ? new Date(Date.now() - 86400000).toISOString().slice(0, 16)
+                                        : undefined
+                                    }
                                     className="rounded-xl bg-slate-50 border-slate-100 focus:bg-white h-12"
                                 />
                             </div>
@@ -238,7 +263,7 @@ export function CreateEventDialog({ groups, defaultGroupId, places = [] }: { gro
                             disabled={loading}
                             className="flex-1 bg-primary hover:bg-blue-600 text-white rounded-xl h-12 font-bold shadow-lg shadow-blue-200"
                         >
-                            {loading ? 'Plant...' : 'Event planen'}
+                            {loading ? (variant === 'retroactive' ? 'Trage nach...' : 'Plant...') : (variant === 'retroactive' ? 'Nachtragen' : 'Event planen')}
                         </Button>
                     </div>
                 </form>

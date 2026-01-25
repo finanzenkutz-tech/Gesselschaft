@@ -66,6 +66,25 @@ export async function updateProfile(formData: FormData) {
         updateData.show_reputation = showReputation
     }
 
+    // Handle JSON preferences
+    const guestPrefs = formData.get('guest_preferences') as string
+    if (guestPrefs) {
+        try {
+            updateData.guest_preferences = JSON.parse(guestPrefs)
+        } catch (error) {
+            console.error('Error parsing guest_preferences', error)
+        }
+    }
+
+    const hostingPrefs = formData.get('hosting_preferences') as string
+    if (hostingPrefs) {
+        try {
+            updateData.hosting_preferences = JSON.parse(hostingPrefs)
+        } catch (error) {
+            console.error('Error parsing hosting_preferences', error)
+        }
+    }
+
     // Notification prefs
     if (formData.has('pref_email_notifications_present')) {
         updateData.pref_email_notifications = formData.get('pref_email_notifications') === 'on'
@@ -207,4 +226,20 @@ export async function deleteAccount() {
     await supabase.auth.signOut()
 
     return { success: true }
+}
+
+export async function getPublicProfile(userId: string) {
+    const supabase = await createClient()
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+    if (error) {
+        console.error('Error fetching public profile:', error)
+        return null
+    }
+
+    return profile
 }

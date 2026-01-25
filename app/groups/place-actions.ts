@@ -13,6 +13,9 @@ export async function addGroupPlace(formData: FormData) {
     const address = formData.get('address') as string
     const services = formData.get('services') as string
     const description = formData.get('description') as string
+    const imageUrl = formData.get('image_url') as string
+    const isPrivate = formData.get('is_private') === 'true'
+    const hostInfo = formData.get('host_info') as string
 
     // Parse coordinates if provided
     const latStr = formData.get('latitude') as string
@@ -20,9 +23,7 @@ export async function addGroupPlace(formData: FormData) {
     const latitude = latStr ? parseFloat(latStr) : null
     const longitude = lngStr ? parseFloat(lngStr) : null
 
-    // Parse amenities from FormData (checkboxes usually send multiple values for same key, 
-    // but in Next.js Server Actions with standard FormData, we might need to handle it carefully.
-    // For now assuming we perform comma-joining in frontend or receive as JSON string)
+    // Parse amenities from FormData
     const amenitiesJson = formData.get('amenities') as string
     const amenities = amenitiesJson ? JSON.parse(amenitiesJson) : []
 
@@ -37,6 +38,9 @@ export async function addGroupPlace(formData: FormData) {
             latitude,
             longitude,
             amenities,
+            image_url: imageUrl || null,
+            is_private: isPrivate,
+            host_info: hostInfo || null,
             created_by: user.id
         })
 
@@ -79,6 +83,9 @@ export async function updateGroupPlace(formData: FormData) {
     const address = formData.get('address') as string
     const services = formData.get('services') as string
     const description = formData.get('description') as string
+    const imageUrl = formData.get('image_url') as string
+    const isPrivate = formData.get('is_private') === 'true'
+    const hostInfo = formData.get('host_info') as string
 
     const latStr = formData.get('latitude') as string
     const lngStr = formData.get('longitude') as string
@@ -97,7 +104,10 @@ export async function updateGroupPlace(formData: FormData) {
             description: description || null,
             latitude,
             longitude,
-            amenities
+            amenities,
+            image_url: imageUrl || null,
+            is_private: isPrivate,
+            host_info: hostInfo || null
         })
         .eq('id', placeId)
 

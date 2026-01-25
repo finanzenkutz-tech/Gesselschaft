@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { addXP } from '@/app/gamification/actions'
+import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function createGameSession(formData: FormData) {
     const supabase = await createClient()
@@ -58,19 +60,8 @@ export async function addPlayerToSession(formData: FormData) {
         return { success: false, error: error.message }
     }
 
-    // Award points for participation - fetch current points first
-    const { data: currentProfile } = await supabase
-        .from('profiles')
-        .select('points')
-        .eq('id', playerId)
-        .single()
-
-    if (currentProfile) {
-        await supabase
-            .from('profiles')
-            .update({ points: (currentProfile.points || 0) + 5 })
-            .eq('id', playerId)
-    }
+    // Award points for participation
+    await addXP(playerId, XP_REWARDS.game_played || 10)
 
     revalidatePath(`/events`)
     return { success: true, data }
@@ -139,18 +130,7 @@ export async function addSessionReport(sessionId: string, report: {
 
     // Award bonus points to winner
     if (report.winner_id) {
-        const { data: currentProfile } = await supabase
-            .from('profiles')
-            .select('points')
-            .eq('id', report.winner_id)
-            .single()
-
-        if (currentProfile) {
-            await supabase
-                .from('profiles')
-                .update({ points: (currentProfile.points || 0) + 10 })
-                .eq('id', report.winner_id)
-        }
+        await addXP(report.winner_id, XP_REWARDS.game_won || 30, 'Du hast ein Spiel gewonnen!')
     }
 
     revalidatePath('/events')

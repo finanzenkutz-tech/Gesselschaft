@@ -25,6 +25,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { UserSearchDialog } from '@/components/social/user-search-dialog'
+import { BottomNav } from '@/components/layout/bottom-nav'
 
 const menuNavigation = [
     { name: 'Dashboard', href: '/', icon: Home },
@@ -51,10 +53,14 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
     const router = useRouter()
     const [sidebarOpen, setSidebarOpen] = useState(false)
     const [viewMode, setViewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop')
-    const [godMode, setGodMode] = useState(() => {
-        // Initialize from cookie on client side
-        return Cookies.get('godMode') !== 'false'
-    })
+    const [godMode, setGodMode] = useState(true)
+
+    useEffect(() => {
+        const cookieVal = Cookies.get('godMode')
+        if (cookieVal === 'false') {
+            setGodMode(false)
+        }
+    }, [])
     const supabase = createClient()
 
     // Check if we are inside the preview iframe
@@ -86,14 +92,10 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
     // Effective Super Admin for UI (respects God Mode toggles)
     const isSuperAdmin = isRealSuperAdmin && godMode
 
-    // Sync godMode with cookie
-    useEffect(() => {
-        Cookies.set('godMode', godMode.toString(), { expires: 7 })
-        router.refresh()
-    }, [godMode, router])
+
 
     const displayName = profile?.full_name || user.email?.split('@')[0] || 'User'
-    const levelInfo = getLevelInfo(profile?.points || 0)
+    const levelInfo = getLevelInfo(profile?.xp || 0)
 
     // Preview Mode Render
     if (!isFramed && viewMode !== 'desktop') {
@@ -251,22 +253,7 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
 
                             {/* Social / Buddies Section */}
                             <div className="space-y-4 px-2">
-                                <Dialog>
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full bg-slate-50 border-dashed border-2 border-slate-200 text-slate-400 hover:text-primary hover:border-primary rounded-2xl h-12 transition-all font-bold">
-                                            <UserPlus className="w-4 h-4 mr-2" /> Buddies finden
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="rounded-[2.5rem] border-none shadow-2xl p-8 bg-white max-w-md">
-                                        <DialogHeader>
-                                            <DialogTitle className="text-2xl font-black text-slate-800 flex items-center gap-2">
-                                                <Users className="w-6 h-6 text-primary" />
-                                                Buddies finden
-                                            </DialogTitle>
-                                        </DialogHeader>
-                                        <UserSearch />
-                                    </DialogContent>
-                                </Dialog>
+                                <UserSearchDialog />
 
                                 <FriendsSidebar currentUserId={user.id} />
                             </div>
@@ -281,7 +268,12 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
 
                                         {/* God Mode Toggle */}
                                         <button
-                                            onClick={() => setGodMode(!godMode)}
+                                            onClick={() => {
+                                                const newValue = !godMode
+                                                setGodMode(newValue)
+                                                Cookies.set('godMode', newValue.toString(), { expires: 7 })
+                                                router.refresh()
+                                            }}
                                             className={cn(
                                                 "text-[9px] font-black px-2 py-0.5 rounded-full transition-all border",
                                                 godMode
@@ -407,10 +399,10 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 overflow-y-auto relative w-full p-4 md:p-6 lg:p-10">
+                <main className="flex-1 overflow-y-auto relative w-full p-4 md:p-6 lg:p-10 pb-24 lg:pb-10">
                     <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
                         <RewardEffects
-                            points={profile?.points}
+                            points={profile?.xp}
                             badges={profile?.badges}
                         />
                         {children}
@@ -441,6 +433,8 @@ export function Shell({ children, user, profile }: { children: React.ReactNode, 
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
+
+            <BottomNav />
         </div>
     )
 }

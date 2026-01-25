@@ -3,6 +3,8 @@ import { SPIELELISTE } from '@/lib/spieleliste'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { addXP } from '@/app/gamification/actions'
+import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function addGameToInventory(formData: FormData) {
     const supabase = await createClient()
@@ -87,6 +89,9 @@ export async function addGameToInventory(formData: FormData) {
             })
         }
     }
+
+    // Award XP
+    await addXP(user.id, 10, 'Neues Spiel hinzugefügt!')
 
     revalidatePath('/inventory')
     return { success: true, data }

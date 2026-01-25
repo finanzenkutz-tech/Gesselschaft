@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { addEventComment, deleteEventComment } from '@/app/events/comment-actions'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface Comment {
     id: string
@@ -104,72 +106,87 @@ export function EventComments({ eventId, initialComments, currentUserId }: Event
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <h3 className="font-bold text-xl text-slate-800 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-primary" />
-                Kommentare ({comments.length})
+                Besprechung ({comments.length})
             </h3>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-3">
-                <Textarea
-                    placeholder="Schreibe einen Kommentar..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="rounded-xl border-slate-100 bg-slate-50 focus:ring-primary/20"
-                />
-                <div className="flex justify-end">
-                    <Button
-                        type="submit"
-                        disabled={isSubmitting || !newComment.trim()}
-                        className="bg-primary hover:bg-blue-600 text-white rounded-xl gap-2 px-6 font-bold"
-                    >
-                        <Send className="w-4 h-4" />
-                        Senden
-                    </Button>
-                </div>
-            </form>
-
             {/* List */}
-            <div className="space-y-4">
+            <div className="space-y-6">
                 {comments.length === 0 ? (
-                    <p className="text-center py-8 text-slate-400 text-sm">Noch keine Kommentare. Sei der Erste!</p>
+                    <div className="text-center py-12 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-100">
+                        <MessageSquare className="w-12 h-12 mx-auto text-slate-200 mb-2" />
+                        <p className="text-slate-400 text-sm">Noch keine Kommentare. Sei der Erste!</p>
+                    </div>
                 ) : (
-                    comments.map((comment) => (
-                        <div key={comment.id} className="flex gap-4 group">
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 overflow-hidden border border-blue-100">
-                                {comment.profiles?.avatar_url ? (
-                                    <img src={comment.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                                ) : (
-                                    <User className="w-5 h-5 text-blue-400" />
-                                )}
-                            </div>
-                            <div className="flex-1 space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <p className="font-bold text-slate-800 text-sm">{comment.profiles?.full_name || 'Spieler'}</p>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-[10px] text-slate-400 font-medium uppercase">
-                                            {new Date(comment.created_at).toLocaleDateString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                        {comment.user_id === currentUserId && (
-                                            <button
-                                                onClick={() => handleDelete(comment.id)}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500"
-                                                title="Kommentar löschen"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
+                    <div className="flex flex-col gap-4">
+                        {comments.map((comment) => {
+                            const isMine = comment.user_id === currentUserId
+                            return (
+                                <div key={comment.id} className={cn(
+                                    "flex gap-3 max-w-[85%]",
+                                    isMine ? "ml-auto flex-row-reverse" : ""
+                                )}>
+                                    <Avatar className="w-8 h-8 shrink-0 mt-1 border-2 border-white shadow-sm">
+                                        <AvatarImage src={comment.profiles?.avatar_url || undefined} />
+                                        <AvatarFallback className="text-[10px] bg-blue-50 text-blue-500 font-bold">
+                                            {comment.profiles?.full_name?.[0]}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="space-y-1">
+                                        <div className={cn(
+                                            "flex items-center gap-2",
+                                            isMine ? "flex-row-reverse" : ""
+                                        )}>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                                                {isMine ? 'Du' : comment.profiles?.full_name}
+                                            </span>
+                                            <span className="text-[10px] text-slate-300 font-medium">
+                                                {new Date(comment.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                        <div className={cn(
+                                            "p-4 text-sm shadow-sm relative group",
+                                            isMine
+                                                ? "bg-primary text-white rounded-2xl rounded-tr-none"
+                                                : "bg-white text-slate-600 rounded-2xl rounded-tl-none border border-slate-100"
+                                        )}>
+                                            {comment.content}
+                                            {isMine && (
+                                                <button
+                                                    onClick={() => handleDelete(comment.id)}
+                                                    className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-300 hover:text-red-500 p-1"
+                                                    title="Löschen"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                                <p className="text-slate-600 text-sm bg-slate-50 p-3 rounded-2xl rounded-tl-none border border-slate-100/50">
-                                    {comment.content}
-                                </p>
-                            </div>
-                        </div>
-                    ))
+                            )
+                        })}
+                    </div>
                 )}
             </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="relative pt-4 border-t border-slate-100">
+                <Textarea
+                    placeholder="Schreibe eine Nachricht..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="min-h-[100px] rounded-2xl border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-primary/10 transition-all resize-none pr-16"
+                />
+                <Button
+                    type="submit"
+                    disabled={isSubmitting || !newComment.trim()}
+                    className="absolute bottom-4 right-4 h-10 w-10 p-0 rounded-xl bg-primary hover:bg-blue-600 text-white shadow-lg hover:shadow-primary/20 transition-all"
+                >
+                    <Send className="w-4 h-4" />
+                </Button>
+            </form>
         </div>
     )
 }

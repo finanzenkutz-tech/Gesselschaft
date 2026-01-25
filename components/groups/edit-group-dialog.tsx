@@ -29,7 +29,7 @@ type Group = {
     zip_code?: string
 }
 
-export function EditGroupDialog({ group }: { group: Group }) {
+export function EditGroupDialog({ group, trigger }: { group: Group, trigger?: React.ReactNode }) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -94,10 +94,12 @@ export function EditGroupDialog({ group }: { group: Group }) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" className="border-2 border-slate-100 text-slate-600 rounded-xl hover:bg-slate-50 transition-all group">
-                    <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
-                    <span className="ml-2 hidden sm:inline">Gruppe bearbeiten</span>
-                </Button>
+                {trigger ? trigger : (
+                    <Button variant="outline" className="border-2 border-slate-100 text-slate-600 rounded-xl hover:bg-slate-50 transition-all group">
+                        <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" />
+                        <span className="ml-2 hidden sm:inline">Gruppe bearbeiten</span>
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-2xl rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
                 <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-white shrink-0">
@@ -164,7 +166,8 @@ export function EditGroupDialog({ group }: { group: Group }) {
                             </div>
 
                             <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-4">
+                                    {/* Zip Code (Still manual for now if preferred, or could be derived) */}
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
                                             <MapPin className="w-4 h-4 text-primary" /> PLZ *
@@ -177,16 +180,20 @@ export function EditGroupDialog({ group }: { group: Group }) {
                                             className="rounded-xl bg-slate-50 border-slate-100 h-12 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
                                         />
                                     </div>
+
                                     <div className="space-y-2">
                                         <label className="text-sm font-bold text-slate-700 ml-1 flex items-center gap-2">
-                                            <MapPin className="w-4 h-4 text-blue-400" /> Ort (Anzeige)
+                                            <MapPin className="w-4 h-4 text-blue-400" /> Standort auf Karte
                                         </label>
-                                        <Input
-                                            name="location_name"
-                                            value={locationName}
-                                            onChange={(e) => setLocationName(e.target.value)}
-                                            placeholder="z.B. Berlin"
-                                            className="rounded-xl bg-slate-50 border-slate-100 h-12 focus:bg-white focus:ring-4 focus:ring-primary/10 transition-all font-medium"
+                                        <LocationPicker
+                                            value={location ? [location.lat, location.lng] : null}
+                                            onChange={(lat, lng) => setLocation({ lat, lng })}
+                                            initialName={locationName}
+                                            onNameChange={setLocationName}
+                                            initialPublic={isPublic}
+                                            onPublicChange={setIsPublic}
+                                            showSaveButton={false} // Saving happens via main form
+                                            height="h-56"
                                         />
                                     </div>
                                 </div>

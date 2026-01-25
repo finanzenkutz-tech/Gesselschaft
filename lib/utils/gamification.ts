@@ -175,16 +175,20 @@ const ranks = [
     { minLevel: 20, name: 'Strategie-Meister', color: 'text-purple-500' },
     { minLevel: 50, name: 'Spiele-Legende', color: 'text-amber-500' },
     { minLevel: 100, name: 'Ewiger Spielleiter', color: 'text-red-500' },
+    { minLevel: 200, name: 'Brettspiel-Gott', color: 'text-yellow-500' },
 ]
 
-export function getLevelInfo(points: number = 0): LevelInfo {
-    // Basic formula: Level = floor(sqrt(points / 10))
-    const level = Math.floor(Math.sqrt(points / 10)) || 1
-    const currentLevelXP = Math.pow(level, 2) * 10
-    const nextLevelXP = Math.pow(level + 1, 2) * 10
+export function getLevelInfo(xp: number = 0): LevelInfo {
+    // Formula: Level = floor(1 + sqrt(xp / 100))
+    // Means: Level 1 @ 0 XP, Level 2 @ 100 XP, Level 3 @ 400 XP, Level 4 @ 900 XP...
+    const level = Math.floor(1 + Math.sqrt(xp / 100))
 
-    const xpInLevel = points - currentLevelXP
-    const xpNeededForLevel = nextLevelXP - currentLevelXP
+    // Reverse calculation for boundaries
+    const currentLevelMinXP = Math.pow(level - 1, 2) * 100
+    const nextLevelMinXP = Math.pow(level, 2) * 100
+
+    const xpInLevel = xp - currentLevelMinXP
+    const xpNeededForLevel = nextLevelMinXP - currentLevelMinXP
     const progress = Math.min(Math.max((xpInLevel / xpNeededForLevel) * 100, 0), 100)
 
     const rank = ranks.slice().reverse().find(r => level >= r.minLevel) || ranks[0]
@@ -193,7 +197,7 @@ export function getLevelInfo(points: number = 0): LevelInfo {
         level,
         rank: rank.name,
         color: rank.color,
-        xpToNext: nextLevelXP - points,
+        xpToNext: nextLevelMinXP - xp,
         progress
     }
 }

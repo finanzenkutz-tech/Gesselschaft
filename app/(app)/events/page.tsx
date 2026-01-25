@@ -27,7 +27,10 @@ export default async function EventsPage() {
                     <h1 className="text-3xl font-extrabold text-slate-800">Events</h1>
                     <p className="text-slate-500 text-lg mt-1">Hier findest du alle geplanten Spieleabende.</p>
                 </div>
-                <CreateEventDialog groups={groups} />
+                <div className="flex gap-2">
+                    <CreateEventDialog groups={groups} variant="retroactive" />
+                    <CreateEventDialog groups={groups} />
+                </div>
             </header>
 
             {/* Filters Placeholder */}

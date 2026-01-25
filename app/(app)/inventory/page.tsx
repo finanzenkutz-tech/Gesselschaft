@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { cn } from '@/lib/utils'
 import { Dice5, Trash2, ExternalLink, Box, Trophy, Lock, Globe, Users, Star, Clock, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { removeGameFromInventory } from '@/app/inventory/actions'
@@ -6,6 +7,7 @@ import { AddGameForm } from '@/components/inventory/add-game-form'
 import { GameDetailModal } from '@/components/inventory/game-detail-modal'
 import { BGGSyncButton } from '@/components/inventory/bgg-sync-button'
 import { GameTransferDialog } from '@/components/inventory/game-transfer-dialog'
+import Link from 'next/link'
 
 export default async function InventoryPage() {
     const supabase = await createClient()
@@ -55,6 +57,11 @@ export default async function InventoryPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <Link href="/inventory/import">
+                        <Button variant="outline" className="rounded-2xl h-12 px-6 border-slate-200 hover:border-primary/50 text-slate-600 font-bold bg-white">
+                            <Layers className="w-5 h-5 mr-2" /> Massenupload
+                        </Button>
+                    </Link>
                     <BGGSyncButton />
                     <AddGameForm groups={groups} />
                 </div>
@@ -62,37 +69,60 @@ export default async function InventoryPage() {
 
             {/* Ranking Card */}
             {myCount > 0 && (
-                <div className={`sky-card p-6 flex items-center gap-4 ${isTopCollector ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200' : ''}`}>
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isTopCollector ? 'bg-yellow-100 text-yellow-600' : 'bg-primary/10 text-primary'}`}>
-                        <Trophy className="w-7 h-7" />
+                <div className={cn(
+                    "relative overflow-hidden p-8 flex flex-col md:flex-row items-center gap-6 rounded-[2.5rem] transition-all duration-700",
+                    isTopCollector
+                        ? "bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-500 shadow-2xl shadow-amber-200"
+                        : "sky-card border-slate-100"
+                )}>
+                    {isTopCollector && (
+                        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] pointer-events-none mix-blend-overlay" />
+                    )}
+
+                    <div className={cn(
+                        "w-20 h-20 rounded-3xl flex items-center justify-center shadow-xl relative z-10",
+                        isTopCollector ? "bg-white text-amber-500 scale-110" : "bg-primary/10 text-primary"
+                    )}>
+                        <Trophy className={cn("w-10 h-10", isTopCollector ? "fill-amber-400" : "")} />
+                        {isTopCollector && (
+                            <div className="absolute -top-3 -right-3 bg-white text-amber-600 text-[10px] font-black px-2 py-1 rounded-full shadow-lg border border-amber-100 animate-bounce">TOP</div>
+                        )}
                     </div>
-                    <div className="flex-1">
+
+                    <div className="flex-1 relative z-10 text-center md:text-left">
                         {isTopCollector ? (
                             <>
-                                <p className="font-extrabold text-lg text-yellow-700">🏆 Top-Sammler!</p>
-                                <p className="text-yellow-600 text-sm">
-                                    Du hast mehr Spiele als die meisten anderen ({myCount} Spiele, Platz {myRank} von {totalPlayers})
+                                <h2 className="text-2xl font-black text-amber-900 leading-tight">Elite Sammler Status!</h2>
+                                <p className="text-amber-800/80 font-bold text-lg mt-1">
+                                    Deine Sammlung gehört zu den Top {myRank === 1 ? '1' : myRank} von {totalPlayers} Spielern.
                                 </p>
                             </>
                         ) : (
                             <>
-                                <p className="font-bold text-slate-800">{myCount} {myCount === 1 ? 'Spiel' : 'Spiele'} in deiner Sammlung</p>
-                                <p className="text-slate-500 text-sm">
-                                    {totalPlayers > 1 ? `Platz ${myRank} von ${totalPlayers} Spielern bei Game Hub` : 'Sei der erste Sammler bei Game Hub!'}
+                                <h2 className="text-xl font-black text-slate-800 leading-tight">{myCount} Schätze gefunden</h2>
+                                <p className="text-slate-500 font-bold mt-1">
+                                    {totalPlayers > 1 ? `Du bist auf Platz ${myRank} der besten Sammler.` : 'Sei der erste Sammler bei Game Hub!'}
                                 </p>
                             </>
                         )}
                     </div>
-                    <div className="flex flex-col md:flex-row gap-4 md:gap-8 border-l border-slate-200 pl-4 md:pl-8 ml-auto">
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gesamtwert (Neu)</span>
-                            <span className="text-xl font-black text-primary">
+
+                    <div className="flex flex-col sm:flex-row gap-4 ml-auto relative z-10 w-full md:w-auto">
+                        <div className={cn(
+                            "px-6 py-4 rounded-2xl flex flex-col items-center md:items-start transition-all",
+                            isTopCollector ? "bg-white/30 backdrop-blur-md border border-white/40" : "bg-slate-50 border border-slate-100"
+                        )}>
+                            <span className={cn("text-[10px] font-black uppercase tracking-widest", isTopCollector ? "text-amber-900/60" : "text-slate-400")}>Neuwert</span>
+                            <span className={cn("text-2xl font-black", isTopCollector ? "text-amber-900" : "text-primary")}>
                                 {totalValueNew.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                             </span>
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Sammlerwert (Gebraucht)</span>
-                            <span className="text-xl font-black text-emerald-500">
+                        <div className={cn(
+                            "px-6 py-4 rounded-2xl flex flex-col items-center md:items-start transition-all",
+                            isTopCollector ? "bg-white/40 backdrop-blur-md border border-white/50" : "bg-emerald-50/50 border border-emerald-100"
+                        )}>
+                            <span className={cn("text-[10px] font-black uppercase tracking-widest", isTopCollector ? "text-amber-900/60" : "text-emerald-600/60")}>Marktwert</span>
+                            <span className={cn("text-2xl font-black", isTopCollector ? "text-amber-900" : "text-emerald-500")}>
                                 {totalValueUsed.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
                             </span>
                         </div>

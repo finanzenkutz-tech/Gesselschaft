@@ -30,15 +30,31 @@ export async function sendMessage(eventId: string, content: string) {
     // Notify attendees
     const { data: attendees } = await supabase
         .from('event_attendees')
-        .select('user_id')
+        .select(`
+            user_id,
+            profiles:user_id(notifications_enabled)
+        `)
         .eq('event_id', eventId)
 
     if (attendees) {
+        // Fetch all users who have muted the current sender
+        const { data: mutes } = await supabase
+            .from('user_mutes')
+            .select('user_id')
+            .eq('muted_user_id', user.id)
+
+        const mutedByUserIds = new Set(mutes?.map(m => m.user_id) || [])
+
         const { createNotification } = await import('@/app/notifications/actions')
         const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
 
         for (const attendee of attendees) {
-            if (attendee.user_id !== user.id) {
+            const profile = attendee.profiles as any
+            const isSelf = attendee.user_id === user.id
+            const notificationsEnabled = profile?.notifications_enabled !== false
+            const isMuted = mutedByUserIds.has(attendee.user_id)
+
+            if (!isSelf && notificationsEnabled && !isMuted) {
                 await createNotification(
                     attendee.user_id,
                     'chat_message',

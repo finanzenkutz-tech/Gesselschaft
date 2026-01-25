@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MapPin, Repeat, ShoppingBag, Image as ImageIcon, MoreVertical, Edit, Trash2, CheckCircle2, Clock } from 'lucide-react'
+import { MapPin, Repeat, ShoppingBag, Store, MoreVertical, Edit, Trash2, CheckCircle2, Clock } from 'lucide-react'
 import { toast } from 'sonner'
 import { markAsReserved, markAsSold, deleteListing } from '@/app/marketplace/actions'
 
@@ -67,110 +67,119 @@ export function ListingCard({ listing, isFavorite = false, isOwner = false }: Li
 
     return (
         <Link href={`/marketplace/${listing.id}`}>
-            <Card className="h-full overflow-hidden hover:shadow-lg transition-all group border-slate-200 flex flex-col">
-                <div className="aspect-[4/3] relative bg-slate-100 overflow-hidden">
+            <Card className="h-full overflow-hidden hover:shadow-2xl transition-all duration-500 group border-slate-100 flex flex-col bg-white/80 backdrop-blur-sm rounded-[2rem]">
+                <div className="aspect-[5/4] relative bg-slate-50 overflow-hidden">
                     {mainImage ? (
                         <img
                             src={mainImage}
                             alt={listing.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400">
-                            <ImageIcon className="w-12 h-12 opacity-50" />
+                        <div className="w-full h-full flex items-center justify-center text-slate-200">
+                            <Store className="w-16 h-16 opacity-30" />
                         </div>
                     )}
 
-                    <div className="absolute top-2 right-2 flex gap-1 z-10">
-                        {isOwner ? (
-                            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 shadow-sm backdrop-blur-sm hover:bg-white">
-                                            <MoreVertical className="w-4 h-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <Link href={`/marketplace/${listing.id}/edit`}>
-                                            <DropdownMenuItem>
-                                                <Edit className="w-4 h-4 mr-2" /> Bearbeiten
-                                            </DropdownMenuItem>
-                                        </Link>
-                                        {listing.status === 'active' && (
-                                            <>
-                                                <DropdownMenuItem onClick={(e) => handleStatusChange(e, 'reserved')}>
-                                                    <Clock className="w-4 h-4 mr-2" /> Reservieren
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={(e) => handleStatusChange(e, 'sold')}>
-                                                    <CheckCircle2 className="w-4 h-4 mr-2" /> Als Verkauft markieren
-                                                </DropdownMenuItem>
-                                            </>
-                                        )}
-                                        {listing.status === 'reserved' && (
-                                            <DropdownMenuItem onClick={(e) => handleStatusChange(e, 'sold')}>
-                                                <CheckCircle2 className="w-4 h-4 mr-2" /> Als Verkauft markieren
-                                            </DropdownMenuItem>
-                                        )}
-                                        <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600 focus:bg-red-50">
-                                            <Trash2 className="w-4 h-4 mr-2" /> Löschen
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        ) : (
-                            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                                <FavoriteButton listingId={listing.id} initialIsFavorite={isFavorite} size="sm" className="bg-white/80 hover:bg-white backdrop-blur-sm rounded-full shadow-sm" />
-                            </div>
-                        )}
-
-                        {(listing.listing_type === 'sell' || listing.listing_type === 'both') && (
-                            <Badge variant="secondary" className="bg-white/90 text-green-700 shadow-sm backdrop-blur-sm h-8 px-3">
-                                <ShoppingBag className="w-3 h-3 mr-1" />
-                                {listing.is_for_rent ? `${listing.price?.toFixed(2)} € (Miete)` : (listing.price ? `${listing.price.toFixed(2)} €` : 'Verkauf')}
+                    {/* Type Badges */}
+                    <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                        {listing.listing_type === 'sell' && (
+                            <Badge className="bg-emerald-500/90 hover:bg-emerald-500 text-white border-0 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg">
+                                Verkauf
                             </Badge>
                         )}
-                        {(listing.listing_type === 'trade' || listing.listing_type === 'both') && (
-                            <Badge variant="secondary" className="bg-white/90 text-blue-700 shadow-sm backdrop-blur-sm h-8 px-3">
-                                <Repeat className="w-3 h-3 mr-1" />
+                        {listing.listing_type === 'trade' && (
+                            <Badge className="bg-blue-500/90 hover:bg-blue-500 text-white border-0 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg">
                                 Tausch
                             </Badge>
                         )}
+                        {listing.listing_type === 'both' && (
+                            <Badge className="bg-purple-500/90 hover:bg-purple-500 text-white border-0 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg">
+                                Mix
+                            </Badge>
+                        )}
                         {listing.is_for_rent && (
-                            <Badge variant="secondary" className="bg-orange-500 text-white shadow-sm h-8 px-3">
-                                <Clock className="w-3 h-3 mr-1" />
+                            <Badge className="bg-amber-500/90 hover:bg-amber-500 text-white border-0 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-lg">
                                 Verleih
                             </Badge>
                         )}
                     </div>
 
+                    {/* Actions Overlay */}
+                    <div className="absolute top-4 right-4 flex gap-2 z-10">
+                        {isOwner ? (
+                            <div className="flex gap-2" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                <Link href={`/marketplace/${listing.id}/edit`}>
+                                    <Button variant="secondary" size="icon" className="h-9 w-9 rounded-xl bg-white/90 shadow-xl backdrop-blur-md hover:bg-white text-slate-600">
+                                        <Edit className="w-4 h-4" />
+                                    </Button>
+                                </Link>
+                                <Button onClick={handleDelete} variant="secondary" size="icon" className="h-9 w-9 rounded-xl bg-white/90 shadow-xl backdrop-blur-md hover:bg-white text-red-500">
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                                <FavoriteButton listingId={listing.id} initialIsFavorite={isFavorite} size="sm" className="h-9 w-9 bg-white/90 hover:bg-white backdrop-blur-md rounded-xl shadow-xl border-0" />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Status Overlay */}
                     {listing.status !== 'active' && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-[1px]">
-                            <Badge className={`${listing.status === 'sold' ? 'bg-red-500' : 'bg-amber-500'} text-white px-3 py-1 text-lg font-bold uppercase tracking-wider`}>
-                                {listing.status === 'sold' ? 'Verkauft' : 'Reserviert'}
+                        <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center backdrop-blur-[2px] z-20">
+                            <Badge className={`${listing.status === 'sold' ? 'bg-red-500' : 'bg-amber-500'} text-white px-6 py-2 text-sm font-black uppercase tracking-widest border-2 border-white/20 shadow-2xl`}>
+                                {listing.status === 'sold' ? 'Gelöscht / Verkauft' : 'Reserviert'}
                             </Badge>
+                        </div>
+                    )}
+
+                    {/* Price Tag */}
+                    {listing.price !== null && (
+                        <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-md px-4 py-2 rounded-2xl shadow-xl z-10 border border-white/20">
+                            <span className="text-xl font-black text-slate-900">
+                                {listing.price.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}
+                            </span>
                         </div>
                     )}
                 </div>
 
-                <CardContent className="p-4 flex-1">
-                    <h3 className="font-bold text-lg text-slate-800 line-clamp-1 group-hover:text-primary transition-colors">
-                        {listing.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-2 text-sm text-slate-500">
-                        {listing.condition && (
-                            <Badge variant="outline" className="text-xs font-normal border-slate-200 text-slate-500">
-                                {getConditionLabel(listing.condition)}
+                <CardContent className="p-6 flex-1 space-y-4">
+                    <div>
+                        <h3 className="font-extrabold text-xl text-slate-800 line-clamp-2 leading-tight group-hover:text-primary transition-colors mb-2">
+                            {listing.title}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-[10px] font-black uppercase tracking-widest border-slate-200 text-slate-400 px-2 py-0.5 rounded-md">
+                                {getConditionLabel(listing.condition || 'good')}
                             </Badge>
-                        )}
+                            {listing.is_for_rent && (
+                                <span className="text-[10px] font-black text-amber-600 uppercase tracking-tighter">
+                                    {listing.rental_period_days || 7} Tage Leihzeit
+                                </span>
+                            )}
+                        </div>
                     </div>
+
+                    {listing.description && (
+                        <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed">
+                            {listing.description}
+                        </p>
+                    )}
                 </CardContent>
 
-                <CardFooter className="p-4 pt-0 flex justify-between items-center text-slate-400 text-xs">
-                    <div className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        <span className="truncate max-w-[120px]">{listing.location || 'Kein Ort'}</span>
+                <CardFooter className="px-6 py-4 border-t border-slate-50 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400">
+                            <MapPin className="w-3 h-3" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-500 truncate max-w-[100px]">
+                            {listing.location || 'Kein Ort'}
+                        </span>
                     </div>
-                    <span>{new Date(listing.created_at).toLocaleDateString('de-DE')}</span>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                        {new Date(listing.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                    </span>
                 </CardFooter>
             </Card>
         </Link>

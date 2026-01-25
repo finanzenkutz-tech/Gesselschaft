@@ -10,15 +10,23 @@ interface RSVPButtonsProps {
     eventId: string
     currentStatus?: string
     currentGuestCount?: number
+    currentArrival?: string
+    currentDeparture?: string
+    currentNote?: string
 }
 
-export function RSVPButtons({ eventId, currentStatus, currentGuestCount = 0 }: RSVPButtonsProps) {
+export function RSVPButtons({ eventId, currentStatus, currentGuestCount = 0, currentArrival, currentDeparture, currentNote }: RSVPButtonsProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [guestCount, setGuestCount] = useState(currentGuestCount)
+    const [arrival, setArrival] = useState(currentArrival || '')
+    const [departure, setDeparture] = useState(currentDeparture || '')
+    const [note, setNote] = useState(currentNote || '')
 
     const handleRSVP = async (status: string) => {
         setIsLoading(true)
-        await upsertRSVP(eventId, status, guestCount)
+        // If status is NOT going, we might clear times? Or keep them? 
+        // Usually if not going, times don't matter. But let's send them if set.
+        await upsertRSVP(eventId, status, guestCount, arrival, departure, note)
         setIsLoading(false)
     }
 
@@ -37,6 +45,37 @@ export function RSVPButtons({ eventId, currentStatus, currentGuestCount = 0 }: R
                     value={guestCount}
                     onChange={(e) => setGuestCount(parseInt(e.target.value) || 0)}
                     className="h-8 w-16 text-center text-sm ml-auto bg-white"
+                />
+            </div>
+
+            <div className="flex gap-2 px-2 mb-2">
+                <div className="flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Geplante Ankunft</label>
+                    <Input
+                        type="time"
+                        className="bg-white h-9 text-xs"
+                        value={arrival}
+                        onChange={(e) => setArrival(e.target.value)}
+                    />
+                </div>
+                <div className="flex-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase">Geplante Abreise</label>
+                    <Input
+                        type="time"
+                        className="bg-white h-9 text-xs"
+                        value={departure}
+                        onChange={(e) => setDeparture(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            <div className="px-2 mb-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase">Notiz (Optional)</label>
+                <Input
+                    placeholder="z.B. Nur wenn wir Catan spielen..."
+                    className="bg-white h-9 text-xs"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
                 />
             </div>
 
@@ -68,6 +107,6 @@ export function RSVPButtons({ eventId, currentStatus, currentGuestCount = 0 }: R
                     <span className="text-[10px]">Nein</span>
                 </Button>
             </div>
-        </div>
+        </div >
     )
 }

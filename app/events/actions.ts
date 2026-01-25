@@ -113,3 +113,99 @@ export async function createEvent(formData: FormData) {
 
     return { success: true, event: firstEvent }
 }
+
+export async function getUserEvents(startDate: string, endDate: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    // 1. Get user's groups
+    const { data: memberships } = await supabase.from('group_members').select('group_id').eq('user_id', user.id)
+    const groupIds = memberships?.map(m => m.group_id) || []
+
+    if (groupIds.length === 0) return []
+
+    // 2. Fetch events in range for these groups
+    const { data, error } = await supabase
+        .from('events')
+        .select(`
+            id, title, start_time, end_time, location, description, group_id, mood_status,
+            groups:group_id (name, emoji),
+            event_attendees(user_id, status)
+        `)
+        .in('group_id', groupIds)
+        .gte('start_time', startDate)
+        .lte('start_time', endDate)
+        .order('start_time', { ascending: true })
+
+    if (error) {
+        console.error('Error fetching calendar events:', error)
+        return []
+    }
+
+    return data.map((event: any) => ({
+        ...event,
+        myStatus: event.event_attendees.find((a: any) => a.user_id === user.id)?.status || null,
+        attendeeCount: event.event_attendees.filter((a: any) => a.status === 'going').length
+    }))
+}
+
+export async function getReviewableEvents() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    // 1. Get events from last 3 days where user was 'going' and end_time is passed
+    const now = new Date().toISOString()
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+
+    // We first get the attendee records
+    const { data: attendances } = await supabase
+        .from('event_attendees')
+        .select('event_id')
+        .eq('user_id', user.id)
+        .eq('status', 'going')
+
+    if (!attendances || attendances.length === 0) return []
+
+    const eventIds = attendances.map(a => a.event_id)
+
+    // Then we get the actual events
+    const { data: events } = await supabase
+        .from('events')
+        .select('id, title, end_time, group_id')
+        .in('id', eventIds)
+        .lt('end_time', now)
+        .gt('end_time', threeDaysAgo)
+
+    if (!events || events.length === 0) return []
+
+    // 2. Check which ones have NO session by this user (or maybe no session at all linked to it?)
+    // Let's assume we want to prompt if *I* haven't created a session OR if no session exists for it.
+    // If someone else logged it, maybe prompt to "Review" the session (future feature).
+    // For now: Prompt to "Log Game" if no session exists for this event.
+
+    // Check sessions for these events
+    const { data: sessions } = await supabase
+        .from('game_sessions')
+        .select('event_id')
+        .in('event_id', events.map(e => e.id))
+
+    const loggedEventIds = new Set(sessions?.map(s => s.event_id))
+
+    // Filter events that have already been logged
+    const unloggedEvents = events.filter(e => !loggedEventIds.has(e.id))
+
+    // Need group and member info to open dialog?
+    // We can fetch that in the component or return enough info here.
+    // Let's return the events.
+    if (unloggedEvents.length === 0) return []
+
+    // Fetch minimal group info for context
+    const { data: groups } = await supabase.from('groups').select('id, name').in('id', unloggedEvents.map(e => e.group_id))
+
+    return unloggedEvents.map(e => ({
+        ...e,
+        groupName: groups?.find(g => g.id === e.group_id)?.name
+    }))
+}

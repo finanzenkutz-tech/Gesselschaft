@@ -9,8 +9,14 @@ import { cookies } from 'next/headers'
 import { OnlineUsersWidget } from '@/components/social/online-users-widget'
 import { LeaderboardCard } from '@/components/social/leaderboard-card'
 import { getLeaderboard } from '@/app/events/session-actions'
+import { getReviewableEvents } from '@/app/events/actions'
 import { ActivityFeed, ActivityItem } from '@/components/dashboard/activity-feed'
 import { QuickActions } from '@/components/dashboard/quick-actions'
+import { ReviewPrompt } from '@/components/dashboard/review-prompt'
+
+import { DigitalCheckInDialog } from '@/components/events/digital-check-in-dialog'
+import { getPunctualityStats } from '@/app/events/stats-actions'
+import { PunctualityLeaderboard } from '@/components/social/punctuality-leaderboard'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -26,13 +32,16 @@ export default async function DashboardPage() {
     // Parallelize all data fetching
     const [
         { data: profile },
-        { count: groupCount },
+        { count: groupCount, data: myGroups },
         { count: inventoryCount },
         { data: eventsData },
         leaderboardEntries,
         { data: recentJoins },
         { data: recentGames },
-        { data: recentEvents }
+        { data: recentEvents },
+        { data: recentSessions },
+        reviewableEvents,
+        punctualityStats
     ] = await Promise.all([
         supabase
             .from('profiles')
@@ -41,7 +50,7 @@ export default async function DashboardPage() {
             .single(),
         supabase
             .from('group_members')
-            .select('*', { count: 'exact', head: true })
+            .select('*, groups(id, name)', { count: 'exact', head: false })
             .eq('user_id', user.id),
         supabase
             .from('inventory')
@@ -49,7 +58,7 @@ export default async function DashboardPage() {
             .eq('owner_id', user.id),
         supabase
             .from('events')
-            .select('*, groups(name), event_attendees(user_id, status)')
+            .select('*, groups(name), event_attendees(user_id, status, checked_in_at)')
             .order('start_time', { ascending: true }),
         getLeaderboard(),
         // Activity Feed Data
@@ -67,7 +76,14 @@ export default async function DashboardPage() {
             .from('events')
             .select('created_at, title, groups(name), profiles:created_by(full_name, avatar_url)')
             .order('created_at', { ascending: false })
-            .limit(5)
+            .limit(5),
+        supabase
+            .from('game_sessions')
+            .select('created_at, game_name, mood, groups(name), profiles:created_by(full_name, avatar_url)')
+            .order('created_at', { ascending: false })
+            .limit(5),
+        getReviewableEvents(),
+        getPunctualityStats()
     ])
 
     const showOnboarding = profile ? !profile.has_seen_onboarding : false
@@ -97,12 +113,44 @@ export default async function DashboardPage() {
             description: `In der Gruppe ${e.groups?.name}`,
             timestamp: e.created_at,
             user: { name: e.profiles?.full_name, avatar_url: e.profiles?.avatar_url }
+        })) || []),
+        ...(recentSessions?.map((s: any) => ({
+            id: `session-${s.created_at}-${s.game_name}`,
+            type: 'session_logged' as const,
+            title: `hat "${s.game_name}" gespielt`,
+            description: s.mood ? `Stimmung: ${s.mood} • ${s.groups?.name}` : `In der Gruppe ${s.groups?.name}`,
+            timestamp: s.created_at,
+            mood: s.mood,
+            user: { name: s.profiles?.full_name, avatar_url: s.profiles?.avatar_url }
         })) || [])
     ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 10)
 
     const cookieStore = await cookies()
     const godMode = cookieStore.get('godMode')?.value === 'true'
+
+    // Determine Logic for Check-In Dialog
+    const now = new Date()
+    // Find an event that is "active" (approx start -30m to end or start+4h)
+    // AND user is going, AND user is NOT checked in
+    const checkInCandidate = (eventsData || []).find((e: any) => {
+        const start = new Date(e.start_time)
+        // If end_time is not set, assume 4h duration
+        const end = e.end_time ? new Date(e.end_time) : new Date(start.getTime() + 4 * 60 * 60 * 1000)
+
+        // Window: Starts in 30 mins or less, OR already started and not ended
+        const windowStart = new Date(start.getTime() - 30 * 60 * 1000)
+        // const windowEnd = end 
+        // Allow check-in as long as event is running
+
+        const isTimeWindow = now >= windowStart && now <= end
+
+        const myAttendance = e.event_attendees?.find((a: any) => a.user_id === user.id)
+        const isGoing = myAttendance?.status === 'going'
+        const isNotCheckedIn = !myAttendance?.checked_in_at
+
+        return isTimeWindow && isGoing && isNotCheckedIn
+    })
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -121,6 +169,18 @@ export default async function DashboardPage() {
                     <QuickActions />
                 </div>
             </div>
+
+            {/* Review Prompt for Unlogged Past Events */}
+            <ReviewPrompt events={reviewableEvents as any[]} />
+
+            {/* Digital Check-In Dialog */}
+            {checkInCandidate && (
+                <DigitalCheckInDialog
+                    eventId={checkInCandidate.id}
+                    eventTitle={checkInCandidate.title}
+                    location={checkInCandidate.location}
+                />
+            )}
 
             {/* Main Dashboard Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -316,6 +376,7 @@ export default async function DashboardPage() {
                     <ActivityFeed activities={activities} />
                     <LeaderboardCard entries={leaderboardEntries as any[]} />
                     <OnlineUsersWidget currentUserId={user.id} />
+                    <PunctualityLeaderboard stats={punctualityStats} />
                 </div>
             </div>
 

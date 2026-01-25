@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { BarcodeScannerDialog } from '@/components/inventory/barcode-scanner-dialog'
 import { Dice5, Plus, Image, Search, Loader2, Link as LinkIcon, Check } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
@@ -18,6 +20,7 @@ import { searchBGG, getBGGGameDetails, BGGSearchResult } from '@/app/inventory/b
 import { searchKnownGames } from '@/app/inventory/actions'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { useDebounce } from '@/lib/hooks/use-debounce'
 import { useEffect } from 'react'
@@ -54,6 +57,12 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     const [priceUsed, setPriceUsed] = useState<string>('')
 
     const router = useRouter()
+
+    function handleScan(decodedText: string) {
+        setSearchQuery(decodedText)
+        handleSearch(decodedText)
+        toast.info(`Suche nach Code/Spiel: ${decodedText}`)
+    }
 
     const debouncedSearch = useDebounce(searchQuery, 500)
 

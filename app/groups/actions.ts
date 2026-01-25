@@ -147,6 +147,11 @@ export async function updateGroup(formData: FormData) {
             updateData.longitude = parseFloat(longitudeStr)
             updateData.location_name = locationName
             updateData.is_location_public = isLocationPublicStr === 'true'
+        } else if (locationName) {
+            // Case where only location name is provided (manual text) but no coordinates
+            // Or updating existing location name without changing coordinates (frontend setup dependent)
+            // Assuming frontend sends all if available, but let's be safe:
+            updateData.location_name = locationName
         }
 
 
@@ -209,4 +214,27 @@ export async function deleteGroup(groupId: string) {
 
     revalidatePath('/groups')
     return { success: true }
+}
+
+export async function createEventQuickly(groupId: string, title: string, date: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Nicht authentifiziert' }
+
+    // Minimal event creation
+    const { data: event, error } = await supabase
+        .from('events')
+        .insert({
+            title,
+            start_time: date,
+            group_id: groupId,
+            created_by: user.id
+        })
+        .select()
+        .single()
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath(`/groups/${groupId}`)
+    return { success: true, eventId: event.id }
 }

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getConversations } from '@/app/chat/actions'
+import { getMyDirectChats } from '@/app/chat/direct-actions'
 import { ConversationList } from '@/components/chat/conversation-list'
 import { ChatWindow } from '@/components/chat/chat-window'
 
@@ -15,7 +15,16 @@ export default async function ChatConversationPage({
 
     if (!user) redirect('/login')
 
-    const conversations = await getConversations()
+    const rawChats = await getMyDirectChats()
+
+    // Transform to the expected format
+    const conversations = rawChats.map((c: any) => ({
+        partnerId: c.profiles?.id || c.chat_id,
+        lastMessage: '', // Would need a separate query for last message
+        lastMessageAt: new Date().toISOString(),
+        unread: false,
+        partner: Array.isArray(c.profiles) ? c.profiles[0] : c.profiles
+    }))
 
     return (
         <div className="max-w-6xl mx-auto animate-in fade-in duration-500">
