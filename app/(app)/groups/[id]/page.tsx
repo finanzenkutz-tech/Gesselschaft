@@ -183,6 +183,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                             games={groupGames}
                                             members={groupMembers}
                                             places={places || []}
+                                            currentUserId={user?.id}
                                             trigger={
                                                 <Button variant="outline" className="h-14 rounded-2xl border-2 border-slate-200 text-slate-600 font-bold hover:border-primary/50 hover:text-primary hover:bg-white shadow-sm transition-all px-6 text-base">
                                                     <Dice5 className="w-6 h-6 mr-2" />

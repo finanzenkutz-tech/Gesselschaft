@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
 import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
 import { searchBGGGames, getBGGGameDetails } from '@/app/groups/bgg-actions'
+import confetti from 'canvas-confetti'
 
 interface LogGameDialogProps {
     groupId: string
@@ -30,9 +31,10 @@ interface LogGameDialogProps {
     places: any[]
     trigger?: React.ReactNode
     defaultEventId?: string
+    currentUserId?: string
 }
 
-export function LogGameDialog({ groupId, games, members, places, trigger, defaultEventId }: LogGameDialogProps) {
+export function LogGameDialog({ groupId, games, members, places, trigger, defaultEventId, currentUserId }: LogGameDialogProps) {
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [bggLoading, setBggLoading] = useState(false)
@@ -63,6 +65,26 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
     const [isEpic, setIsEpic] = useState(false)
     const [sessionImageUrl, setSessionImageUrl] = useState<string | undefined>(undefined)
     const [uploadingImage, setUploadingImage] = useState(false)
+
+    const analyzeVictory = (currentScores: Record<string, number>, currentWinnerId?: string) => {
+        if (!currentWinnerId || Object.keys(currentScores).length < 2) return null
+
+        const scoresArr = Object.values(currentScores).sort((a, b) => b - a)
+        if (scoresArr.length < 2) return null
+
+        const first = scoresArr[0]
+        const second = scoresArr[1]
+
+        if (first <= 0) return null
+
+        const diff = first - second
+        const percent = (diff / first) * 100
+
+        if (percent >= 50) return { type: 'Dominiert', message: 'Wahnsinn! Du hast die Gruppe absolut dominiert! 👑' }
+        if (percent >= 20) return { type: 'Klarer Sieg', message: 'Ein klarer und verdienter Sieg! Gut gespielt! 🏆' }
+        if (percent <= 10) return { type: 'Knappe Kiste', message: 'Puh, das war eine knappe Kiste! Haarscharf gewonnen! 🎢' }
+        return { type: 'Sieg', message: 'Herzlichen Glückwunsch zum Sieg! 🎉' }
+    }
 
     // Filtered lists
     const filteredGames = gameName ? games.filter(g =>
@@ -197,6 +219,26 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
                 reportImageUrl: sessionImageUrl,
                 eventId: defaultEventId
             })
+
+            const victoryInfo = winnerId === currentUserId ? analyzeVictory(scores, winnerId) : null
+
+            if (victoryInfo) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#3b82f6', '#fbbf24', '#10b981']
+                })
+                toast.success(victoryInfo.message, {
+                    duration: 5000,
+                })
+            } else if (winnerId) {
+                const winner = members.find(m => m.user_id === winnerId)
+                toast.success(`Spiel eingetragen! Gratulation an ${winner?.profiles?.full_name || 'den Gewinner'}!`)
+            } else {
+                toast.success("Spiel eingetragen!")
+            }
+
             setOpen(false)
             router.refresh()
             toast.success("Spiel eingetragen!")

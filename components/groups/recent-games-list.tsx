@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Button } from '@/components/ui/button'
 import { EditGameSessionDialog } from './edit-game-session-dialog'
+import { cn } from '@/lib/utils'
 
 interface RecentGame {
     game_name: string
@@ -127,6 +128,24 @@ export function RecentGamesList({ games, groupId, members, places, allGames }: {
         }
     }
 
+    const getVictoryType = (players: any[]) => {
+        if (!players || players.length < 2) return null
+        const scores = players.map(p => p.score).filter(s => s !== null).sort((a, b) => b - a)
+        if (scores.length < 2) return null
+
+        const first = scores[0]
+        const second = scores[1]
+        if (first <= 0) return null
+
+        const diff = first - second
+        const percent = (diff / first) * 100
+
+        if (percent >= 50) return { label: 'Dominiert', color: 'bg-indigo-100 text-indigo-700 border-indigo-200' }
+        if (percent >= 20) return { label: 'Klarer Sieg', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' }
+        if (percent <= 10) return { label: 'Knappe Kiste', color: 'bg-amber-100 text-amber-700 border-amber-200' }
+        return null
+    }
+
     if (!games || games.length === 0) return null
 
     return (
@@ -212,6 +231,13 @@ export function RecentGamesList({ games, groupId, members, places, allGames }: {
                                     <div className="flex items-center gap-2 text-primary bg-primary/5 px-3 py-2 rounded-xl border border-primary/10">
                                         <MapPin className="w-3.5 h-3.5" />
                                         <span className="text-xs font-black uppercase tracking-wider">{stats.lastSession.location}</span>
+                                    </div>
+                                )}
+
+                                {getVictoryType(stats.lastSession?.game_session_players) && (
+                                    <div className={cn("flex items-center gap-2 px-3 py-2 rounded-xl border font-black uppercase tracking-wider text-[10px]", getVictoryType(stats.lastSession.game_session_players)?.color)}>
+                                        <Crown className="w-3 h-3" />
+                                        {getVictoryType(stats.lastSession.game_session_players)?.label}
                                     </div>
                                 )}
 

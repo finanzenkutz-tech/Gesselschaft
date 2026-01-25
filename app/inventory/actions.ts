@@ -93,8 +93,46 @@ export async function addGameToInventory(formData: FormData) {
     // Award XP
     await addXP(user.id, 10, 'Neues Spiel hinzugefügt!')
 
+    // Calculate insights for the toast
+    const insights: string[] = []
+
+    // 1. Popularity check (Simplified: if in top 200 list)
+    if (formData.get('source') === 'list') {
+        insights.push("Wow! Das ist eines der beliebtesten Spiele überhaupt! 🌟")
+    }
+
+    // 2. Kickstarter check
+    const category = formData.get('category') as string || ""
+    if (category.toLowerCase().includes('kickstarter') || name.toLowerCase().includes('kickstarter')) {
+        insights.push("Ein echter Kickstarter-Schatz! 💎")
+    }
+
+    // 3. Collection Value Milestone
+    const collectionData = await getCollectionInsights()
+    if (collectionData.totalValue > 100 && (collectionData.totalValue - (parseFloat(formData.get('price_new') as string) || 0)) <= 100) {
+        insights.push("Glückwunsch! Deine Sammlung ist jetzt über 100€ wert! 💰")
+    } else if (collectionData.totalValue > 500 && (collectionData.totalValue - (parseFloat(formData.get('price_new') as string) || 0)) <= 500) {
+        insights.push("Beeindruckend! Deine Sammlung hat die 500€ Marke geknackt! 🚀")
+    }
+
     revalidatePath('/inventory')
-    return { success: true, data }
+    return { success: true, data, insights }
+}
+
+export async function getCollectionInsights() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { totalValue: 0, count: 0 }
+
+    const { data } = await supabase
+        .from('inventory')
+        .select('price_new, price_used')
+        .eq('owner_id', user.id)
+
+    const totalValue = data?.reduce((acc, curr) => acc + (curr.price_new || curr.price_used || 0), 0) || 0
+    const count = data?.length || 0
+
+    return { totalValue, count }
 }
 
 export async function removeGameFromInventory(gameId: string) {

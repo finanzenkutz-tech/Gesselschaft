@@ -39,6 +39,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     const [searchResults, setSearchResults] = useState<(BGGSearchResult & { source?: string; original?: any })[]>([])
     const [searching, setSearching] = useState(false)
     const [selectedBggId, setSelectedBggId] = useState<string | null>(null)
+    const [selectedSource, setSelectedSource] = useState<string | null>(null)
 
     // Form State (for auto-fill)
     const [gameName, setGameName] = useState('')
@@ -114,6 +115,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
     async function handleSelectGame(game: any) {
         setSelectedBggId(game.id)
         setGameName(game.name)
+        setSelectedSource(game.source || 'manual')
         setBggLink(`https://boardgamegeek.com/boardgame/${game.id}`)
 
         setSearching(true)
@@ -199,6 +201,7 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         if (luck) formData.set('luck_score', luck.toString())
         if (priceNew) formData.set('price_new', priceNew)
         if (priceUsed) formData.set('price_used', priceUsed)
+        if (selectedSource) formData.set('source', selectedSource)
 
         const result = await addGameToInventory(formData)
 
@@ -210,26 +213,25 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
 
             // Fire confetti! 🎲🎉
             confetti({
-                particleCount: 100,
+                particleCount: 150,
                 spread: 70,
                 origin: { y: 0.6 },
                 colors: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444']
             })
 
-            setTimeout(() => {
-                confetti({
-                    particleCount: 50,
-                    angle: 60,
-                    spread: 55,
-                    origin: { x: 0 }
+            // Show insights if available
+            if (result.insights && result.insights.length > 0) {
+                result.insights.forEach((insight: string, index: number) => {
+                    setTimeout(() => {
+                        toast.success(insight, {
+                            duration: 6000,
+                            icon: index === 0 ? '✨' : index === 1 ? '💎' : '💰'
+                        })
+                    }, index * 1000)
                 })
-                confetti({
-                    particleCount: 50,
-                    angle: 120,
-                    spread: 55,
-                    origin: { x: 1 }
-                })
-            }, 200)
+            } else {
+                toast.success("Spiel zur Sammlung hinzugefügt!")
+            }
 
             router.refresh()
         } else {
