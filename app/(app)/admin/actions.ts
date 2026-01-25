@@ -93,15 +93,32 @@ export async function updateUserProfile(userId: string, data: any) {
     if (!await checkSuperAdmin()) throw new Error('Unauthorized')
 
     const supabase = await createClient()
+    const { createAdminClient } = await import('@/lib/supabase/admin')
+    const adminSupabase = createAdminClient()
+
+    // 1. If email is provided, update it in Auth
+    if (data.email) {
+        const { error: authError } = await adminSupabase.auth.admin.updateUserById(
+            userId,
+            { email: data.email }
+        )
+        if (authError) return { success: false, error: authError.message }
+    }
+
+    // 2. Prepare profile data (remove email as it's in a different table/managed by auth)
+    const { email, ...profileData } = data
+
+    // 3. Update Profile
     const { error } = await supabase
         .from('profiles')
-        .update(data)
+        .update(profileData)
         .eq('id', userId)
 
     if (error) return { success: false, error: error.message }
 
     revalidatePath('/admin')
     revalidatePath('/members')
+    revalidatePath('/admin/users')
     return { success: true }
 }
 

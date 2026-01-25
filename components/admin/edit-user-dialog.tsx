@@ -17,10 +17,14 @@ export function EditUserDialog({ user }: { user: any }) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         full_name: user.full_name || '',
+        email: user.email || '',
+        points: user.points || 0,
         nickname: user.nickname || '',
         bio: user.bio || '',
         location: user.location || '',
         favorite_games: user.favorite_games || '',
+        preferences_likes: user.preferences_likes || '',
+        preferences_dislikes: user.preferences_dislikes || '',
         show_reputation: user.show_reputation ?? true,
         use_nickname: user.use_nickname ?? false,
         system_role: user.system_role || 'user',
@@ -76,17 +80,19 @@ export function EditUserDialog({ user }: { user: any }) {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Standort</Label>
+                            <Label>E-Mail Adresse (Auth)</Label>
                             <Input
-                                value={formData.location}
-                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Lieblingsspiele</Label>
+                            <Label>XP / Punkte</Label>
                             <Input
-                                value={formData.favorite_games}
-                                onChange={(e) => setFormData({ ...formData, favorite_games: e.target.value })}
+                                type="number"
+                                value={formData.points}
+                                onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
                             />
                         </div>
                         <div className="space-y-2">
@@ -103,15 +109,45 @@ export function EditUserDialog({ user }: { user: any }) {
                                 <option value="super_admin">Super Admin</option>
                             </select>
                         </div>
+                        <div className="space-y-2">
+                            <Label>Standort</Label>
+                            <Input
+                                value={formData.location}
+                                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Lieblingsspiele</Label>
+                            <Input
+                                value={formData.favorite_games}
+                                onChange={(e) => setFormData({ ...formData, favorite_games: e.target.value })}
+                            />
+                        </div>
                     </div>
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Bio</Label>
+                            <Label>Bio / Über mich</Label>
                             <Textarea
                                 value={formData.bio}
                                 onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                className="h-32"
+                                className="h-24"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Mag ich (Preferences)</Label>
+                            <Input
+                                value={formData.preferences_likes}
+                                onChange={(e) => setFormData({ ...formData, preferences_likes: e.target.value })}
+                                placeholder="z.B. Strategie, Snacks..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Mag ich nicht</Label>
+                            <Input
+                                value={formData.preferences_dislikes}
+                                onChange={(e) => setFormData({ ...formData, preferences_dislikes: e.target.value })}
+                                placeholder="z.B. Zeitdruck, Lärm..."
                             />
                         </div>
 

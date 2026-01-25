@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Users, Shield, Trophy, Edit2, Trash2, Check, X, Mail, Key, Circle } from 'lucide-react'
+import { Users, Shield, Trophy, Trash2, Mail, Key, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { deleteUser, updateUserProfile, sendPasswordReset } from '@/app/(app)/admin/actions'
+import { deleteUser, sendPasswordReset } from '@/app/(app)/admin/actions'
 import { getLevelInfo } from '@/lib/utils/gamification'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { EditUserDialog } from './edit-user-dialog'
 
 interface MemberCardProps {
     profile: any
@@ -16,26 +17,11 @@ interface MemberCardProps {
 
 export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
     const router = useRouter()
-    const [isEditing, setIsEditing] = useState(false)
     const [loading, setLoading] = useState(false)
-    const [selectedRole, setSelectedRole] = useState(profile.system_role || 'user')
-    const [showPasswordHint, setShowPasswordHint] = useState(false)
 
     const levelInfo = getLevelInfo(profile.points || 0)
     const isSuperAdmin = profile.system_role === 'super_admin'
     const isCurrentUser = profile.id === currentUserId
-
-    const handleSaveRole = async () => {
-        setLoading(true)
-        const result = await updateUserProfile(profile.id, { system_role: selectedRole })
-        if (result.success) {
-            toast.success('Rolle erfolgreich geändert!')
-            setIsEditing(false)
-        } else {
-            toast.error('Fehler: ' + result.error)
-        }
-        setLoading(false)
-    }
 
     const handleDelete = async () => {
         if (!confirm(`Möchtest du "${profile.full_name || profile.email}" wirklich löschen?`)) return
@@ -56,7 +42,6 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
         const result = await sendPasswordReset(profile.email)
         if (result.success) {
             toast.success('Passwort-Reset wurde gesendet!')
-            setShowPasswordHint(false)
         } else {
             toast.error('Fehler: ' + result.error)
         }
@@ -92,62 +77,27 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
 
             {/* Edit/Delete Actions */}
             <div className="absolute top-4 right-4 flex gap-1 z-20 bg-white/90 backdrop-blur-sm p-1 rounded-xl shadow-md border border-slate-100">
-                {!isEditing ? (
-                    <>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-slate-400 hover:text-primary hover:bg-blue-50"
-                            onClick={() => setIsEditing(true)}
-                            disabled={isCurrentUser}
-                            title={isCurrentUser ? "Du kannst dich selbst nicht bearbeiten" : "Bearbeiten"}
-                        >
-                            <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
-                            onClick={handleDelete}
-                            disabled={loading || isCurrentUser}
-                            title={isCurrentUser ? "Du kannst dich selbst nicht löschen" : "Löschen"}
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                    </>
-                ) : (
-                    <>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-emerald-500 hover:bg-emerald-50"
-                            onClick={handleSaveRole}
-                            disabled={loading}
-                        >
-                            <Check className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-slate-400 hover:bg-slate-50"
-                            onClick={() => { setIsEditing(false); setSelectedRole(profile.system_role || 'user') }}
-                        >
-                            <X className="w-4 h-4" />
-                        </Button>
-                    </>
-                )}
+                <EditUserDialog user={profile} />
+                <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                    onClick={handleDelete}
+                    disabled={loading || isCurrentUser}
+                    title={isCurrentUser ? "Du kannst dich selbst nicht löschen" : "Löschen"}
+                >
+                    <Trash2 className="w-4 h-4" />
+                </Button>
             </div>
 
             {/* User Info */}
             <div className="flex items-center gap-4 relative z-10">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl font-bold text-slate-400 shrink-0 uppercase">
+                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl font-bold text-slate-400 shrink-0 uppercase overflow-hidden">
                     {profile.avatar_url ? (
-                        <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover rounded-2xl" />
+                        <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full object-cover" />
                     ) : (
                         profile.full_name?.[0] || '?'
                     )}
-                </div>
-                <div className="min-w-0">
                 </div>
                 <div className="min-w-0">
                     <h3 className="font-bold text-lg text-slate-800 leading-tight truncate">
@@ -168,31 +118,23 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
                 </div>
             </div>
 
-            {/* Role Badge / Editor */}
+            {/* Role Badge */}
             <div className="flex items-center gap-2 mt-2">
-                {isEditing ? (
-                    <select
-                        value={selectedRole}
-                        onChange={(e) => setSelectedRole(e.target.value)}
-                        className="text-xs font-bold bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/20"
-                    >
-                        <option value="user">Spieler</option>
-                        <option value="moderator">Moderator</option>
-                        <option value="admin">Admin</option>
-                        <option value="super_admin">Super Admin</option>
-                    </select>
+                {isSuperAdmin ? (
+                    <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
+                        <Shield className="w-3 h-3" />
+                        Super Admin
+                    </span>
+                ) : profile.system_role === 'moderator' ? (
+                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
+                        <Shield className="w-3 h-3" />
+                        Moderator
+                    </span>
                 ) : (
-                    isSuperAdmin ? (
-                        <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
-                            <Shield className="w-3 h-3" />
-                            Super Admin
-                        </span>
-                    ) : (
-                        <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
-                            <Users className="w-3 h-3" />
-                            Spieler
-                        </span>
-                    )
+                    <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] font-black uppercase px-2 py-1 rounded-lg">
+                        <Users className="w-3 h-3" />
+                        Spieler
+                    </span>
                 )}
             </div>
 
