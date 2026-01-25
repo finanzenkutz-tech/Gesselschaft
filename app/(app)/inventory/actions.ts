@@ -55,7 +55,9 @@ export async function addGameToInventory(formData: FormData) {
             luck_score: formData.get('luck_score') ? parseFloat(formData.get('luck_score') as string) : null,
             category: formData.get('category') as string || null,
             price_new: formData.get('price_new') ? parseFloat(formData.get('price_new') as string) : null,
-            price_used: formData.get('price_used') ? parseFloat(formData.get('price_used') as string) : null
+            price_used: formData.get('price_used') ? parseFloat(formData.get('price_used') as string) : null,
+            rules_url: formData.get('rules_url') as string || null,
+            video_url: formData.get('video_url') as string || null
         })
         .select()
         .single()

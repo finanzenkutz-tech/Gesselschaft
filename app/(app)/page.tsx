@@ -17,6 +17,10 @@ import { ReviewPrompt } from '@/components/dashboard/review-prompt'
 import { DigitalCheckInDialog } from '@/components/events/digital-check-in-dialog'
 import { getPunctualityStats } from '@/app/(app)/events/stats-actions'
 import { PunctualityLeaderboard } from '@/components/social/punctuality-leaderboard'
+import { getGameOfTheMonth, getPersonalStats } from '@/app/(app)/dashboard/stats-actions'
+import { GameOfTheMonthCard } from '@/components/dashboard/game-of-the-month-card'
+import { PersonalSuccessPulse } from '@/components/dashboard/personal-success-pulse'
+import { DrMeepleWidget } from '@/components/advisor/dr-meeple-widget'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -41,7 +45,9 @@ export default async function DashboardPage() {
         { data: recentEvents },
         { data: recentSessions },
         reviewableEvents,
-        punctualityStats
+        punctualityStats,
+        gameOfTheMonth,
+        personalStats
     ] = await Promise.all([
         supabase
             .from('profiles')
@@ -83,7 +89,9 @@ export default async function DashboardPage() {
             .order('created_at', { ascending: false })
             .limit(5),
         getReviewableEvents(),
-        getPunctualityStats()
+        getPunctualityStats(),
+        getGameOfTheMonth(),
+        getPersonalStats()
     ])
 
     const showOnboarding = profile ? !profile.has_seen_onboarding : false
@@ -282,9 +290,13 @@ export default async function DashboardPage() {
                                                 <Users className="w-4 h-4" />
                                                 <span className="text-sm font-medium">{goingCount} dabei</span>
                                             </div>
-                                            {myRsvp && (
+                                            {myRsvp ? (
                                                 <span className={`text-xs font-black uppercase px-2 py-1 rounded-full ${myRsvp.status === 'going' ? 'bg-white/20' : myRsvp.status === 'maybe' ? 'bg-yellow-400/30' : 'bg-red-400/30'}`}>
                                                     {myRsvp.status === 'going' ? '✓ Dabei' : myRsvp.status === 'maybe' ? '? Vielleicht' : '✗ Nicht dabei'}
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs font-black uppercase px-2 py-1 rounded-full bg-blue-400/30 animate-pulse">
+                                                    Antworten?
                                                 </span>
                                             )}
                                         </div>
@@ -294,8 +306,8 @@ export default async function DashboardPage() {
                         )
                     })()}
 
-                    {/* Stats Tiles */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Stats Tiles & Widgets */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                         <Link href="/events" className="group">
                             <div className="sky-card p-5 h-full min-h-[140px] flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] border border-blue-100">
                                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -364,6 +376,10 @@ export default async function DashboardPage() {
                                 </div>
                             </div>
                         </Link>
+
+                        <div className="group h-full">
+                            <PersonalSuccessPulse data={personalStats || []} />
+                        </div>
                     </div>
 
                     <div className="lg:block">
@@ -373,6 +389,7 @@ export default async function DashboardPage() {
 
                 {/* Right Column (1/3) - Sidebar Widgets */}
                 <div className="space-y-8">
+                    <GameOfTheMonthCard game={gameOfTheMonth} />
                     <ActivityFeed activities={activities} />
                     <LeaderboardCard entries={leaderboardEntries as any[]} />
                     <OnlineUsersWidget currentUserId={user.id} />
@@ -381,8 +398,8 @@ export default async function DashboardPage() {
             </div>
 
             <OnboardingModal show={showOnboarding} />
+            <DrMeepleWidget />
             <div className="pb-20" />
-        </div>
+        </div >
     )
 }
-

@@ -10,7 +10,9 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Trophy, Swords, Dice5, Box, Star, Users } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Trophy, Swords, Dice5, Box, Star, Users, MessageSquare } from 'lucide-react'
 import { getMemberComparison } from '@/app/(app)/groups/game-actions'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -51,13 +53,22 @@ export function MemberComparisonDialog({ groupId, member, trigger }: MemberCompa
                 {/* Header Section */}
                 <div className="bg-gradient-to-br from-primary/10 via-white to-secondary/5 p-8 border-b border-white/40">
                     <DialogHeader>
-                        <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight flex items-center justify-between">
-                            <span>Gemeinsame Erlebnisse</span>
-                            <Swords className="w-8 h-8 text-primary/40" />
-                        </DialogTitle>
-                        <DialogDescription className="text-slate-500 font-medium text-base mt-2">
-                            Vergleiche deine Stats mit <span className="text-primary font-bold">{member.profiles?.full_name}</span>.
-                        </DialogDescription>
+                        <div className="flex items-start justify-between">
+                            <div className="space-y-2">
+                                <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                                    <span>Gemeinsame Erlebnisse</span>
+                                    <Swords className="w-8 h-8 text-primary/40" />
+                                </DialogTitle>
+                                <DialogDescription className="text-slate-500 font-medium text-base">
+                                    Vergleiche deine Stats mit <span className="text-primary font-bold">{member.profiles?.full_name}</span>.
+                                </DialogDescription>
+                            </div>
+                            <Link href={`/chat/${member.user_id}`} onClick={() => setOpen(false)}>
+                                <Button className="rounded-2xl h-12 w-12 shadow-lg shadow-blue-200" size="icon">
+                                    <MessageSquare className="w-5 h-5" />
+                                </Button>
+                            </Link>
+                        </div>
                     </DialogHeader>
 
                     {/* H2H Stat Bar */}

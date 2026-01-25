@@ -62,7 +62,10 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
                         ...payload.new as Message,
                         profiles: profile
                     }
-                    setMessages(prev => [...prev, newMsg])
+                    setMessages(prev => {
+                        if (prev.some(m => m.id === newMsg.id)) return prev
+                        return [...prev, newMsg]
+                    })
                     scrollToBottom()
                 }
             )
@@ -91,6 +94,13 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
         if (!result.success) {
             console.error('Error sending message:', result.error)
             setNewMessage(content) // Restore message on error
+        } else if (result.data) {
+            const newMsg = result.data as Message
+            setMessages(prev => {
+                if (prev.some(m => m.id === newMsg.id)) return prev
+                return [...prev, newMsg]
+            })
+            scrollToBottom()
         }
         setSending(false)
     }

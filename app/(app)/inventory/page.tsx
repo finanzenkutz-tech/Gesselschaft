@@ -67,6 +67,61 @@ export default async function InventoryPage() {
                 </div>
             </header>
 
+            {/* Pile of Shame Tracker (Global) */}
+            {(() => {
+                const totalGames = games?.length || 0
+                const unplayedCount = games?.filter((g: any) => g.is_unplayed).length || 0
+                const playedPercent = totalGames > 0 ? Math.round(((totalGames - unplayedCount) / totalGames) * 100) : 0
+
+                if (totalGames === 0) return null
+
+                return (
+                    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col md:flex-row items-center gap-6 md:gap-12 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none group-hover:scale-110 transition-transform">
+                            <Layers className="w-32 h-32 text-slate-900" />
+                        </div>
+
+                        {/* Chart / Donut could go here, but Bar is better for "Shame" */}
+                        <div className="flex-1 w-full space-y-3 relative z-10">
+                            <div className="flex justify-between items-center">
+                                <h3 className="font-extrabold text-slate-800 flex items-center gap-2 text-lg">
+                                    <span className="text-2xl">🔥</span>
+                                    Pile of Shame Tracker
+                                </h3>
+                                <div className="text-right">
+                                    <span className="text-2xl font-black text-red-500">{unplayedCount}</span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase ml-1">Ungespielt</span>
+                                </div>
+                            </div>
+
+                            <div className="h-6 bg-slate-100 rounded-full overflow-hidden relative shadow-inner">
+                                {/* Success Part (Green) */}
+                                <div
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-green-400 absolute left-0 top-0 transition-all duration-1000"
+                                    style={{ width: `${playedPercent}%` }}
+                                />
+                                {/* Label inside bar if enough space */}
+                                {playedPercent > 10 && (
+                                    <div className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase text-white drop-shadow-md">
+                                        {playedPercent}% Gespielt
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex justify-between text-xs font-medium text-slate-400">
+                                <span>Total: {totalGames} Spiele</span>
+                                <span>Ziel: 100% Gespielt</span>
+                            </div>
+                        </div>
+
+                        <div className="hidden md:block relative z-10 shrink-0 text-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <p className="text-3xl font-black text-slate-800">{playedPercent}%</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Completion Rate</p>
+                        </div>
+                    </div>
+                )
+            })()}
+
             {/* Ranking Card */}
             {myCount > 0 && (
                 <div className={cn(

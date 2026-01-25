@@ -459,7 +459,7 @@ export async function getGameSessionDetails(sessionId: string) {
                 brings,
                 profiles(id, full_name, avatar_url)
             ),
-            creator:created_by(full_name)
+            creator:profiles!game_sessions_created_by_fkey(full_name)
         `)
         .eq('id', sessionId)
         .single()

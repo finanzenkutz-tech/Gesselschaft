@@ -39,7 +39,7 @@ Das Ziel ist eine App, die Spaß macht und intuitiv bedienbar ist. Die Terminpla
 *   **[x] Ortstypen & Privatsphäre:** Unterscheidung Privat/Öffentlich implementiert.
 
 ## 🔔 Phase 3: Live-Event Experience & Mobile First
-*   **[~] Push-Benachrichtigungen:** Implementierung gestartet. VAPID Keys generiert, Service Worker bereit, Frontend-Logik implementiert. Serverseitige Integration läuft. (IN ARBEIT)
+*   **[x] Push-Benachrichtigungen:** Vollständig integriert. Inklusive Service Worker, VAPID Keys, Datenbank-Subscriptions und Versand-Logik via `web-push`. (Erledigt)
 *   **[x] Digitaler "Check-In":** Bei Eventstart erscheint ein Dialog: "Wer ist schon da?".
 *   **[x] Pünktlichkeits-Tracking:** Statistiken darüber, wer am zuverlässigsten ist.
 *   **[x] PWA Support & Mobile Nav:** Bottom-Navigation für bessere Handy-Bedienung.
@@ -48,16 +48,16 @@ Das Ziel ist eine App, die Spaß macht und intuitiv bedienbar ist. Die Terminpla
 *   **[x] Neue Spiele einfügen:** Gamification angepasst (+10 XP). (Erledigt)
 *   **[x] Spiele mitbringen:** Gamification angepasst (+20 XP). (Erledigt)
 *   **[x] Barcode-Scanner:** Integration eines Scanners (z.B. via QuaggaJS oder Barcode Detection API), um Spiele blitzschnell via EAN/UPC zur Sammlung hinzuzufügen.
-*   **[ ] UI/UX Audit:** Überarbeitung der Navigation (z.B. Bottom-Navbar für Mobile) und Reduzierung von Klicks für Standard-Aktionen.
+*   **[ ] UI/UX Audit:** Kontinuierlicher Prozess (Teilweise integriert, z.B. bei Mobile Nav).
 
 ## 💡 Zusätzliche Ideen von Antigravity (Der letzte Schliff)
-*   **[ ] KI-Spieleberater:** Ein Bot, der basierend auf der Gruppengröße und dem "Pile of Shame" Vorschläge macht.
+*   **[x] KI-Spieleberater (Dr. Meeple):** Ein Bot (Chat-Interface), der basierend auf Spielerzahl, Zeit, Stimmung und Sammlung (Specs) Empfehlungen gibt. Inklusive "Floating Widget" auf dem Dashboard. (Erledigt)
 *   **[x] Dynamic Badge System:** Verdienst von Abzeichen für besondere Leistungen.
 *   **[x] XP & Level System:** Gamification-Fortschritt im Profil integriert.
-*   **[ ] Personal Success Pulse:** Ein kleiner Graph auf dem Dashboard.
-*   **[ ] "Game of the Group":** Ein Highlight-Bereich, der das am häufigsten gespielte Spiel des Monats in der Gruppe präsentiert.
-*   **[ ] Pile of Shame Tracker:** Visueller Fortschrittsbalken: "Du hast 20% deiner Sammlung noch nicht gespielt – Zeit für einen neuen Termin!"
-*   **[ ] Regel-Quickfinder:** Integration von Links zu Video-Tutorials oder PDF-Regeln bei jedem Spiel in der Sammlung.
+*   **[x] Personal Success Pulse:** Ein kleiner Graph auf dem Dashboard. (Erledigt)
+*   **[x] "Game of the Group":** Ein Highlight-Bereich auf dem Dashboard, der das am häufigsten gespielte Spiel des Monats präsentiert. (Erledigt)
+*   **[x] Pile of Shame Tracker:** Visueller Fortschrittsbalken: "Du hast 20% deiner Sammlung noch nicht gespielt – Zeit für einen neuen Termin!" (Erledigt)
+*   **[x] Regel-Quickfinder:** Integration von Links zu Video-Tutorials oder PDF-Regeln bei jedem Spiel in der Sammlung. (Erledigt)
 
 ## 🎨 Phase 5: Emotionale Features & Sammlungs-Insights
 *   **[x] Erweiterte Sieges-Analyse (Smart Stats):**

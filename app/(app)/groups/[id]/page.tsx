@@ -197,6 +197,7 @@ export default async function GroupPage({ params, searchParams }: { params: Prom
                                             games={groupGames}
                                             members={groupMembers}
                                             places={places || []}
+                                            events={combinedHistory.filter(h => h.type === 'event' && new Date(h.date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) as any[]} // Last 7 days + future
                                             currentUserId={user?.id}
                                             defaultOpen={log === 'true'}
                                             trigger={

@@ -11,7 +11,7 @@ export async function getGroupMessages(groupId: string) {
         .from('group_messages')
         .select(`
             *,
-            profiles:user_id(full_name, avatar_url)
+            profiles:profiles!group_messages_user_id_fkey(full_name, avatar_url)
         `)
         .eq('group_id', groupId)
         .order('created_at', { ascending: true }) // Oldest first for chat log
@@ -31,21 +31,25 @@ export async function sendGroupMessage(groupId: string, content: string) {
 
     if (!content.trim()) return { success: false, error: 'Message empty' }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('group_messages')
         .insert({
             group_id: groupId,
             user_id: user.id,
             content: content
         })
+        .select(`
+            *,
+            profiles:profiles!group_messages_user_id_fkey(full_name, avatar_url)
+        `)
+        .single()
 
     if (error) {
         console.error('Error sending message:', error)
         return { success: false, error: error.message }
     }
 
-    // No need to revalidate path if we use Realtime, but for fallback:
-    return { success: true }
+    return { success: true, data }
 }
 
 export async function getUserGroups() {

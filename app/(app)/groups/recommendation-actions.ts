@@ -51,11 +51,15 @@ export async function getSmartRecommendations(groupId: string) {
             }
         }
         // Force cast to any or correct type because TS inference on join can be tricky
-        const profile = item.profiles as any
-        groupedRecommendations[key].owners.push({
-            name: profile.full_name,
-            avatar: profile.avatar_url
-        })
+        const profileData = item.profiles as any
+        const profile = Array.isArray(profileData) ? profileData[0] : profileData
+
+        if (profile) {
+            groupedRecommendations[key].owners.push({
+                name: profile.full_name || 'Unbekannt',
+                avatar: profile.avatar_url
+            })
+        }
     })
 
     // Helper: Select Top 5 recommendations

@@ -9,7 +9,8 @@ import {
     DialogTrigger
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Info, Users, Clock, Star, ExternalLink, Loader2, Archive, CheckCircle2, Gauge } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Info, Users, Clock, Star, ExternalLink, Loader2, Archive, CheckCircle2, Gauge, BookOpen, PlayCircle, Edit2, FileText } from 'lucide-react'
 import { getBGGGameDetails } from '@/app/(app)/inventory/bgg-actions'
 import { updateGame } from '@/app/(app)/inventory/actions'
 
@@ -21,6 +22,19 @@ export function GameDetailModal({
     const [details, setDetails] = useState<any>(null)
     const [loading, setLoading] = useState(false)
     const [open, setOpen] = useState(false)
+
+    // Quickfinder State
+    const [rulesUrl, setRulesUrl] = useState(game.rules_url || '')
+    const [videoUrl, setVideoUrl] = useState(game.video_url || '')
+    const [isEditingLinks, setIsEditingLinks] = useState(false)
+
+    const saveLinks = async () => {
+        setLoading(true)
+        await updateGame(game.id, { rules_url: rulesUrl, video_url: videoUrl })
+        setLoading(false)
+        setIsEditingLinks(false)
+        window.location.reload()
+    }
 
     const bggId = game.bgg_link?.split('/').pop()
 
@@ -113,6 +127,96 @@ export function GameDetailModal({
                                         {game.complexity ? Number(game.complexity).toFixed(1) : details?.averageweight ? parseFloat(details.averageweight).toFixed(1) : '?'}/5
                                     </p>
                                 </div>
+                            </div>
+
+                            {/* Regel-Quickfinder */}
+                            <div className="bg-indigo-50/50 p-6 rounded-2xl border border-indigo-100 space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-bold text-indigo-900 flex items-center gap-2">
+                                        <BookOpen className="w-5 h-5 text-indigo-600" />
+                                        Regel-Quickfinder
+                                    </h3>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setIsEditingLinks(!isEditingLinks)}
+                                        className="text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+
+                                {isEditingLinks ? (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] uppercase font-bold text-indigo-400 ml-1">Regel-PDF Link</label>
+                                            <Input
+                                                placeholder="https://..."
+                                                value={rulesUrl}
+                                                onChange={e => setRulesUrl(e.target.value)}
+                                                className="bg-white border-indigo-200 focus:border-indigo-400"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] uppercase font-bold text-indigo-400 ml-1">Erklärvideo Link</label>
+                                            <Input
+                                                placeholder="https://youtube.com/..."
+                                                value={videoUrl}
+                                                onChange={e => setVideoUrl(e.target.value)}
+                                                className="bg-white border-indigo-200 focus:border-indigo-400"
+                                            />
+                                        </div>
+                                        <div className="flex justify-end">
+                                            <Button size="sm" onClick={saveLinks} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                                                Speichern
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {game.rules_url ? (
+                                            <a href={game.rules_url} target="_blank" rel="noopener noreferrer" className="block">
+                                                <div className="bg-white p-4 rounded-xl border border-indigo-100 flex items-center gap-3 hover:shadow-md hover:border-indigo-300 transition-all group cursor-pointer h-full">
+                                                    <div className="w-10 h-10 rounded-lg bg-red-50 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                        <FileText className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 text-sm group-hover:text-indigo-600">Regeln (PDF)</p>
+                                                        <p className="text-xs text-slate-400 font-medium">Ansehen</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        ) : (
+                                            <div className="bg-white/50 p-4 rounded-xl border border-indigo-50 border-dashed flex items-center gap-3 opacity-60">
+                                                <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-300 flex items-center justify-center">
+                                                    <FileText className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-400">Keine Regeln hinterlegt</span>
+                                            </div>
+                                        )}
+
+                                        {game.video_url ? (
+                                            <a href={game.video_url} target="_blank" rel="noopener noreferrer" className="block">
+                                                <div className="bg-white p-4 rounded-xl border border-indigo-100 flex items-center gap-3 hover:shadow-md hover:border-indigo-300 transition-all group cursor-pointer h-full">
+                                                    <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                        <PlayCircle className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-slate-800 text-sm group-hover:text-indigo-600">Erklärvideo</p>
+                                                        <p className="text-xs text-slate-400 font-medium">Ansehen</p>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        ) : (
+                                            <div className="bg-white/50 p-4 rounded-xl border border-indigo-50 border-dashed flex items-center gap-3 opacity-60">
+                                                <div className="w-10 h-10 rounded-lg bg-slate-50 text-slate-300 flex items-center justify-center">
+                                                    <PlayCircle className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-400">Kein Video hinterlegt</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* Description */}

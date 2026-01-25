@@ -29,17 +29,20 @@ interface LogGameDialogProps {
     games: any[]
     members: any[]
     places: any[]
+    events?: any[]
     trigger?: React.ReactNode
     defaultEventId?: string
     currentUserId?: string
     defaultOpen?: boolean
 }
 
-export function LogGameDialog({ groupId, games, members, places, trigger, defaultEventId, currentUserId, defaultOpen }: LogGameDialogProps) {
+export function LogGameDialog({ groupId, games, members, places, events = [], trigger, defaultEventId, currentUserId, defaultOpen }: LogGameDialogProps) {
     const [open, setOpen] = useState(defaultOpen || false)
     const [loading, setLoading] = useState(false)
     const [bggLoading, setBggLoading] = useState(false)
     const router = useRouter()
+
+    const [eventId, setEventId] = useState<string | undefined>(defaultEventId)
 
     const [gameName, setGameName] = useState('')
     const [bggResults, setBggResults] = useState<any[]>([])
@@ -146,6 +149,21 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
         setIsLocationFocused(false)
     }
 
+    const handleSelectEvent = (event: any) => {
+        setEventId(event.id)
+        // Auto-fill from event
+        if (event.location) setLocation(event.location)
+        if (event.start_time) setPlayedAt(event.start_time.slice(0, 16))
+
+        // Auto-select attendees if available
+        if (event.event_attendees) {
+            const going = event.event_attendees
+                .filter((a: any) => a.status === 'going')
+                .map((a: any) => a.user_id)
+            if (going.length > 0) setSelectedPlayers(going)
+        }
+    }
+
     const handleScoreChange = (userId: string, scoreStr: string) => {
         const score = parseInt(scoreStr)
         if (!isNaN(score)) {
@@ -218,7 +236,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
                 punctuality: punctuality,
                 isEpic,
                 reportImageUrl: sessionImageUrl,
-                eventId: defaultEventId
+                eventId: eventId
             })
 
             const victoryInfo = winnerId === currentUserId ? analyzeVictory(scores, winnerId) : null
@@ -248,6 +266,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
             setGameName('')
             setSelectedGameImage(undefined)
             setSelectedPlayers([])
+            setEventId(undefined)
             setWinnerId(undefined)
             setScores({})
             setPlacements({})
@@ -295,66 +314,109 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
 
                 <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
                     {/* Game Selection */}
-                    <div className="space-y-3 relative group">
-                        <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Welches Spiel?</Label>
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-primary transition-colors" />
-                            <Input
-                                placeholder="Suche in der Sammlung oder BGG..."
-                                value={gameName}
-                                onChange={(e) => handleBGGSearch(e.target.value)}
-                                className="pl-12 h-14 bg-white/50 border-slate-100 rounded-2xl text-lg font-bold focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all shadow-sm"
-                            />
-                            {bggLoading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary animate-spin" />}
-                        </div>
-
-                        {(gameName && (filteredGames.length > 0 || bggResults.length > 0)) && (
-                            <div className="absolute z-[60] w-full bg-white/95 backdrop-blur-md border border-white shadow-2xl rounded-3xl mt-2 overflow-hidden animate-in fade-in slide-in-from-top-2 max-h-80 overflow-y-auto">
-                                {filteredGames.length > 0 && (
-                                    <div className="px-4 py-2 bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Aus deiner Sammlung</div>
-                                )}
-                                {filteredGames.slice(0, 5).map(game => (
+                    <div className="space-y-6">
+                        {events.length > 0 && (
+                            <div className="space-y-3">
+                                <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Event zuordnen (Optional)</Label>
+                                <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 custom-scrollbar">
                                     <button
-                                        key={game.id}
-                                        onClick={() => handleSelectGame(game)}
-                                        className="w-full text-left px-6 py-4 hover:bg-primary/5 text-slate-700 transition-colors flex items-center gap-4 group/item"
+                                        onClick={() => {
+                                            setEventId(undefined)
+                                            setSelectedPlayers([])
+                                            setLocation('')
+                                        }}
+                                        className={cn(
+                                            "shrink-0 px-4 py-3 rounded-xl border font-bold text-sm transition-all",
+                                            !eventId ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                                        )}
                                     >
-                                        <div className="w-12 h-12 rounded-xl bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
-                                            {game.image_url ? (
-                                                <img src={game.image_url} alt="" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <Dice5 className="w-full h-full p-3 text-slate-300" />
-                                            )}
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-slate-900 group-hover/item:text-primary transition-colors">{game.name}</p>
-                                            <p className="text-xs text-slate-400 font-medium">{game.min_players}-{game.max_players} Spieler • {game.playtime} Min</p>
-                                        </div>
-                                        <Plus className="w-4 h-4 text-slate-300 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                        Kein Event
                                     </button>
-                                ))}
-
-                                {bggResults.length > 0 && (
-                                    <div className="px-4 py-2 bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-y border-slate-100">BoardGameGeek Ergebnisse</div>
-                                )}
-                                {bggResults.map(game => (
-                                    <button
-                                        key={game.bggId}
-                                        onClick={() => handleSelectBGGGame(game.bggId)}
-                                        className="w-full text-left px-6 py-4 hover:bg-primary/5 text-slate-700 transition-colors flex items-center gap-4 group/item"
-                                    >
-                                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100 text-primary">
-                                            <Dice5 className="w-6 h-6" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-bold text-slate-900 group-hover/item:text-primary transition-colors">{game.name}</p>
-                                            <p className="text-xs text-slate-400 font-medium">Veröffentlicht: {game.yearPublished}</p>
-                                        </div>
-                                        <Search className="w-4 h-4 text-slate-300 opacity-0 group-hover/item:opacity-100 transition-opacity" />
-                                    </button>
-                                ))}
+                                    {events.map((evt: any) => {
+                                        const isSelected = eventId === evt.id
+                                        return (
+                                            <button
+                                                key={evt.id}
+                                                onClick={() => handleSelectEvent(evt)}
+                                                className={cn(
+                                                    "shrink-0 px-4 py-3 rounded-xl border text-left transition-all min-w-[200px] flex flex-col gap-1",
+                                                    isSelected
+                                                        ? "bg-blue-50 border-blue-200 shadow-sm ring-2 ring-blue-500 ring-offset-1"
+                                                        : "bg-white text-slate-600 border-slate-200 hover:border-blue-300"
+                                                )}
+                                            >
+                                                <span className={cn("font-black text-sm block truncate", isSelected ? "text-blue-700" : "text-slate-700")}>{evt.title}</span>
+                                                <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                                                    {new Date(evt.start_time).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' })}
+                                                </span>
+                                            </button>
+                                        )
+                                    })}
+                                </div>
                             </div>
                         )}
+
+                        <div className="space-y-3 relative group">
+                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Welches Spiel?</Label>
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-primary transition-colors" />
+                                <Input
+                                    placeholder="Suche in der Sammlung oder BGG..."
+                                    value={gameName}
+                                    onChange={(e) => handleBGGSearch(e.target.value)}
+                                    className="pl-12 h-14 bg-white/50 border-slate-100 rounded-2xl text-lg font-bold focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all shadow-sm"
+                                />
+                                {bggLoading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary animate-spin" />}
+                            </div>
+
+                            {(gameName && (filteredGames.length > 0 || bggResults.length > 0)) && (
+                                <div className="absolute z-[60] w-full bg-white/95 backdrop-blur-md border border-white shadow-2xl rounded-3xl mt-2 overflow-hidden animate-in fade-in slide-in-from-top-2 max-h-80 overflow-y-auto">
+                                    {filteredGames.length > 0 && (
+                                        <div className="px-4 py-2 bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Aus deiner Sammlung</div>
+                                    )}
+                                    {filteredGames.slice(0, 5).map(game => (
+                                        <button
+                                            key={game.id}
+                                            onClick={() => handleSelectGame(game)}
+                                            className="w-full text-left px-6 py-4 hover:bg-primary/5 text-slate-700 transition-colors flex items-center gap-4 group/item"
+                                        >
+                                            <div className="w-12 h-12 rounded-xl bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
+                                                {game.image_url ? (
+                                                    <img src={game.image_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Dice5 className="w-full h-full p-3 text-slate-300" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-bold text-slate-900 group-hover/item:text-primary transition-colors">{game.name}</p>
+                                                <p className="text-xs text-slate-400 font-medium">{game.min_players}-{game.max_players} Spieler • {game.playtime} Min</p>
+                                            </div>
+                                            <Plus className="w-4 h-4 text-slate-300 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                        </button>
+                                    ))}
+
+                                    {bggResults.length > 0 && (
+                                        <div className="px-4 py-2 bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-y border-slate-100">BoardGameGeek Ergebnisse</div>
+                                    )}
+                                    {bggResults.map(game => (
+                                        <button
+                                            key={game.bggId}
+                                            onClick={() => handleSelectBGGGame(game.bggId)}
+                                            className="w-full text-left px-6 py-4 hover:bg-primary/5 text-slate-700 transition-colors flex items-center gap-4 group/item"
+                                        >
+                                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100 text-primary">
+                                                <Dice5 className="w-6 h-6" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-bold text-slate-900 group-hover/item:text-primary transition-colors">{game.name}</p>
+                                                <p className="text-xs text-slate-400 font-medium">Veröffentlicht: {game.yearPublished}</p>
+                                            </div>
+                                            <Search className="w-4 h-4 text-slate-300 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Ratings Section */}
@@ -367,6 +429,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
                                     <button
                                         key={star}
                                         onClick={() => setRating(star)}
+                                        aria-label={`${star} von 5 Sternen`}
                                         className="transition-all active:scale-90 hover:scale-125"
                                     >
                                         <Star
@@ -391,6 +454,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
                                     <button
                                         key={level}
                                         onClick={() => setComplexityRating(level)}
+                                        aria-label={`Anspruch Level ${level}`}
                                         className="transition-transform active:scale-90"
                                     >
                                         <Zap
@@ -412,6 +476,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
                                     <button
                                         key={level}
                                         onClick={() => setDurationRating(level)}
+                                        aria-label={`Dauer Level ${level}`}
                                         className="transition-transform active:scale-90"
                                     >
                                         <Clock3
@@ -557,6 +622,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
                                     id="session-image-upload"
                                     onChange={handleImageUpload}
                                     disabled={uploadingImage}
+                                    title="Foto hochladen"
                                 />
                                 <Label
                                     htmlFor="session-image-upload"
@@ -698,6 +764,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
                                                                         setPlacements(prev => ({ ...prev, [member.user_id]: 1 }))
                                                                     }
                                                                 }}
+                                                                aria-label={isWinner ? "Gewinner entfernen" : "Als Gewinner markieren"}
                                                                 className={cn(
                                                                     "h-12 w-12 flex items-center justify-center rounded-xl border transition-all font-bold text-sm",
                                                                     isWinner
