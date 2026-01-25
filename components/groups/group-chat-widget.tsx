@@ -2,14 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { getGroupMessages, sendGroupMessage } from '@/app/(app)/chat/actions'
-import { Send, MessageSquare, Loader2, User } from 'lucide-react'
+import { getGroupMessages, sendGroupMessage, deleteGroupMessage } from '@/app/(app)/chat/actions'
+import { Send, MessageSquare, Loader2, User, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { MuteUserButton } from '@/components/chat/mute-user-button'
+import { getMutedUsers } from '@/app/(app)/settings/user-settings-actions'
 
 type Message = {
     id: string
@@ -27,15 +29,25 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
     const [newMessage, setNewMessage] = useState('')
     const [sending, setSending] = useState(false)
     const [loading, setLoading] = useState(true)
+    const [mutedUserIds, setMutedUserIds] = useState<string[]>([])
+    const [mounted, setMounted] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const supabase = createClient()
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     useEffect(() => {
         const loadMessages = async () => {
             setLoading(true)
             try {
-                const msgs = await getGroupMessages(groupId)
+                const [msgs, mutedUsers] = await Promise.all([
+                    getGroupMessages(groupId),
+                    getMutedUsers()
+                ])
                 setMessages(msgs || [])
+                setMutedUserIds(mutedUsers.map((u: any) => u.id))
             } catch (err) {
                 console.error('Error in GroupChatWidget:', err)
             } finally {
@@ -50,28 +62,32 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
             .on(
                 'postgres_changes',
                 {
-                    event: 'INSERT',
+                    event: '*',
                     schema: 'public',
                     table: 'group_messages',
                     filter: `group_id=eq.${groupId}`
                 },
                 async (payload) => {
-                    // Fetch profile for the new message
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('full_name, avatar_url')
-                        .eq('id', payload.new.user_id)
-                        .single()
+                    if (payload.eventType === 'INSERT') {
+                        // Fetch profile for the new message
+                        const { data: profile } = await supabase
+                            .from('profiles')
+                            .select('full_name, avatar_url')
+                            .eq('id', payload.new.user_id)
+                            .single()
 
-                    const newMsg = {
-                        ...payload.new as Message,
-                        profiles: profile
+                        const newMsg = {
+                            ...payload.new as Message,
+                            profiles: profile
+                        }
+                        setMessages(prev => {
+                            if (prev.some(m => m.id === newMsg.id)) return prev
+                            return [...prev, newMsg]
+                        })
+                        scrollToBottom()
+                    } else if (payload.eventType === 'DELETE') {
+                        setMessages(prev => prev.filter(m => m.id !== payload.old.id))
                     }
-                    setMessages(prev => {
-                        if (prev.some(m => m.id === newMsg.id)) return prev
-                        return [...prev, newMsg]
-                    })
-                    scrollToBottom()
                 }
             )
             .subscribe()
@@ -99,15 +115,18 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
         if (!result.success) {
             console.error('Error sending message:', result.error)
             setNewMessage(content) // Restore message on error
-        } else if (result.data) {
-            const newMsg = result.data as Message
-            setMessages(prev => {
-                if (prev.some(m => m.id === newMsg.id)) return prev
-                return [...prev, newMsg]
-            })
-            scrollToBottom()
         }
+        // Result is handled by realtime subscription
         setSending(false)
+    }
+
+    const handleDelete = async (messageId: string) => {
+        if (!confirm('Nachricht wirklich löschen?')) return
+        const result = await deleteGroupMessage(messageId)
+        if (!result.success) {
+            alert('Löschen fehlgeschlagen: ' + result.error)
+        }
+        // Result is handled by realtime subscription
     }
 
     return (
@@ -149,12 +168,14 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
                     <div className="space-y-6">
                         {messages.map((msg, idx) => {
                             const isMe = msg.user_id === user?.id
+                            const isMuted = mutedUserIds.includes(msg.user_id)
                             const showAvatar = idx === 0 || messages[idx - 1].user_id !== msg.user_id
 
                             return (
                                 <div key={msg.id} className={cn(
                                     "flex gap-3 max-w-[85%] group/msg",
-                                    isMe ? "ml-auto flex-row-reverse" : "mr-auto"
+                                    isMe ? "ml-auto flex-row-reverse" : "mr-auto",
+                                    isMuted && !isMe && "opacity-40 grayscale"
                                 )}>
                                     <div className={cn("w-8 h-8 shrink-0", !showAvatar && "invisible")}>
                                         <Avatar className="w-8 h-8 border-2 border-white shadow-sm ring-1 ring-slate-100">
@@ -165,19 +186,43 @@ export function GroupChatWidget({ groupId, user }: { groupId: string, user: any 
                                         </Avatar>
                                     </div>
                                     <div className={cn("flex flex-col gap-1.5 min-w-0", isMe ? "items-end" : "items-start")}>
-                                        {showAvatar && !isMe && (
-                                            <span className="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-wider">{msg.profiles?.full_name}</span>
+                                        {showAvatar && (
+                                            <div className="flex items-center gap-2 px-1">
+                                                {!isMe && (
+                                                    <>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{msg.profiles?.full_name}</span>
+                                                        <MuteUserButton
+                                                            targetUserId={msg.user_id}
+                                                            targetUserName={msg.profiles?.full_name || 'Unbekannt'}
+                                                            initialIsMuted={isMuted}
+                                                            className="p-0 h-4 w-4"
+                                                        />
+                                                    </>
+                                                )}
+                                            </div>
                                         )}
-                                        <div className={cn(
-                                            "px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm break-words transition-all hover:shadow-md",
-                                            isMe
-                                                ? "bg-gradient-to-br from-primary to-blue-600 text-white rounded-tr-none"
-                                                : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
-                                        )}>
-                                            {msg.content}
+                                        <div className="relative group/msg-content">
+                                            <div className={cn(
+                                                "px-4 py-2.5 rounded-2xl text-sm font-medium shadow-sm break-words transition-all hover:shadow-md",
+                                                isMe
+                                                    ? "bg-gradient-to-br from-primary to-blue-600 text-white rounded-tr-none"
+                                                    : "bg-white text-slate-700 border border-slate-100 rounded-tl-none"
+                                            )}>
+                                                {msg.content}
+                                            </div>
+
+                                            {isMe && (
+                                                <button
+                                                    onClick={() => handleDelete(msg.id)}
+                                                    className="absolute -left-8 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 hover:text-red-500 opacity-0 group-hover/msg-content:opacity-100 transition-all"
+                                                    title="Löschen"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </div>
                                         <span className="text-[9px] font-bold text-slate-300 opacity-0 group-hover/msg:opacity-100 transition-opacity">
-                                            {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: de })}
+                                            {mounted ? formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: de }) : '...'}
                                         </span>
                                     </div>
                                 </div>

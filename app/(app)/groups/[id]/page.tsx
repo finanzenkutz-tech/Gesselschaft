@@ -38,11 +38,11 @@ export default async function GroupPage({ params, searchParams }: { params: Prom
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
 
-        const { data: profile } = await supabase
+        const { data: profile } = user ? await supabase
             .from('profiles')
             .select('system_role')
-            .eq('id', user?.id)
-            .single()
+            .eq('id', user.id)
+            .maybeSingle() : { data: null }
 
         const isSuperAdmin = profile?.system_role === 'super_admin'
 
@@ -137,8 +137,11 @@ export default async function GroupPage({ params, searchParams }: { params: Prom
                 title: s.game_name,
                 id: s.id
             }))
-        ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .slice(0, 10)
+        ].sort((a: any, b: any) => {
+            const timeA = a.date ? new Date(a.date).getTime() : 0;
+            const timeB = b.date ? new Date(b.date).getTime() : 0;
+            return timeB - timeA;
+        }).slice(0, 10)
 
         const nextEvent = upcomingEvents[0]
 

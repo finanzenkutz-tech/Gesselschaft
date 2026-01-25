@@ -48,7 +48,15 @@ export function ChatInterface({ user, groups, directChats = [] }: { user: any, g
     ]
 
     const [selectedChatId, setSelectedChatId] = useState<string | null>(() => {
-        if (initialDmId && allChats.find(c => c.id === initialDmId)) return initialDmId
+        const groupParam = searchParams.get('group')
+        const dmParam = searchParams.get('dm')
+        const idParam = searchParams.get('id')
+        const typeParam = searchParams.get('type')
+
+        if (groupParam && allChats.find(c => c.id === groupParam && c.type === 'group')) return groupParam
+        if (dmParam && allChats.find(c => c.id === dmParam && c.type === 'dm')) return dmParam
+        if (idParam && typeParam && allChats.find(c => c.id === idParam && c.type === typeParam)) return idParam
+
         if (groups.length > 0) return groups[0].id
         if (directChats.length > 0) return directChats[0].chat_id
         return null
@@ -225,7 +233,12 @@ export function ChatInterface({ user, groups, directChats = [] }: { user: any, g
                     <>
                         {/* Header */}
                         <div className="bg-white border-b border-slate-100 p-4 shrink-0 flex items-center gap-3 shadow-sm z-20">
-                            <button onClick={() => setMobileView('list')} className="md:hidden p-2 -ml-2 hover:bg-slate-50 rounded-full text-slate-500">
+                            <button
+                                onClick={() => setMobileView('list')}
+                                className="md:hidden p-2 -ml-2 hover:bg-slate-50 rounded-full text-slate-500"
+                                title="Zurück zur Liste"
+                                aria-label="Zurück zur Liste"
+                            >
                                 <ArrowLeft className="w-5 h-5" />
                             </button>
                             {selectedChat.type === 'group' ? (

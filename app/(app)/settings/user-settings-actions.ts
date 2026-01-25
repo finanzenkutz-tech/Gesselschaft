@@ -78,8 +78,10 @@ export async function getMutedUsers() {
         return []
     }
 
+    if (!data) return []
+
     return data.map(m => ({
         id: m.muted_user_id,
-        ...(m.profiles as any)
+        ...(m.profiles as any || {})
     }))
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Users, Shield, Trophy, Trash2, Mail, Key, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { deleteUser, sendPasswordReset } from '@/app/(app)/admin/actions'
@@ -8,6 +8,8 @@ import { getLevelInfo } from '@/lib/utils/gamification'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { EditUserDialog } from './edit-user-dialog'
+import { formatDistanceToNow } from 'date-fns'
+import { de } from 'date-fns/locale'
 
 interface MemberCardProps {
     profile: any
@@ -18,6 +20,11 @@ interface MemberCardProps {
 export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
 
     const levelInfo = getLevelInfo(profile.points || 0)
     const isSuperAdmin = profile.system_role === 'super_admin'
@@ -49,18 +56,10 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
     }
 
     const lastSeenDate = profile.last_seen ? new Date(profile.last_seen) : null
-    const isOnline = lastSeenDate && (new Date().getTime() - lastSeenDate.getTime() < 5 * 60 * 1000) // 5 minutes
+    const isOnline = lastSeenDate && (Date.now() - lastSeenDate.getTime() < 5 * 60 * 1000)
 
-    const formatLastSeen = (date: Date) => {
-        const diff = new Date().getTime() - date.getTime()
-        const minutes = Math.floor(diff / 60000)
-        const hours = Math.floor(minutes / 60)
-        const days = Math.floor(hours / 24)
-
-        if (minutes < 5) return 'Jetzt online'
-        if (minutes < 60) return `Vor ${minutes} Min.`
-        if (hours < 24) return `Vor ${hours} Std.`
-        return `Vor ${days} Tagen`
+    const formatLastSeenStr = (date: Date) => {
+        return formatDistanceToNow(date, { addSuffix: true, locale: de })
     }
 
     return (
@@ -109,9 +108,10 @@ export function MemberCard({ profile, index, currentUserId }: MemberCardProps) {
                             {profile.email}
                         </p>
                         <div className="flex items-center gap-1.5 text-xs font-medium">
-                            <Circle className={`w-2 h-2 fill-current ${isOnline ? 'text-green-500' : 'text-slate-300'}`} />
-                            <span className={isOnline ? 'text-green-600' : 'text-slate-400'}>
-                                {lastSeenDate ? formatLastSeen(lastSeenDate) : 'Nie online'}
+                            {/* Use mounted check to prevent hydration mismatch on online status */}
+                            <Circle className={`w-2 h-2 fill-current ${mounted && isOnline ? 'text-green-500' : 'text-slate-300'}`} />
+                            <span className={mounted && isOnline ? 'text-green-600' : 'text-slate-400'}>
+                                {lastSeenDate ? (mounted ? formatLastSeenStr(lastSeenDate) : 'Vor kurzem') : 'Nie online'}
                             </span>
                         </div>
                     </div>

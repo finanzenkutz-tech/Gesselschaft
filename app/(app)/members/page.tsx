@@ -15,7 +15,7 @@ export default async function MembersPage() {
         .from('profiles')
         .select('system_role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
     if (currentUserProfile?.system_role !== 'super_admin') {
         redirect('/')

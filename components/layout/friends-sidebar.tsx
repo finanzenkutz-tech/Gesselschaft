@@ -3,24 +3,28 @@
 import { useEffect, useState } from 'react'
 import { getBuddies } from '@/app/(app)/profile/buddy-actions'
 import { getMyDirectChats } from '@/app/(app)/chat/direct-actions'
-import { User, MessageCircle, MoreVertical, MessageSquare } from 'lucide-react'
+import { getUserGroups } from '@/app/(app)/chat/actions'
+import { User, MessageCircle, MoreVertical, MessageSquare, Users } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 export function FriendsSidebar({ currentUserId }: { currentUserId: string }) {
     const [buddies, setBuddies] = useState<any[]>([])
     const [chats, setChats] = useState<any[]>([])
+    const [groups, setGroups] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [buddiesData, chatsData] = await Promise.all([
+                const [buddiesData, chatsData, groupsData] = await Promise.all([
                     getBuddies(),
-                    getMyDirectChats()
+                    getMyDirectChats(),
+                    getUserGroups()
                 ])
                 setBuddies(buddiesData || [])
                 setChats(chatsData || [])
+                setGroups(groupsData || [])
             } catch (err) {
                 console.error('Error fetching sidebar data:', err)
             } finally {
@@ -42,19 +46,34 @@ export function FriendsSidebar({ currentUserId }: { currentUserId: string }) {
         </div>
     )
 
-    const hasContent = buddies.length > 0 || chats.length > 0
+    const hasContent = buddies.length > 0 || chats.length > 0 || groups.length > 0
     if (!hasContent) return null
 
     return (
         <div className="space-y-6 py-4 border-t border-slate-50 mt-4">
-            {/* Active Chats */}
-            {chats.length > 0 && (
-                <div className="space-y-2">
+            {/* Active Chats & Groups */}
+            {(chats.length > 0 || groups.length > 0) && (
+                <div className="space-y-4">
                     <p className="px-4 text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                         <MessageCircle className="w-3 h-3" />
-                        Letzte Chats
+                        Letzte Nachrichten
                     </p>
                     <div className="space-y-1">
+                        {/* Group Chats */}
+                        {groups.map((g) => (
+                            <div key={g.id} className="group relative flex items-center gap-3 px-4 py-2 hover:bg-blue-50/50 rounded-xl transition-all cursor-pointer">
+                                <Link href={`/chat?group=${g.id}`} className="absolute inset-0 z-10" />
+                                <div className="w-8 h-8 rounded-lg bg-blue-50 border-2 border-white shadow-sm flex items-center justify-center text-sm">
+                                    {g.emoji || '🎲'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-slate-700 truncate">{g.name}</p>
+                                    <p className="text-[10px] text-slate-400 font-medium truncate uppercase tracking-tighter">Gruppenchat</p>
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Direct Chats */}
                         {chats.map((c) => {
                             const profile = c.profiles
                             if (!profile) return null

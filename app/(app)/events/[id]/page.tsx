@@ -4,11 +4,9 @@ import { Calendar, MapPin, Users, ArrowLeft, Trash2, Car, Pizza, Dice5, MessageC
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { CarpoolingWidget } from '@/components/events/carpooling-widget'
-import { EventChatWidget } from '@/components/events/event-chat-widget'
-import { getMessages } from '@/app/(app)/events/chat-actions'
+import { GroupChatWidget } from '@/components/groups/group-chat-widget'
 import { GameTrackingWidget } from '@/components/events/game-tracking-widget'
 import { getEventSessions } from '@/app/(app)/events/session-actions'
-
 import { deleteAnyEvent } from '@/app/(app)/admin/actions'
 import { RSVPButtons } from '@/components/events/rsvp-buttons'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -86,9 +84,6 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
     const totalHeadcount = goingCount + guestCounts
 
     const maybeCount = attendees.filter((a: any) => a.status === 'maybe').length
-
-    // Fetch chat messages
-    const messages = await getMessages(id)
 
     // Fetch game sessions
     const sessions = await getEventSessions(id)
@@ -494,12 +489,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
                 </TabsContent>
 
                 <TabsContent value="chat" className="mt-6">
-                    {/* Event Chat */}
-                    <EventChatWidget
-                        eventId={id}
-                        initialMessages={messages as any}
-                        userId={user?.id}
-                        initialMutedUserIds={(await getMutedUsers()).map((u: any) => u.id)}
+                    <GroupChatWidget
+                        groupId={event.group_id}
+                        user={user}
                     />
                 </TabsContent>
             </Tabs>

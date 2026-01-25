@@ -14,7 +14,7 @@ export default async function AppLayout({
         redirect('/login')
     }
 
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
 
     return <Shell user={user} profile={profile}>{children}</Shell>
 }
