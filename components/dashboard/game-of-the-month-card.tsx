@@ -13,7 +13,7 @@ export function GameOfTheMonthCard({ game }: GameOfTheMonthCardProps) {
     if (!game) return null
 
     return (
-        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-amber-400 to-orange-500 shadow-xl shadow-orange-200/50 group h-full transition-all hover:scale-[1.02] hover:shadow-2xl">
+        <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-amber-400 to-orange-500 shadow-xl shadow-orange-200/50 group transition-all hover:scale-[1.02] hover:shadow-2xl">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
 

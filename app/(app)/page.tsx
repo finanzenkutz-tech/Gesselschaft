@@ -13,6 +13,7 @@ import { getReviewableEvents } from '@/app/(app)/events/actions'
 import { ActivityFeed, ActivityItem } from '@/components/dashboard/activity-feed'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { ReviewPrompt } from '@/components/dashboard/review-prompt'
+import { getDisplayName } from '@/lib/utils'
 
 import { DigitalCheckInDialog } from '@/components/events/digital-check-in-dialog'
 import { getPunctualityStats } from '@/app/(app)/events/stats-actions'
@@ -70,22 +71,22 @@ export default async function DashboardPage() {
         // Activity Feed Data
         supabase
             .from('group_members')
-            .select('joined_at, profiles(full_name, avatar_url), groups(name)')
+            .select('joined_at, profiles(full_name, avatar_url, nickname, use_nickname), groups(name)')
             .order('joined_at', { ascending: false })
             .limit(5),
         supabase
             .from('inventory')
-            .select('created_at, name, profiles:owner_id(full_name, avatar_url)')
+            .select('created_at, name, profiles:owner_id(full_name, avatar_url, nickname, use_nickname)')
             .order('created_at', { ascending: false })
             .limit(5),
         supabase
             .from('events')
-            .select('created_at, title, groups(name), profiles:created_by(full_name, avatar_url)')
+            .select('created_at, title, groups(name), profiles:created_by(full_name, avatar_url, nickname, use_nickname)')
             .order('created_at', { ascending: false })
             .limit(5),
         supabase
             .from('game_sessions')
-            .select('created_at, game_name, mood, groups(name), profiles:created_by(full_name, avatar_url)')
+            .select('created_at, game_name, mood, groups(name), profiles:created_by(full_name, avatar_url, nickname, use_nickname)')
             .order('created_at', { ascending: false })
             .limit(5),
         getReviewableEvents(),
@@ -104,7 +105,7 @@ export default async function DashboardPage() {
             title: `ist der Gruppe "${j.groups?.name}" beigetreten`,
             description: 'Willkommen in der Crew!',
             timestamp: j.joined_at,
-            user: { name: j.profiles?.full_name, avatar_url: j.profiles?.avatar_url }
+            user: { name: getDisplayName(j.profiles), avatar_url: j.profiles?.avatar_url }
         })) || []),
         ...(recentGames?.map((g: any) => ({
             id: `game-${g.created_at}-${g.name}`,
@@ -112,7 +113,7 @@ export default async function DashboardPage() {
             title: `hat "${g.name}" zur Sammlung hinzugefügt`,
             description: 'Ein neues Spiel zum Ausprobieren!',
             timestamp: g.created_at,
-            user: { name: g.profiles?.full_name, avatar_url: g.profiles?.avatar_url }
+            user: { name: getDisplayName(g.profiles), avatar_url: g.profiles?.avatar_url }
         })) || []),
         ...(recentEvents?.map((e: any) => ({
             id: `event-${e.created_at}-${e.title}`,
@@ -120,7 +121,7 @@ export default async function DashboardPage() {
             title: `hat ein neues Event geplant: "${e.title}"`,
             description: `In der Gruppe ${e.groups?.name}`,
             timestamp: e.created_at,
-            user: { name: e.profiles?.full_name, avatar_url: e.profiles?.avatar_url }
+            user: { name: getDisplayName(e.profiles), avatar_url: e.profiles?.avatar_url }
         })) || []),
         ...(recentSessions?.map((s: any) => ({
             id: `session-${s.created_at}-${s.game_name}`,
@@ -129,7 +130,7 @@ export default async function DashboardPage() {
             description: s.mood ? `Stimmung: ${s.mood} • ${s.groups?.name}` : `In der Gruppe ${s.groups?.name}`,
             timestamp: s.created_at,
             mood: s.mood,
-            user: { name: s.profiles?.full_name, avatar_url: s.profiles?.avatar_url }
+            user: { name: getDisplayName(s.profiles), avatar_url: s.profiles?.avatar_url }
         })) || [])
     ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 10)

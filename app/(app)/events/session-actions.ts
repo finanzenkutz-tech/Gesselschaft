@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { addXP } from '@/app/(app)/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
+import { getDisplayName } from '@/lib/utils'
 
 export async function createGameSession(formData: FormData) {
     const supabase = await createClient()
@@ -72,7 +73,7 @@ export async function getEventSessions(eventId: string) {
 
     const { data, error } = await supabase
         .from('game_sessions')
-        .select('*, game_session_players(*, profiles(full_name, avatar_url))')
+        .select('*, game_session_players(*, profiles(full_name, avatar_url, nickname, use_nickname))')
         .eq('event_id', eventId)
         .order('played_at', { ascending: false })
 
@@ -89,7 +90,7 @@ export async function getLeaderboard() {
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, avatar_url, points, badges')
+        .select('id, full_name, email, avatar_url, points, badges, nickname, use_nickname')
         .order('points', { ascending: false })
         .limit(20)
 
@@ -98,10 +99,10 @@ export async function getLeaderboard() {
         return []
     }
 
-    // Map data to ensure display name fallback
+    // Map data to ensure display name fallback and respect nickname toggle
     return data.map(entry => ({
         ...entry,
-        full_name: entry.full_name || entry.email?.split('@')[0] || 'Spieler'
+        full_name: getDisplayName(entry)
     }))
 }
 
