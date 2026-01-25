@@ -33,6 +33,16 @@ export async function updateProfile(formData: FormData) {
     const updateData: any = { full_name: fullName }
 
     // Add new fields
+    const nickname = formData.get('nickname') as string
+
+    // Check if we are in the "Name Update" context by looking for full_name or nickname presence
+    // This prevents accidental reset when uploading avatar or updating other sections
+    if (formData.has('full_name') || formData.has('nickname')) {
+        updateData.use_nickname = formData.get('use_nickname') === 'on'
+    }
+
+    if (nickname !== null) updateData.nickname = nickname
+
     const bio = formData.get('bio') as string
     const location = formData.get('location') as string
     const favoriteGames = formData.get('favorite_games') as string

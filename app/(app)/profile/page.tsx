@@ -3,6 +3,7 @@ import { User, Mail, Lock, Camera, Trophy, Star, Award, AlertTriangle, Bell, His
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { updateProfile, updateEmail, updatePassword } from './actions'
 import { getBuddies, getPendingBuddyRequests } from './buddy-actions'
 import { getUserBadges } from '@/app/(app)/gamification/actions'
@@ -90,7 +91,10 @@ export default async function ProfilePage() {
                     {/* Stats */}
                     <div className="flex-1 text-center md:text-left space-y-4">
                         <div>
-                            <h2 className="text-3xl font-black text-slate-800 tracking-tight">{profile?.full_name || 'Unbenannter Spieler'}</h2>
+                            <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+                                {profile?.full_name || 'Unbenannter Spieler'}
+                                {profile?.nickname && <span className="text-slate-400 text-xl font-bold ml-2">({profile.nickname})</span>}
+                            </h2>
                             <p className="text-slate-400 font-medium">{user?.email}</p>
                         </div>
 
@@ -187,12 +191,33 @@ export default async function ProfilePage() {
                     Name ändern
                 </h3>
                 <form action={async (formData: FormData) => { 'use server'; await updateProfile(formData) }} className="space-y-4">
-                    <Input
-                        name="full_name"
-                        defaultValue={profile?.full_name || ''}
-                        placeholder="Dein Name"
-                        className="rounded-xl bg-slate-50 border-slate-100 h-12"
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Vollständiger Name</label>
+                            <Input
+                                name="full_name"
+                                defaultValue={profile?.full_name || ''}
+                                placeholder="Dein Name"
+                                className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Spitzname</label>
+                            <Input
+                                name="nickname"
+                                defaultValue={profile?.nickname || ''}
+                                placeholder="Dein Nickname"
+                                className="rounded-xl bg-slate-50 border-slate-100 h-12"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <Switch id="use_nickname" name="use_nickname" defaultChecked={profile?.use_nickname} />
+                        <label htmlFor="use_nickname" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer text-slate-700">
+                            Spitznamen öffentlich anzeigen statt dem echten Namen
+                        </label>
+                    </div>
                     <Button type="submit" className="bg-primary hover:bg-blue-600 text-white rounded-xl h-12 px-6 font-bold">
                         Speichern
                     </Button>
