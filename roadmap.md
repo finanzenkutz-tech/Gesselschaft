@@ -58,3 +58,14 @@ Das Ziel ist eine App, die Spaß macht und intuitiv bedienbar ist. Die Terminpla
 *   **[ ] "Game of the Group":** Ein Highlight-Bereich, der das am häufigsten gespielte Spiel des Monats in der Gruppe präsentiert.
 *   **[ ] Pile of Shame Tracker:** Visueller Fortschrittsbalken: "Du hast 20% deiner Sammlung noch nicht gespielt – Zeit für einen neuen Termin!"
 *   **[ ] Regel-Quickfinder:** Integration von Links zu Video-Tutorials oder PDF-Regeln bei jedem Spiel in der Sammlung.
+
+## 🎨 Phase 5: Emotionale Features & Sammlungs-Insights
+*   **[ ] Erweiterte Sieges-Analyse (Smart Stats):**
+    *   Automatische Bewertung des Sieges (z.B. "Knappe Kiste" bei <5% Abstand, "Klarer Sieg" bei >20%, "Dominiert" bei >50%).
+    *   Dynamisches textliches Feedback im Log-Screen ("Das war eng!").
+*   **[ ] Visuelle Belohnungen (Celebration Mode):**
+    *   **Konfetti-Effekt:** Animation beim Eintragen eines Sieges.
+    *   Hervorhebung des Gewinners mit visuellen Effekten.
+*   **[ ] Smart Collection Insights:**
+    *   Direktes Feedback beim Hinzufügen von Spielen zur Sammlung.
+    *   Erkennung von Besonderheiten: "Wow, ein Top-10-Spiel!" (Popularität), "Ein Kickstarter-Exklusivtitel!", "Deine Sammlung ist jetzt über 100€ wert!".
