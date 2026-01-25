@@ -377,14 +377,20 @@ export async function getMemberComparison(groupId: string, targetUserId: string)
     // 2. Head-to-Head Stats
     let myWins = 0
     let targetWins = 0
-    const commonSessions = sharedPlayers?.map(sp => {
-        const session = Array.isArray(sp.game_sessions) ? sp.game_sessions[0] : sp.game_sessions
-        const isMyWin = session.winner_id === user.id
-        const isTargetWin = session.winner_id === targetUserId
-        if (isMyWin) myWins++
-        if (isTargetWin) targetWins++
-        return session
-    }) || []
+    const commonSessions = (sharedPlayers || [])
+        .map(sp => {
+            const sessionsArr = sp.game_sessions
+            const session = Array.isArray(sessionsArr) ? sessionsArr[0] : sessionsArr
+            return session
+        })
+        .filter(Boolean)
+        .map(session => {
+            const isMyWin = session.winner_id === user.id
+            const isTargetWin = session.winner_id === targetUserId
+            if (isMyWin) myWins++
+            if (isTargetWin) targetWins++
+            return session
+        })
 
     // 3. Shared Games in Inventory
     const { data: myInventory } = await supabase.from('inventory').select('name').eq('owner_id', user.id)
@@ -453,7 +459,7 @@ export async function getGameSessionDetails(sessionId: string) {
                 brings,
                 profiles(id, full_name, avatar_url)
             ),
-            profiles:created_by(full_name)
+            creator:created_by(full_name)
         `)
         .eq('id', sessionId)
         .single()

@@ -166,7 +166,7 @@ export default async function DashboardPage() {
                     </p>
                 </header>
                 <div className="shrink-0">
-                    <QuickActions />
+                    <QuickActions groups={myGroups || []} />
                 </div>
             </div>
 

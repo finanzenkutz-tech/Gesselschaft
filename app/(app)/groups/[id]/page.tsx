@@ -26,9 +26,12 @@ import { GroupReviewsWidget } from '@/components/groups/group-reviews-widget'
 import { PreparationButton } from '@/components/groups/preparation-button'
 import { GameSessionDetailDialog } from '@/components/groups/game-session-detail-dialog'
 import { GroupRecommendations } from '@/components/groups/group-recommendations'
+import { GroupChatWidget } from '@/components/groups/group-chat-widget'
 
-export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
+
+export default async function GroupPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ log?: string }> }) {
     const { id } = await params
+    const { log } = await searchParams
 
     try {
         console.log('[GroupPage] Starting render for ID:', id)
@@ -176,14 +179,26 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                         {/* Actions Bar - Redesigned */}
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/60 backdrop-blur-md p-4 rounded-[2rem] border border-white/50 shadow-sm sticky top-4 z-40 transition-all">
                             <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto no-scrollbar">
-                                {user && (
+                                {user && isMember && (
                                     <>
+                                        <CreateEventDialog
+                                            groups={[group]}
+                                            defaultGroupId={id}
+                                            places={places || []}
+                                            trigger={
+                                                <Button className="h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black shadow-lg shadow-blue-200 hover:shadow-xl hover:scale-[1.02] transition-all px-8 text-base">
+                                                    <Calendar className="w-6 h-6 mr-3" />
+                                                    Event planen
+                                                </Button>
+                                            }
+                                        />
                                         <LogGameDialog
                                             groupId={id}
                                             games={groupGames}
                                             members={groupMembers}
                                             places={places || []}
                                             currentUserId={user?.id}
+                                            defaultOpen={log === 'true'}
                                             trigger={
                                                 <Button variant="outline" className="h-14 rounded-2xl border-2 border-slate-200 text-slate-600 font-bold hover:border-primary/50 hover:text-primary hover:bg-white shadow-sm transition-all px-6 text-base">
                                                     <Dice5 className="w-6 h-6 mr-2" />
@@ -191,19 +206,6 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                                                 </Button>
                                             }
                                         />
-                                        {isMember && (
-                                            <CreateEventDialog
-                                                groups={[group]}
-                                                defaultGroupId={id}
-                                                places={places || []}
-                                                trigger={
-                                                    <Button className="h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black shadow-lg shadow-blue-200 hover:shadow-xl hover:scale-[1.02] transition-all px-8 text-base">
-                                                        <Calendar className="w-6 h-6 mr-3" />
-                                                        Event planen
-                                                    </Button>
-                                                }
-                                            />
-                                        )}
                                     </>
                                 )}
                             </div>
@@ -426,7 +428,14 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
                             </div>
                         )}
 
+                        {isMember && (
+                            <div className="animate-in slide-in-from-right-2 fade-in duration-700 delay-100">
+                                <GroupChatWidget groupId={id} user={user} />
+                            </div>
+                        )}
+
                         <GroupReviewsWidget reviews={reviews || []} currentUserId={user?.id} />
+
 
                         {/* Stats Card */}
                         <div className="sky-card p-6 bg-slate-900 text-white border-0 shadow-2xl">

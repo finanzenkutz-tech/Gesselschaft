@@ -32,10 +32,11 @@ interface LogGameDialogProps {
     trigger?: React.ReactNode
     defaultEventId?: string
     currentUserId?: string
+    defaultOpen?: boolean
 }
 
-export function LogGameDialog({ groupId, games, members, places, trigger, defaultEventId, currentUserId }: LogGameDialogProps) {
-    const [open, setOpen] = useState(false)
+export function LogGameDialog({ groupId, games, members, places, trigger, defaultEventId, currentUserId, defaultOpen }: LogGameDialogProps) {
+    const [open, setOpen] = useState(defaultOpen || false)
     const [loading, setLoading] = useState(false)
     const [bggLoading, setBggLoading] = useState(false)
     const router = useRouter()
@@ -87,7 +88,7 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
     }
 
     // Filtered lists
-    const filteredGames = gameName ? games.filter(g =>
+    const filteredGames = gameName && Array.isArray(games) ? games.filter(g =>
         g.name.toLowerCase().includes(gameName.toLowerCase())
     ) : []
 

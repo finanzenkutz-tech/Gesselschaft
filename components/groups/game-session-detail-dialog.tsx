@@ -22,7 +22,14 @@ export function GameSessionDetailDialog({ sessionId, trigger }: GameSessionDetai
             setLoading(true)
             getGameSessionDetails(sessionId)
                 .then(data => {
-                    setSession(data)
+                    if (data) {
+                        setSession(data)
+                    } else {
+                        console.error('No data returned for sessionId:', sessionId)
+                    }
+                })
+                .catch(err => {
+                    console.error('Error in GameSessionDetailDialog:', err)
                 })
                 .finally(() => setLoading(false))
         }
@@ -93,14 +100,15 @@ export function GameSessionDetailDialog({ sessionId, trigger }: GameSessionDetai
                                     <Users className="w-4 h-4" /> Spielergebnisse
                                 </h3>
                                 <div className="bg-slate-50 rounded-3xl border border-slate-100 divide-y divide-slate-100/50 overflow-hidden">
-                                    {session.game_session_players
+                                    {(session.game_session_players || [])
                                         .sort((a: any, b: any) => {
                                             if (a.placement && b.placement) return a.placement - b.placement
                                             if (a.score && b.score) return b.score - a.score
                                             return 0
                                         })
                                         .map((player: any) => {
-                                            const isWinner = session.winner_id === player.profiles.id
+                                            const isWinner = session.winner_id === player?.profiles?.id
+                                            if (!player || !player.profiles) return null;
                                             return (
                                                 <div key={player.profiles.id} className={cn(
                                                     "flex items-center justify-between p-4",
@@ -167,7 +175,7 @@ export function GameSessionDetailDialog({ sessionId, trigger }: GameSessionDetai
                             {/* Meta Info */}
                             <div className="text-center">
                                 <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
-                                    Geloggt von {session.profiles?.full_name} am {new Date(session.created_at).toLocaleDateString()}
+                                    Geloggt von {session.creator?.full_name || 'Unbekannt'} am {new Date(session.created_at).toLocaleDateString()}
                                 </p>
                             </div>
                         </div>
