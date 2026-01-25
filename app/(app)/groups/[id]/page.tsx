@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Dice5, Calendar, Users, Settings, MapPin, History, Swords, X, Coins, Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getChallengesForGroup } from '@/app/groups/challenge-actions'
+import { getChallengesForGroup } from '@/app/(app)/groups/challenge-actions'
 import { GroupPlacesWidget } from '@/components/groups/group-places-widget'
 import { CreateEventDialog } from '@/components/events/create-event-dialog'
 import { GroupJoinButton, GroupLeaveButton } from '@/components/groups/group-actions-buttons'
@@ -9,7 +9,7 @@ import { EditGroupDialog } from '@/components/groups/edit-group-dialog'
 import { ChallengeList } from '@/components/groups/challenge-list'
 import { PollWidget } from '@/components/groups/poll-widget'
 import { CreatePollForm } from '@/components/groups/create-poll-form'
-import { getPollsForGroup } from '@/app/groups/poll-actions'
+import { getPollsForGroup } from '@/app/(app)/groups/poll-actions'
 import { GroupGamesCard } from '@/components/groups/group-games-card'
 import { NextEventCountdown } from '@/components/groups/next-event-countdown'
 import { RecentGamesList } from '@/components/groups/recent-games-list'
@@ -18,8 +18,8 @@ import { GroupLeaderboard } from '@/components/groups/group-leaderboard'
 import { MemberComparisonDialog } from '@/components/groups/member-comparison-dialog'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { getGroupWishlist } from '@/app/groups/wishlist-actions'
-import { getGroupGoals } from '@/app/groups/goal-actions'
+import { getGroupWishlist } from '@/app/(app)/groups/wishlist-actions'
+import { getGroupGoals } from '@/app/(app)/groups/goal-actions'
 import { GroupWishlist } from '@/components/groups/group-wishlist'
 import { GroupGoals } from '@/components/groups/group-goals'
 import { GroupReviewsWidget } from '@/components/groups/group-reviews-widget'
@@ -96,8 +96,8 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
 
         const polls = await getPollsForGroup(id)
 
-        const { getGroupGames, getGroupRecentGames, getGroupLeaderboard } = await import('@/app/groups/game-actions')
-        const { getSmartRecommendations } = await import('@/app/groups/recommendation-actions')
+        const { getGroupGames, getGroupRecentGames, getGroupLeaderboard } = await import('@/app/(app)/groups/game-actions')
+        const { getSmartRecommendations } = await import('@/app/(app)/groups/recommendation-actions')
 
         const groupGames = await getGroupGames(id)
         const collectionValue = groupGames.reduce((sum: number, game: any) => {
