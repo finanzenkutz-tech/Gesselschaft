@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { MessageSquare, Send, Trash2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { addEventComment, deleteEventComment } from '@/app/events/comment-actions'
+import { addEventComment, deleteEventComment } from '@/app/(app)/events/comment-actions'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -190,3 +190,4 @@ export function EventComments({ eventId, initialComments, currentUserId }: Event
         </div>
     )
 }
+

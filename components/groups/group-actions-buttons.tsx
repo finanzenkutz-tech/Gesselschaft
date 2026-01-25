@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { UserPlus, LogOut, Loader2, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { joinGroup, leaveGroup } from '@/app/groups/member-actions'
+import { joinGroup, leaveGroup } from '@/app/(app)/groups/member-actions'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
@@ -93,3 +93,4 @@ export function GroupLeaveButton({ groupId }: { groupId: string }) {
         </Button>
     )
 }
+

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Camera, Trophy, FileText, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { addSessionReport } from '@/app/events/session-actions'
+import { addSessionReport } from '@/app/(app)/events/session-actions'
 import { useRouter } from 'next/navigation'
 
 interface SessionReportFormProps {
@@ -82,3 +82,4 @@ export function SessionReportForm({ sessionId, attendees, eventId }: SessionRepo
         </form>
     )
 }
+

@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogTrigger
 } from '@/components/ui/dialog'
-import { syncBGGCollection } from '@/app/inventory/bgg-sync-actions'
+import { syncBGGCollection } from '@/app/(app)/inventory/bgg-sync-actions'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 
@@ -127,3 +127,4 @@ export function BGGSyncButton({ savedUsername }: BGGSyncButtonProps) {
         </Dialog>
     )
 }
+

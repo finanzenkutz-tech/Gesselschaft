@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Heart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { toggleFavorite } from '@/app/marketplace/actions'
+import { toggleFavorite } from '@/app/(app)/marketplace/actions'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner' // Assuming sonner is used, or alert/console
 
@@ -61,3 +61,4 @@ export function FavoriteButton({ listingId, initialIsFavorite, className, size =
         </Button>
     )
 }
+

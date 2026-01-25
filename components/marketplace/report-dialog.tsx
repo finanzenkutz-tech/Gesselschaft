@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AlertCircle, Loader2, Flag } from 'lucide-react'
-import { reportListing } from '@/app/marketplace/actions'
+import { reportListing } from '@/app/(app)/marketplace/actions'
 import { toast } from 'sonner' // Or native alert
 
 interface ReportDialogProps {
@@ -104,3 +104,4 @@ export function ReportDialog({ listingId }: ReportDialogProps) {
         </Dialog>
     )
 }
+

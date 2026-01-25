@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle, Check, X, ExternalLink, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { updateReportStatus } from '@/app/(app)/admin/actions'
-import { deleteListing } from '@/app/marketplace/actions'
+import { deleteListing } from '@/app/(app)/marketplace/actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -127,3 +127,4 @@ export default async function AdminReportsPage() {
         </div>
     )
 }
+

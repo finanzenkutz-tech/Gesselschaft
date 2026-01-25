@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { CheckCircle2, LogOut, Loader2 } from 'lucide-react'
-import { checkIn, checkOut } from '@/app/events/check-in-actions'
+import { checkIn, checkOut } from '@/app/(app)/events/check-in-actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -77,3 +77,4 @@ export function CheckInButton({ eventId, checkedInAt, checkedOutAt, isGoing }: C
         </Button>
     )
 }
+

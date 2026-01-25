@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { addXP } from '@/app/gamification/actions'
+import { addXP } from '@/app/(app)/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function createGameSession(formData: FormData) {
@@ -136,3 +136,4 @@ export async function addSessionReport(sessionId: string, report: {
     revalidatePath('/events')
     return { success: true }
 }
+

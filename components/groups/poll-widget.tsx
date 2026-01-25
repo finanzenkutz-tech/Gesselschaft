@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Calendar, Check, HelpCircle, X, Plus, Vote, ChevronDown, ChevronUp, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { votePoll, closePoll } from '@/app/groups/poll-actions'
+import { votePoll, closePoll } from '@/app/(app)/groups/poll-actions'
 import { cn } from '@/lib/utils'
 
 interface PollOption {
@@ -198,3 +198,4 @@ export function PollWidget({ polls, groupId, userId }: PollWidgetProps) {
         </div>
     )
 }
+

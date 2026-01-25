@@ -12,7 +12,7 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { addGroupPlace, deleteGroupPlace, updateGroupPlace } from '@/app/groups/place-actions'
+import { addGroupPlace, deleteGroupPlace, updateGroupPlace } from '@/app/(app)/groups/place-actions'
 import { useRouter } from 'next/navigation'
 import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
 import { PLACE_AMENITIES } from '@/lib/constants/amenities'
@@ -196,3 +196,4 @@ export function GroupPlacesWidget({
         </section>
     )
 }
+

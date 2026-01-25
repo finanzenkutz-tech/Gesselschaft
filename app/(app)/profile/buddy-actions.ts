@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { createNotification } from '@/app/notifications/actions'
+import { createNotification } from '@/app/(app)/notifications/actions'
 
 export async function sendBuddyRequest(buddyId: string) {
     const supabase = await createClient()
@@ -144,3 +144,4 @@ export async function searchProfiles(query: string) {
 
     return profilesWithStatus
 }
+

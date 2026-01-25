@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Info, Users, Clock, Star, ExternalLink, Loader2, Archive, CheckCircle2, Gauge } from 'lucide-react'
-import { getBGGGameDetails } from '@/app/inventory/bgg-actions'
-import { updateGame } from '@/app/inventory/actions'
+import { getBGGGameDetails } from '@/app/(app)/inventory/bgg-actions'
+import { updateGame } from '@/app/(app)/inventory/actions'
 
 export function GameDetailModal({
     game
@@ -201,3 +201,4 @@ export function GameDetailModal({
         </Dialog>
     )
 }
+

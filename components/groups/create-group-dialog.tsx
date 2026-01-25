@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus, Users, Dice5 } from 'lucide-react'
-import { createGroup } from '@/app/groups/actions'
+import { createGroup } from '@/app/(app)/groups/actions'
 import confetti from 'canvas-confetti'
 import { useRouter } from 'next/navigation'
 
@@ -149,3 +149,4 @@ export function CreateGroupDialog() {
         </Dialog>
     )
 }
+

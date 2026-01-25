@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Star, Loader2, MessageSquare } from 'lucide-react'
-import { ratePlace, getPlaceRatings } from '@/app/groups/place-rating-actions'
+import { ratePlace, getPlaceRatings } from '@/app/(app)/groups/place-rating-actions'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -102,3 +102,4 @@ export function PlaceRating({ placeId, currentUserId }: { placeId: string, curre
         </div>
     )
 }
+

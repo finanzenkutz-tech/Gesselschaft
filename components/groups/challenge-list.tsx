@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Swords, Check, X, Clock, Send, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { respondToChallenge, cancelChallenge } from '@/app/groups/challenge-actions'
+import { respondToChallenge, cancelChallenge } from '@/app/(app)/groups/challenge-actions'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -243,3 +243,4 @@ export function ChallengeList({ incoming, outgoing, isAdmin, groupName }: Challe
         </div>
     )
 }
+

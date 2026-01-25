@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Swords, Dice5, Check, X, Trophy, Clock, Target } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { createChallenge, getMyChallenges, respondToChallenge } from '@/app/challenge/actions'
+import { createChallenge, getMyChallenges, respondToChallenge } from '@/app/(app)/challenge/actions'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
@@ -201,7 +201,7 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
                                             <div className="flex gap-1">
                                                 <form action={async () => {
                                                     'use server'
-                                                    const { completeChallenge } = await import('@/app/challenge/actions')
+                                                    const { completeChallenge } = await import('@/app/(app)/challenge/actions')
                                                     await completeChallenge(challenge.id, challenge.challenger_id)
                                                     revalidatePath('/challenge')
                                                 }}>
@@ -211,7 +211,7 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
                                                 </form>
                                                 <form action={async () => {
                                                     'use server'
-                                                    const { completeChallenge } = await import('@/app/challenge/actions')
+                                                    const { completeChallenge } = await import('@/app/(app)/challenge/actions')
                                                     await completeChallenge(challenge.id, challenge.challenged_id)
                                                     revalidatePath('/challenge')
                                                 }}>
@@ -237,3 +237,4 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
         </div>
     )
 }
+

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { getMyDirectChats } from '@/app/chat/direct-actions'
+import { getMyDirectChats } from '../direct-actions'
 import { ConversationList } from '@/components/chat/conversation-list'
 import { ChatWindow } from '@/components/chat/chat-window'
 

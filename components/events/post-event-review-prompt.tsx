@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Star, MessageSquarePlus, CheckCircle2, Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { logGameSession } from '@/app/groups/game-actions'
+import { logGameSession } from '@/app/(app)/groups/game-actions'
 import { toast } from 'sonner'
 
 interface PostEventReviewPromptProps {
@@ -116,3 +116,4 @@ export function PostEventReviewPrompt({ eventId, groupId, gamesToReview }: PostE
         </div>
     )
 }
+

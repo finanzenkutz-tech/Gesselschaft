@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Check, HelpCircle, X, Users } from 'lucide-react'
-import { upsertRSVP } from '@/app/events/rsvp-actions'
+import { upsertRSVP } from '@/app/(app)/events/rsvp-actions'
 import { Input } from '@/components/ui/input'
 
 interface RSVPButtonsProps {
@@ -110,3 +110,4 @@ export function RSVPButtons({ eventId, currentStatus, currentGuestCount = 0, cur
         </div >
     )
 }
+

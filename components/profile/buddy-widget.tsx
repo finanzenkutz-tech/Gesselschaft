@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Users, UserPlus, Check, X, UserMinus, Clock, Search, Loader2, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { acceptBuddyRequest, rejectBuddyRequest, searchProfiles, sendBuddyRequest } from '@/app/profile/buddy-actions'
+import { acceptBuddyRequest, rejectBuddyRequest, searchProfiles, sendBuddyRequest } from '@/app/(app)/profile/buddy-actions'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 

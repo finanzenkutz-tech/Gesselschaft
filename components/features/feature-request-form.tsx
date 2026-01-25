@@ -12,7 +12,7 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { createFeatureRequest } from '@/app/features/actions'
+import { createFeatureRequest } from '@/app/(app)/features/actions'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 import { GamificationPopup } from '@/components/gamification/gamification-popup'
@@ -141,3 +141,4 @@ export function FeatureRequestForm() {
         </>
     )
 }
+

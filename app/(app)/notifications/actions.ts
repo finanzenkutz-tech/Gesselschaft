@@ -67,7 +67,7 @@ export async function createNotification(userId: string, type: string, title: st
     // 2. Try to send Push Notification if enabled (fire and forget)
     if (shouldSendPush) {
         try {
-            const { sendPushToUser } = await import('@/app/push/actions')
+            const { sendPushToUser } = await import('@/app/(app)/push/actions')
             await sendPushToUser(userId, {
                 title,
                 body: message || 'Neue Benachrichtigung',
@@ -80,3 +80,4 @@ export async function createNotification(userId: string, type: string, title: st
         }
     }
 }
+

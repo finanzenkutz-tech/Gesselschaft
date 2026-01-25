@@ -12,7 +12,7 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { addGroupPlace } from '@/app/groups/place-actions'
+import { addGroupPlace } from '@/app/(app)/groups/place-actions'
 import { useRouter } from 'next/navigation'
 import { LocationPicker } from '@/components/groups/location-picker'
 import { Switch } from '@/components/ui/switch'
@@ -190,3 +190,4 @@ export function AddPlaceDialog({ groupId, trigger, onSuccess }: { groupId: strin
         </Dialog>
     )
 }
+

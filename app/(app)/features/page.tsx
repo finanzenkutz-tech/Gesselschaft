@@ -1,5 +1,5 @@
 import { FeaturesList } from '@/components/features/features-list'
-import { getFeatureRequests } from '@/app/features/actions'
+import { getFeatureRequests } from '@/app/(app)/features/actions'
 import { FeatureRequestForm } from '@/components/features/feature-request-form'
 import { createClient } from '@/lib/supabase/server'
 import { Sparkles, TrendingUp } from 'lucide-react'
@@ -56,3 +56,4 @@ export default async function FeaturesPage() {
         </div>
     )
 }
+

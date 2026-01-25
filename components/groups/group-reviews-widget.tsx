@@ -5,7 +5,7 @@ import { Star, ThumbsUp, Zap, Clock3, MessageSquareQuote } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from '@/lib/utils'
-import { voteReviewHelpful } from '@/app/groups/game-actions'
+import { voteReviewHelpful } from '@/app/(app)/groups/game-actions'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -138,3 +138,4 @@ export function GroupReviewsWidget({ reviews, currentUserId }: GroupReviewsWidge
         </div>
     )
 }
+

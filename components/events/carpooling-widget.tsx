@@ -12,7 +12,7 @@ import {
     DialogDescription
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { offerCarpool, joinCarpool, leaveCarpool } from '@/app/carpooling/actions'
+import { offerCarpool, joinCarpool, leaveCarpool } from '@/app/(app)/carpooling/actions'
 import { useRouter } from 'next/navigation'
 
 export function CarpoolingWidget({ eventId, carpools, userId }: { eventId: string, carpools: any[], userId?: string }) {
@@ -157,3 +157,4 @@ export function CarpoolingWidget({ eventId, carpools, userId }: { eventId: strin
         </section>
     )
 }
+

@@ -12,7 +12,7 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { createGameSession, addPlayerToSession } from '@/app/events/session-actions'
+import { createGameSession, addPlayerToSession } from '@/app/(app)/events/session-actions'
 import { useRouter } from 'next/navigation'
 
 type GameSession = {
@@ -178,3 +178,4 @@ export function GameTrackingWidget({
         </section>
     )
 }
+

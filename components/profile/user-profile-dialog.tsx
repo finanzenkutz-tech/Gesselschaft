@@ -9,8 +9,8 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { getPublicProfile } from '@/app/profile/actions'
-import { getOrCreateDirectChat } from '@/app/chat/direct-actions'
+import { getPublicProfile } from '@/app/(app)/profile/actions'
+import { getOrCreateDirectChat } from '@/app/(app)/chat/direct-actions'
 import { useRouter } from 'next/navigation'
 import { MessageCircle, Trophy, MapPin, User as UserIcon, Dice5 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -173,3 +173,4 @@ export function UserProfileDialog({ userId, currentUserId, trigger, open: contro
         </Dialog>
     )
 }
+

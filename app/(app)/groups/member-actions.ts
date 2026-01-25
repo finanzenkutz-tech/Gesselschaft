@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendEmail } from '@/lib/email'
-import { createNotification } from '@/app/notifications/actions'
+import { createNotification } from '@/app/(app)/notifications/actions'
 
 export async function joinGroup(groupId: string) {
     try {
@@ -132,3 +132,4 @@ export async function leaveGroup(groupId: string) {
     revalidatePath('/')
     return { success: true }
 }
+

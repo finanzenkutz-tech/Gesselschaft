@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
-import { markAsRead, markAllAsRead, getNotifications } from '@/app/notifications/actions'
+import { markAsRead, markAllAsRead, getNotifications } from '@/app/(app)/notifications/actions'
 import Link from 'next/link'
 
 export function NotificationBell({ userId }: { userId?: string }) {
@@ -141,3 +141,4 @@ export function NotificationBell({ userId }: { userId?: string }) {
         </Popover>
     )
 }
+

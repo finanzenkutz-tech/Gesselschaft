@@ -35,7 +35,7 @@ export async function createFeatureRequest(formData: FormData) {
     revalidatePath('/features')
 
     // GAMIFICATION: Award XP and Badges
-    const { addXP, awardBadge } = await import('@/app/gamification/actions')
+    const { addXP, awardBadge } = await import('@/app/(app)/gamification/actions')
 
     // Award XP
     await addXP(user.id, 50, 'Idee eingereicht')
@@ -170,3 +170,4 @@ export async function getFeatureRequests() {
 
     return data
 }
+

@@ -13,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { updateGroup } from '@/app/groups/actions'
+import { updateGroup } from '@/app/(app)/groups/actions'
 import { useRouter } from 'next/navigation'
 import { LocationPicker } from '@/components/groups/location-picker'
 
@@ -228,3 +228,4 @@ export function EditGroupDialog({ group, trigger }: { group: Group, trigger?: Re
         </Dialog>
     )
 }
+

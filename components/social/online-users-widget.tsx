@@ -6,7 +6,7 @@ import { Circle, Users, Swords, UserPlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { sendBuddyRequest } from '@/app/profile/buddy-actions'
+import { sendBuddyRequest } from '@/app/(app)/profile/buddy-actions'
 
 import { formatDistanceToNow } from 'date-fns'
 import { de } from 'date-fns/locale'

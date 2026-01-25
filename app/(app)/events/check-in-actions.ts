@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { addXP } from '@/app/gamification/actions'
+import { addXP } from '@/app/(app)/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function checkIn(eventId: string) {
@@ -96,3 +96,4 @@ export async function getCheckedInUsers(eventId: string) {
         checked_in_at: item.checked_in_at
     }))
 }
+

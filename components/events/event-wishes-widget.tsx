@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Heart, Trash2, PartyPopper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { addWish, removeWish } from '@/app/events/feature-actions'
+import { addWish, removeWish } from '@/app/(app)/events/feature-actions'
 
 interface EventWishesWidgetProps {
     eventId: string
@@ -137,3 +137,4 @@ export function EventWishesWidget({ eventId, wishes, availableGames, userId }: E
         </div>
     )
 }
+

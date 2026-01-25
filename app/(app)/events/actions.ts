@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { addXP } from '@/app/gamification/actions'
+import { addXP } from '@/app/(app)/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function createEvent(formData: FormData) {
@@ -85,7 +85,7 @@ export async function createEvent(formData: FormData) {
         .eq('group_id', groupId)
 
     if (members) {
-        const { createNotification } = await import('@/app/notifications/actions')
+        const { createNotification } = await import('@/app/(app)/notifications/actions')
         const { data: group } = await supabase.from('groups').select('name').eq('id', groupId).single()
 
         for (const member of members) {
@@ -209,3 +209,4 @@ export async function getReviewableEvents() {
         groupName: groups?.find(g => g.id === e.group_id)?.name
     }))
 }
+

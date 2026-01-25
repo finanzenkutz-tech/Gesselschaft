@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { MapPin, Save, Loader2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { updateGroupLocation } from '@/app/groups/challenge-actions'
+import { updateGroupLocation } from '@/app/(app)/groups/challenge-actions'
 import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -331,3 +331,4 @@ export function LocationPicker({
         </div>
     )
 }
+

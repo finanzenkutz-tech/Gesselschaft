@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Trophy, Swords, Dice5, Box, Star, Users } from 'lucide-react'
-import { getMemberComparison } from '@/app/groups/game-actions'
+import { getMemberComparison } from '@/app/(app)/groups/game-actions'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
@@ -188,3 +188,4 @@ export function MemberComparisonDialog({ groupId, member, trigger }: MemberCompa
         </Dialog>
     )
 }
+

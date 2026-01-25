@@ -4,7 +4,7 @@ import { Clock, ShieldCheck, TrendingUp, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { PunctualityStat } from '@/app/events/stats-actions'
+import { PunctualityStat } from '@/app/(app)/events/stats-actions'
 
 export function PunctualityLeaderboard({ stats }: { stats: PunctualityStat[] }) {
     if (!stats || stats.length === 0) {
@@ -118,3 +118,4 @@ export function PunctualityLeaderboard({ stats }: { stats: PunctualityStat[] }) 
         </section>
     )
 }
+

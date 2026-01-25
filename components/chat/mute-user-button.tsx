@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { UserX, Volume2, Loader2, VolumeX } from 'lucide-react'
-import { muteUser, unmuteUser } from '@/app/settings/user-settings-actions'
+import { muteUser, unmuteUser } from '@/app/(app)/settings/user-settings-actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -53,3 +53,4 @@ export function MuteUserButton({ targetUserId, targetUserName, initialIsMuted, c
         </button>
     )
 }
+

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { sendMessage, getMessages, DirectMessage, getChatPartner } from '@/app/chat/actions'
+import { sendMessage, getMessages, DirectMessage, getChatPartner } from '@/app/(app)/chat/actions'
 import { Send, ArrowLeft, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -172,3 +172,4 @@ export function ChatWindow({ partnerId, currentUserId }: { partnerId: string, cu
         </div>
     )
 }
+

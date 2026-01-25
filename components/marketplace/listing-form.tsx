@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Loader2, Image as ImageIcon, X, Store, Gift, Repeat, Euro, Save, Calendar } from 'lucide-react'
-import { createListing, updateListing } from '@/app/marketplace/actions'
+import { createListing, updateListing } from '@/app/(app)/marketplace/actions'
 import confetti from 'canvas-confetti'
 
 interface InventoryItem {
@@ -355,3 +355,4 @@ export function ListingForm({ inventory, initialData }: ListingFormProps) {
         </form>
     )
 }
+

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Bell, BellOff, UserX, Loader2, Trash2, ShieldCheck } from 'lucide-react'
-import { updateNotificationSettings, unmuteUser } from '@/app/settings/user-settings-actions'
-import { savePushSubscription, removePushSubscription } from '@/app/notifications/push-actions'
+import { updateNotificationSettings, unmuteUser } from '@/app/(app)/settings/user-settings-actions'
+import { savePushSubscription, removePushSubscription } from '@/app/(app)/notifications/push-actions'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -166,3 +166,4 @@ function urlBase64ToUint8Array(base64String: string) {
     }
     return outputArray;
 }
+

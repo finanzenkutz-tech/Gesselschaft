@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Upload, FileType, Check, Loader2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { addGameToInventory } from '@/app/inventory/actions'
+import { addGameToInventory } from '@/app/(app)/inventory/actions'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 
@@ -168,3 +168,4 @@ export function CSVImportClient({ groups }: { groups: any[] }) {
         </div>
     )
 }
+

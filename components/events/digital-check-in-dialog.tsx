@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { CheckCircle2, Loader2, MapPin } from 'lucide-react'
-import { checkIn, getCheckedInUsers } from '@/app/events/check-in-actions'
+import { checkIn, getCheckedInUsers } from '@/app/(app)/events/check-in-actions'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 
@@ -151,3 +151,4 @@ export function DigitalCheckInDialog({ eventId, eventTitle, location }: DigitalC
         </Dialog>
     )
 }
+

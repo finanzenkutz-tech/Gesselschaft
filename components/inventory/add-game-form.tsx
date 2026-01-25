@@ -15,16 +15,16 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { addGameToInventory } from '@/app/inventory/actions'
-import { searchBGG, getBGGGameDetails, BGGSearchResult } from '@/app/inventory/bgg-actions'
-import { searchKnownGames } from '@/app/inventory/actions'
+import { addGameToInventory } from '@/app/(app)/inventory/actions'
+import { searchBGG, getBGGGameDetails, BGGSearchResult } from '@/app/(app)/inventory/bgg-actions'
+import { searchKnownGames } from '@/app/(app)/inventory/actions'
 import { Badge } from '@/components/ui/badge'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 import { useDebounce } from '@/lib/hooks/use-debounce'
 import { useEffect } from 'react'
-import { searchSpielerliste } from '@/app/inventory/actions'
+import { searchSpielerliste } from '@/app/(app)/inventory/actions'
 import type { GameEntry } from '@/lib/spieleliste'
 
 type Group = { id: string; name: string }
@@ -505,3 +505,4 @@ export function AddGameForm({ groups }: { groups: Group[] }) {
         </Dialog >
     )
 }
+

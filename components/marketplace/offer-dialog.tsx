@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Euro, Send, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
-import { createOffer } from '@/app/marketplace/actions'
+import { createOffer } from '@/app/(app)/marketplace/actions'
 
 interface OfferDialogProps {
     listingId: string
@@ -119,3 +119,4 @@ export function OfferDialog({ listingId, listingTitle, currentPrice, isForRent }
         </Dialog>
     )
 }
+

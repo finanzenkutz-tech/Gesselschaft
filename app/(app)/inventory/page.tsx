@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { cn } from '@/lib/utils'
 import { Dice5, Trash2, ExternalLink, Box, Trophy, Lock, Globe, Users, Star, Clock, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { removeGameFromInventory } from '@/app/inventory/actions'
+import { removeGameFromInventory } from '@/app/(app)/inventory/actions'
 import { AddGameForm } from '@/components/inventory/add-game-form'
 import { GameDetailModal } from '@/components/inventory/game-detail-modal'
 import { BGGSyncButton } from '@/components/inventory/bgg-sync-button'
@@ -255,3 +255,4 @@ export default async function InventoryPage() {
         </div>
     )
 }
+

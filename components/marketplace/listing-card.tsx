@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { MapPin, Repeat, ShoppingBag, Store, MoreVertical, Edit, Trash2, CheckCircle2, Clock } from 'lucide-react'
 import { toast } from 'sonner'
-import { markAsReserved, markAsSold, deleteListing } from '@/app/marketplace/actions'
+import { markAsReserved, markAsSold, deleteListing } from '@/app/(app)/marketplace/actions'
 
 interface Listing {
     id: string
@@ -196,3 +196,4 @@ function getConditionLabel(condition: string) {
     }
     return labels[condition] || condition
 }
+

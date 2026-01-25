@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Trophy, Dice5, Check, Search, MapPin, Trash2, Save } from 'lucide-react'
-import { updateGameSession, deleteGameSession } from '@/app/groups/game-actions'
+import { updateGameSession, deleteGameSession } from '@/app/(app)/groups/game-actions'
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from '@/lib/utils'
@@ -402,3 +402,4 @@ export function EditGameSessionDialog({ open, onOpenChange, session, groupId, ga
         </Dialog>
     )
 }
+

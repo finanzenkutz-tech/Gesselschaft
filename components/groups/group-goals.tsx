@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Trophy, Plus, Trash2, Target, Calendar, CheckCircle2, Circle } from 'lucide-react'
-import { createGroupGoal, updateGoalProgress, deleteGoal } from '@/app/groups/goal-actions'
+import { createGroupGoal, updateGoalProgress, deleteGoal } from '@/app/(app)/groups/goal-actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import {
@@ -194,3 +194,4 @@ export function GroupGoals({ groupId, goals, isAdmin }: GroupGoalsProps) {
         </div>
     )
 }
+

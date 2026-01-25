@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { createEvent } from '@/app/events/actions'
+import { createEvent } from '@/app/(app)/events/actions'
 import confetti from 'canvas-confetti'
 
 type Place = { id: string; name: string; address?: string }
@@ -271,3 +271,4 @@ export function CreateEventDialog({
         </Dialog>
     )
 }
+

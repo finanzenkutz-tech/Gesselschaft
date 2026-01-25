@@ -3,7 +3,7 @@ import { SPIELELISTE } from '@/lib/spieleliste'
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { addXP } from '@/app/gamification/actions'
+import { addXP } from '@/app/(app)/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function addGameToInventory(formData: FormData) {
@@ -193,7 +193,7 @@ export async function transferGame(gameId: string, targetUserId: string) {
     }
 
     // Create a notification for the recipient
-    const { createNotification } = await import('@/app/notifications/actions')
+    const { createNotification } = await import('@/app/(app)/notifications/actions')
     const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
     const { data: game } = await supabase.from('inventory').select('name').eq('id', gameId).single()
 
@@ -245,3 +245,4 @@ export async function searchSpielerliste(query: string) {
         original: g
     }))
 }
+

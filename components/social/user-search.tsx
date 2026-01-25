@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Search, UserPlus, Loader2, Check, User as UserIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { searchProfiles, sendBuddyRequest } from '@/app/profile/buddy-actions'
+import { searchProfiles, sendBuddyRequest } from '@/app/(app)/profile/buddy-actions'
 import { useDebounce } from '@/lib/hooks/use-debounce'
 import { cn } from '@/lib/utils'
 

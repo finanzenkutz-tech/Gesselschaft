@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createNotification } from '@/app/notifications/actions'
+import { createNotification } from '@/app/(app)/notifications/actions'
 
 export async function createListing(formData: FormData) {
     const supabase = await createClient()
@@ -255,7 +255,7 @@ export async function startMarketplaceChat(listingId: string, sellerId: string, 
         return { success: false, error: 'Du kannst dir selbst keine Nachricht schreiben' }
     }
 
-    const { sendMessage } = await import('@/app/chat/actions')
+    const { sendMessage } = await import('@/app/(app)/chat/actions')
 
     const { data: listing } = await supabase.from('marketplace_listings').select('title').eq('id', listingId).single()
     const listingTitle = listing?.title || 'Anzeige'
@@ -465,3 +465,4 @@ export async function saveSearch(query: string, filters: any, label: string) {
 
     return { success: true }
 }
+

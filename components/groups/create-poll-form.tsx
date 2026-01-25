@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogTrigger
 } from '@/components/ui/dialog'
-import { createPoll } from '@/app/groups/poll-actions'
+import { createPoll } from '@/app/(app)/groups/poll-actions'
 import { useRouter } from 'next/navigation'
 
 interface CreatePollFormProps {
@@ -143,3 +143,4 @@ export function CreatePollForm({ groupId }: CreatePollFormProps) {
         </Dialog>
     )
 }
+

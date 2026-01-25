@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { addXP } from '@/app/gamification/actions'
+import { addXP } from '@/app/(app)/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
 
 export async function createChallenge(formData: FormData) {
@@ -34,7 +34,7 @@ export async function createChallenge(formData: FormData) {
     }
 
     // Notify the challenged user
-    const { createNotification } = await import('@/app/notifications/actions')
+    const { createNotification } = await import('@/app/(app)/notifications/actions')
     await createNotification(
         challengedId,
         'challenge',
@@ -106,3 +106,4 @@ export async function getMyChallenges() {
 
     return data || []
 }
+

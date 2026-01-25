@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { getGameSessionDetails } from '@/app/groups/game-actions'
+import { getGameSessionDetails } from '@/app/(app)/groups/game-actions'
 import { Calendar, MapPin, Trophy, Clock3, Users, Star, Loader2, Quote } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from '@/lib/utils'
@@ -181,3 +181,4 @@ export function GameSessionDetailDialog({ sessionId, trigger }: GameSessionDetai
         </Dialog>
     )
 }
+

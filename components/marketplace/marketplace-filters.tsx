@@ -8,7 +8,7 @@ import { Slider } from '@/components/ui/slider'
 import { Search, Filter, MapPin, X, Bell } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { useDebounce } from '@/lib/hooks/use-debounce'
-import { saveSearch } from '@/app/marketplace/actions'
+import { saveSearch } from '@/app/(app)/marketplace/actions'
 import { toast } from 'sonner'
 
 export function MarketplaceFilters() {
@@ -158,3 +158,4 @@ export function MarketplaceFilters() {
         </div>
     )
 }
+

@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Trophy, Users, Calendar, Dice5, Check, Search, MapPin, Star, Zap, Clock3, Loader2, Camera, Image as ImageIcon, Flame } from 'lucide-react'
-import { logGameSession, uploadSessionImage } from '@/app/groups/game-actions'
+import { logGameSession, uploadSessionImage } from '@/app/(app)/groups/game-actions'
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from '@/lib/utils'
@@ -21,7 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
 import { AddPlaceDialog } from '@/components/groups/add-place-dialog'
-import { searchBGGGames, getBGGGameDetails } from '@/app/groups/bgg-actions'
+import { searchBGGGames, getBGGGameDetails } from '@/app/(app)/groups/bgg-actions'
 import confetti from 'canvas-confetti'
 
 interface LogGameDialogProps {
@@ -795,3 +795,4 @@ export function LogGameDialog({ groupId, games, members, places, trigger, defaul
         </Dialog >
     )
 }
+

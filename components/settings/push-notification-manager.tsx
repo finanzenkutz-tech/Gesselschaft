@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Bell, BellOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { subscribeToPush, unsubscribeFromPush, getVapidPublicKey } from '@/app/push/actions'
+import { subscribeToPush, unsubscribeFromPush, getVapidPublicKey } from '@/app/(app)/push/actions'
 
 export function PushNotificationManager() {
     const [isSupported, setIsSupported] = useState(false)
@@ -184,3 +184,4 @@ function urlBase64ToUint8Array(base64String: string) {
     }
     return outputArray
 }
+

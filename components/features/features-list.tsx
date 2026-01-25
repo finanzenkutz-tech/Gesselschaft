@@ -2,7 +2,7 @@
 
 import { useState, useOptimistic, useTransition, useEffect } from 'react'
 import { Lightbulb, ThumbsUp, CheckCircle, TrendingUp, Sparkles, Filter, ArrowUpDown, Trash2 } from 'lucide-react'
-import { voteForFeature, markFeatureAsCompleted, deleteFeatureRequest } from '@/app/features/actions'
+import { voteForFeature, markFeatureAsCompleted, deleteFeatureRequest } from '@/app/(app)/features/actions'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -275,3 +275,4 @@ export function FeaturesList({ initialFeatures, currentUserId, isSuperAdmin }: F
         </div>
     )
 }
+

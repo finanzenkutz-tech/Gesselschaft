@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getUserEvents } from '@/app/events/actions'
+import { getUserEvents } from '@/app/(app)/events/actions'
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, format, addMonths, subMonths, isSameMonth, isSameDay, isToday } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Button } from '@/components/ui/button'
@@ -190,3 +190,4 @@ export default function CalendarPage() {
         </div>
     )
 }
+

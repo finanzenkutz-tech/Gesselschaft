@@ -8,14 +8,14 @@ import { EventCalendar } from '@/components/events/event-calendar'
 import { cookies } from 'next/headers'
 import { OnlineUsersWidget } from '@/components/social/online-users-widget'
 import { LeaderboardCard } from '@/components/social/leaderboard-card'
-import { getLeaderboard } from '@/app/events/session-actions'
-import { getReviewableEvents } from '@/app/events/actions'
+import { getLeaderboard } from '@/app/(app)/events/session-actions'
+import { getReviewableEvents } from '@/app/(app)/events/actions'
 import { ActivityFeed, ActivityItem } from '@/components/dashboard/activity-feed'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { ReviewPrompt } from '@/components/dashboard/review-prompt'
 
 import { DigitalCheckInDialog } from '@/components/events/digital-check-in-dialog'
-import { getPunctualityStats } from '@/app/events/stats-actions'
+import { getPunctualityStats } from '@/app/(app)/events/stats-actions'
 import { PunctualityLeaderboard } from '@/components/social/punctuality-leaderboard'
 
 export default async function DashboardPage() {
@@ -385,3 +385,4 @@ export default async function DashboardPage() {
         </div>
     )
 }
+

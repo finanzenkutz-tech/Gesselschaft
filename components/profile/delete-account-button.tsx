@@ -13,7 +13,7 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { deleteAccount } from '@/app/profile/actions'
+import { deleteAccount } from '@/app/(app)/profile/actions'
 
 export function DeleteAccountButton() {
     const [open, setOpen] = useState(false)

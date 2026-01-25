@@ -45,7 +45,7 @@ export async function sendMessage(eventId: string, content: string) {
 
         const mutedByUserIds = new Set(mutes?.map(m => m.user_id) || [])
 
-        const { createNotification } = await import('@/app/notifications/actions')
+        const { createNotification } = await import('@/app/(app)/notifications/actions')
         const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
 
         for (const attendee of attendees) {
@@ -118,3 +118,4 @@ export async function getMessages(eventId: string) {
         user: msg.profiles
     }))
 }
+

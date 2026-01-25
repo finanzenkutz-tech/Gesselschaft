@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { createNotification } from '@/app/notifications/actions'
+import { createNotification } from '@/app/(app)/notifications/actions'
 
 export async function createPoll(formData: FormData) {
     const supabase = await createClient()
@@ -145,3 +145,4 @@ export async function getPollsForGroup(groupId: string) {
 
     return data || []
 }
+

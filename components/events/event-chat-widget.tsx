@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Trash2, MessageSquare, Loader2, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { sendMessage, deleteMessage } from '@/app/events/chat-actions'
+import { sendMessage, deleteMessage } from '@/app/(app)/events/chat-actions'
 import { useRouter } from 'next/navigation'
 import { MuteUserButton } from '@/components/chat/mute-user-button'
 
@@ -183,3 +183,4 @@ export function EventChatWidget({
         </div>
     )
 }
+

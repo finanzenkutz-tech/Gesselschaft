@@ -11,7 +11,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { updateGroupPlace } from '@/app/groups/place-actions'
+import { updateGroupPlace } from '@/app/(app)/groups/place-actions'
 import { useRouter } from 'next/navigation'
 import { LocationPicker } from '@/components/groups/location-picker'
 import { PLACE_AMENITIES } from '@/lib/constants/amenities'
@@ -193,3 +193,4 @@ export function EditPlaceDialog({ place, groupId }: { place: Place, groupId: str
         </Dialog>
     )
 }
+

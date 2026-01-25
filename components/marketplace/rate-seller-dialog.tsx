@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Star, Loader2 } from 'lucide-react'
-import { createReview } from '@/app/marketplace/actions'
+import { createReview } from '@/app/(app)/marketplace/actions'
 import { cn } from '@/lib/utils'
 
 interface RateSellerDialogProps {
@@ -106,3 +106,4 @@ export function RateSellerDialog({ sellerId, sellerName }: RateSellerDialogProps
         </Dialog>
     )
 }
+

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { TOP_GERMAN_GAMES } from '@/lib/top-games-data'
-import { searchBGG, getBGGGameDetails } from '@/app/inventory/bgg-actions'
+import { searchBGG, getBGGGameDetails } from '@/app/(app)/inventory/bgg-actions'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -76,3 +76,4 @@ export async function GET() {
 
     return NextResponse.json({ success: true, results })
 }
+

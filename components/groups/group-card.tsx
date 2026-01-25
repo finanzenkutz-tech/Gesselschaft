@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Trash2, Loader2, MapPin } from 'lucide-react'
-import { deleteGroup } from '@/app/groups/actions'
+import { deleteGroup } from '@/app/(app)/groups/actions'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -137,3 +137,4 @@ export function GroupCard({ group, isMember, isSuperAdmin }: GroupCardProps) {
         </div>
     )
 }
+

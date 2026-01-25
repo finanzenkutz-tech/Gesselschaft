@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { addXP } from '@/app/gamification/actions'
+import { addXP } from '@/app/(app)/gamification/actions'
 import { XP_REWARDS } from '@/lib/utils/gamification'
 
 interface BGGCollectionItem {
@@ -135,3 +135,4 @@ export async function syncBGGCollection(bggUsername: string) {
     revalidatePath('/inventory')
     return { success: true, imported: newGames.length }
 }
+

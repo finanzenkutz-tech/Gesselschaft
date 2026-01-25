@@ -5,7 +5,7 @@ import { Plus, Trash2, Backpack, Gamepad2, Package, CheckCircle2, User, Hand, Me
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { addBringItem, removeBringItem, addRequestItem, claimRequest, unclaimRequest } from '@/app/events/feature-actions'
+import { addBringItem, removeBringItem, addRequestItem, claimRequest, unclaimRequest } from '@/app/(app)/events/feature-actions'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface EventBringsWidgetProps {
@@ -253,3 +253,4 @@ export function EventBringsWidget({ eventId, brings, myInventory, userId }: Even
         </div>
     )
 }
+

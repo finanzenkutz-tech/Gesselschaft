@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { createNotification } from '@/app/notifications/actions'
+import { createNotification } from '@/app/(app)/notifications/actions'
 
 export async function addEventComment(eventId: string, content: string) {
     const supabase = await createClient()
@@ -74,3 +74,4 @@ export async function deleteEventComment(commentId: string, eventId: string) {
     revalidatePath(`/events/${eventId}`)
     return { success: true }
 }
+

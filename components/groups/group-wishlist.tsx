@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Star, Plus, Trash2, Heart, Search, Dice5 } from 'lucide-react'
-import { addGameToWishlist, toggleVoteForGame, deleteWish } from '@/app/groups/wishlist-actions'
+import { addGameToWishlist, toggleVoteForGame, deleteWish } from '@/app/(app)/groups/wishlist-actions'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -134,3 +134,4 @@ export function GroupWishlist({ groupId, wishlist, userId, isAdmin }: GroupWishl
         </div>
     )
 }
+

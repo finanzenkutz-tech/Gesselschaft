@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { getGroupsWithLocations } from '@/app/groups/challenge-actions'
+import { getGroupsWithLocations } from '@/app/(app)/groups/challenge-actions'
 import { Search, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -52,3 +52,4 @@ export default async function GroupsMapPage() {
         </div>
     )
 }
+

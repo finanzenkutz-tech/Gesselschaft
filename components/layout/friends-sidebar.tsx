@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getBuddies } from '@/app/profile/buddy-actions'
+import { getBuddies } from '@/app/(app)/profile/buddy-actions'
 import { User, MessageCircle, MoreVertical } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'

@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Euro, Check, X, MessageSquare, Clock } from 'lucide-react'
 import { toast } from 'sonner'
-import { updateOfferStatus } from '@/app/marketplace/actions'
+import { updateOfferStatus } from '@/app/(app)/marketplace/actions'
 
 interface Offer {
     id: string
@@ -113,3 +113,4 @@ export function OffersReceived({ offers, isOwner }: OffersReceivedProps) {
         </div>
     )
 }
+

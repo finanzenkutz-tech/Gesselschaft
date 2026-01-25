@@ -11,8 +11,8 @@ import {
     DialogTrigger,
     DialogDescription
 } from '@/components/ui/dialog'
-import { getBuddies } from '@/app/profile/buddy-actions'
-import { transferGame } from '@/app/inventory/actions'
+import { getBuddies } from '@/app/(app)/profile/buddy-actions'
+import { transferGame } from '@/app/(app)/inventory/actions'
 import { useRouter } from 'next/navigation'
 import confetti from 'canvas-confetti'
 
@@ -127,3 +127,4 @@ export function GameTransferDialog({ game, currentUserId }: { game: any, current
         </Dialog>
     )
 }
+

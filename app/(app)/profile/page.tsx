@@ -3,14 +3,14 @@ import { User, Mail, Lock, Camera, Trophy, Star, Award, AlertTriangle, Bell, His
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { updateProfile, updateEmail, updatePassword } from '@/app/profile/actions'
-import { getBuddies, getPendingBuddyRequests } from '@/app/profile/buddy-actions'
-import { getUserBadges } from '@/app/gamification/actions'
+import { updateProfile, updateEmail, updatePassword } from './actions'
+import { getBuddies, getPendingBuddyRequests } from './buddy-actions'
+import { getUserBadges } from '@/app/(app)/gamification/actions'
 import { BuddyWidget } from '@/components/profile/buddy-widget'
 import { DeleteAccountButton } from '@/components/profile/delete-account-button'
 import { PersonalDetailsForm } from '@/components/profile/personal-details-form'
 import { NotificationSettings } from '@/components/settings/notification-settings'
-import { getMutedUsers } from '@/app/settings/user-settings-actions'
+import { getMutedUsers } from '@/app/(app)/settings/user-settings-actions'
 
 import {
     Tooltip,
@@ -274,3 +274,4 @@ export default async function ProfilePage() {
         </div>
     )
 }
+

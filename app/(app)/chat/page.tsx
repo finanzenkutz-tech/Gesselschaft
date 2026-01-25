@@ -1,6 +1,6 @@
-import { getUserGroups } from '@/app/chat/actions'
-import { getMyDirectChats } from '@/app/chat/direct-actions'
-import { ChatInterface } from '@/app/chat/chat-interface'
+import { getUserGroups } from './actions'
+import { getMyDirectChats } from './direct-actions'
+import { ChatInterface } from './chat-interface'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
